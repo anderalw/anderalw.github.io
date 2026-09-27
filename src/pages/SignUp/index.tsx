@@ -9,6 +9,7 @@ import api from '../../services/api';
 import { useToast } from '../../hooks/Toast';
 
 import getValidationErrors from '../../utils/getValidationErros';
+import getApiErrorMessage from '../../utils/getApiErrorMessage';
 
 import logoImg from '../../assets/logo.svg';
 
@@ -65,7 +66,7 @@ const SignUp: React.FC = () => {
         addToast({
           type: 'error',
           title: 'Erro no cadastro',
-          description: 'Ocorreu um erro ao fazer cadastro, tente novamente',
+          description: getApiErrorMessage(err, 'Ocorreu um erro ao fazer cadastro, tente novamente'),
         });
       }
     },

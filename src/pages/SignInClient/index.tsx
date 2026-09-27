@@ -8,6 +8,7 @@ import { Link, useHistory } from 'react-router-dom';
 import { useToast } from '../../hooks/Toast';
 import { useAuth } from '../../hooks/Auth';
 import getValidationErrors from '../../utils/getValidationErros';
+import getApiErrorMessage from '../../utils/getApiErrorMessage';
 
 import logoImg from '../../assets/logo.svg';
 import Input from '../../components/Input';
@@ -48,7 +49,7 @@ const SignInClient: React.FC = () => {
         addToast({
           type: 'error',
           title: 'Erro na autenticação',
-          description: 'Ocorreu um erro ao fazer login, verifique as suas credenciais.',
+          description: getApiErrorMessage(err, 'Ocorreu um erro ao fazer login, verifique as suas credenciais.'),
         });
       }
     },

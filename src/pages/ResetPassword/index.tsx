@@ -9,6 +9,7 @@ import { useHistory, useLocation } from 'react-router-dom';
 import { useToast } from '../../hooks/Toast';
 
 import getValidationErrors from '../../utils/getValidationErros';
+import getApiErrorMessage from '../../utils/getApiErrorMessage';
 
 import logoImg from '../../assets/logo.svg';
 
@@ -72,7 +73,7 @@ const ResetPassword: React.FC = () => {
         addToast({
           type: 'error',
           title: 'Erro ao resetar senha',
-          description: 'Ocorreu um erro ao resetar senha, tente novamente.',
+          description: getApiErrorMessage(err, 'Ocorreu um erro ao resetar senha, tente novamente.'),
         });
       }
     },

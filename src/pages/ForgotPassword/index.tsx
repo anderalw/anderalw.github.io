@@ -9,6 +9,7 @@ import { Link } from 'react-router-dom';
 import { useToast } from '../../hooks/Toast';
 
 import getValidationErrors from '../../utils/getValidationErros';
+import getApiErrorMessage from '../../utils/getApiErrorMessage';
 
 import logoImg from '../../assets/logo.svg';
 
@@ -67,8 +68,7 @@ const ForgotPassword: React.FC = () => {
         addToast({
           type: 'error',
           title: 'Erro na recuperação de senha',
-          description:
-            'Ocorreu um erro ao tentar realizar a recuperação de senha, tente novamente',
+          description: getApiErrorMessage(err, 'Ocorreu um erro ao tentar realizar a recuperação de senha, tente novamente'),
         });
       } finally {
         setLoading(false);

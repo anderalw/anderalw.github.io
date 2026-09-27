@@ -8,6 +8,8 @@ import { FiUser, FiMail, FiLock } from 'react-icons/fi';
 import api from '../../services/api';
 import { useToast } from '../../hooks/Toast';
 import { useAuth } from '../../hooks/Auth';
+import getValidationErrors from '../../utils/getValidationErros';
+import getApiErrorMessage from '../../utils/getApiErrorMessage';
 
 import Input from '../../components/Input';
 import Button from '../../components/Button';
@@ -102,10 +104,15 @@ const CreateProvider: React.FC = () => {
 
       history.push('/dashboard');
     } catch (err) {
+      if (err instanceof Yup.ValidationError) {
+        formRef.current?.setErrors(getValidationErrors(err));
+        return;
+      }
+
       addToast({
         type: 'error',
         title: 'Erro no registo',
-        description: 'Ocorreu um erro ao registar o barbeiro, valide os dados.',
+        description: getApiErrorMessage(err, 'Ocorreu um erro ao registar o barbeiro, valide os dados.'),
       });
     }
   }, [addToast, history, schedules]);

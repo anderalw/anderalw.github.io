@@ -10,6 +10,7 @@ import { useAuth } from '../../hooks/Auth';
 import { useToast } from '../../hooks/Toast';
 
 import getValidationErrors from '../../utils/getValidationErros';
+import getApiErrorMessage from '../../utils/getApiErrorMessage';
 
 import logoImg from '../../assets/logo.svg';
 
@@ -63,7 +64,7 @@ const SignIn: React.FC = () => {
         addToast({
           type: 'error',
           title: 'Erro na autenticação',
-          description: 'Ocorreu um erro ao fazer login, cheque as credenciais',
+          description: getApiErrorMessage(err, 'Ocorreu um erro ao fazer login, cheque as credenciais'),
         });
       }
     },

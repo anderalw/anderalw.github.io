@@ -9,6 +9,7 @@ import api from '../../services/api';
 import { useToast } from '../../hooks/Toast';
 
 import getValidationErrors from '../../utils/getValidationErros';
+import getApiErrorMessage from '../../utils/getApiErrorMessage';
 
 import Input from '../../components/Input';
 import Button from '../../components/Button';
@@ -102,8 +103,7 @@ const Profile: React.FC = () => {
         addToast({
           type: 'error',
           title: 'Erro na atualização',
-          description:
-            'Ocorreu um erro ao tentar atualizar o perfil, tente novamente!',
+          description: getApiErrorMessage(err, 'Ocorreu um erro ao tentar atualizar o perfil, tente novamente!'),
         });
       }
     },

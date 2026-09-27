@@ -4,6 +4,7 @@ import { format } from 'date-fns';
 import api from '../../services/api';
 import { useToast } from '../../hooks/Toast';
 import { useAuth } from '../../hooks/Auth';
+import getApiErrorMessage from '../../utils/getApiErrorMessage';
 
 import {
   Container,
@@ -105,7 +106,7 @@ const CreateAppointment: React.FC = () => {
       addToast({
         type: 'error',
         title: 'Erro ao agendar',
-        description: 'Ocorreu um erro ao tentar criar o agendamento, tente novamente.',
+        description: getApiErrorMessage(err, 'Ocorreu um erro ao tentar criar o agendamento, tente novamente.'),
       });
     }
   }, [selectedDate, selectedHour, selectedProvider, addToast]);
