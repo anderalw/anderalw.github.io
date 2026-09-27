@@ -94,9 +94,9 @@ const CreateAppointment: React.FC = () => {
         throw new Error('Cliente não autenticado');
       }
 
+      // O backend identifica o cliente pelo token, não é preciso enviar o id
       await api.post('/appointments', {
         provider_id: selectedProvider,
-        client_id: client.id,
         date,
       });
 
