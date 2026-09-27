@@ -8,7 +8,6 @@ import React, {
 } from 'react';
 import {
   addDays,
-  addHours,
   format,
   isBefore,
   isToday,
@@ -72,7 +71,12 @@ interface AgendaProvider {
 interface AgendaAppointment {
   id: string;
   date: string;
+  // Fim do atendimento: início + duração do serviço
+  end_date: string;
   provider_id: string;
+  // null em agendamentos anteriores ao cadastro de serviços
+  service: { id: string; name: string } | null;
+  price_cents: number | null;
   created_at: string;
   client: { id: string; name: string; email: string; phone: string } | null;
 }
@@ -97,6 +101,11 @@ const PROVIDER_COLORS = [
 // Intervalo mostrado quando ninguém trabalha no dia
 const DEFAULT_START_HOUR = 8;
 const DEFAULT_END_HOUR = 18;
+
+// Serviços curtos (ex: 15 min) ainda precisam de um card clicável
+const MIN_CARD_HEIGHT = 18;
+// Abaixo desta altura o card mostra só horário e cliente, numa linha
+const COMPACT_CARD_HEIGHT = 44;
 
 const MONTHS = [
   'Janeiro',
@@ -205,6 +214,7 @@ const Dashboard: React.FC = () => {
       agenda.appointments.map(appointment => ({
         ...appointment,
         parsedDate: parseISO(appointment.date),
+        parsedEnd: parseISO(appointment.end_date),
       })),
     [agenda.appointments],
   );
@@ -223,8 +233,11 @@ const Dashboard: React.FC = () => {
     });
 
     appointments.forEach(appointment => {
+      const end = appointment.parsedEnd;
+
       starts.push(appointment.parsedDate.getHours());
-      ends.push(appointment.parsedDate.getHours() + 1);
+      // Um atendimento que termina às 10:15 precisa da linha das 10h
+      ends.push(Math.ceil(end.getHours() + end.getMinutes() / 60));
     });
 
     if (starts.length === 0) {
@@ -480,21 +493,29 @@ const Dashboard: React.FC = () => {
                       {appointments
                         .filter(item => item.provider_id === provider.id)
                         .map(appointment => {
-                          const { parsedDate } = appointment;
+                          const { parsedDate, parsedEnd } = appointment;
                           const top =
                             (parsedDate.getHours() +
                               parsedDate.getMinutes() / 60 -
                               startHour) *
                             hourHeight;
+                          // Altura proporcional à duração do serviço
+                          const durationHours =
+                            (parsedEnd.getTime() - parsedDate.getTime()) /
+                            (60 * 60 * 1000);
+                          const height = Math.max(
+                            durationHours * hourHeight - 4,
+                            MIN_CARD_HEIGHT,
+                          );
                           const clientName =
                             appointment.client?.name || 'Cliente removido';
+                          const serviceName =
+                            appointment.service?.name ||
+                            'Serviço não informado';
                           const timeRange = `${format(
                             parsedDate,
                             'HH:mm',
-                          )} – ${format(
-                            new Date(parsedDate.getTime() + 60 * 60 * 1000),
-                            'HH:mm',
-                          )}`;
+                          )} – ${format(parsedEnd, 'HH:mm')}`;
 
                           return (
                             <AppointmentCard
@@ -505,17 +526,17 @@ const Dashboard: React.FC = () => {
                               }
                               aria-haspopup="dialog"
                               color={color}
-                              // Esmaece só depois de terminar (1 hora)
-                              past={!isBefore(now, addHours(parsedDate, 1))}
-                              compact={compact}
-                              style={{ top: top + 2, height: hourHeight - 4 }}
-                              title={`${timeRange} · ${clientName} · ${provider.name}`}
+                              // Esmaece só depois de terminar
+                              past={!isBefore(now, parsedEnd)}
+                              // Cards baixos (horas baixas ou serviços curtos)
+                              // mostram só horário e cliente numa linha
+                              compact={compact || height < COMPACT_CARD_HEIGHT}
+                              style={{ top: top + 2, height }}
+                              title={`${timeRange} · ${clientName} · ${serviceName} · ${provider.name}`}
                             >
                               <time>{timeRange}</time>
                               <strong>{clientName}</strong>
-                              {appointment.client?.phone && (
-                                <small>{appointment.client.phone}</small>
-                              )}
+                              <small>{serviceName}</small>
                             </AppointmentCard>
                           );
                         })}

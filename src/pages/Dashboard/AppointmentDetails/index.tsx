@@ -1,14 +1,18 @@
 import React, { useEffect, useRef } from 'react';
-import { addHours, format, isBefore, parseISO } from 'date-fns';
+import { differenceInMinutes, format, isBefore, parseISO } from 'date-fns';
 import ptBR from 'date-fns/locale/pt-BR';
 import {
   FiCalendar,
   FiClock,
+  FiDollarSign,
   FiMail,
   FiPhone,
   FiScissors,
+  FiTag,
   FiX,
 } from 'react-icons/fi';
+
+import { formatPrice } from '../../../utils/money';
 
 import {
   Overlay,
@@ -22,6 +26,9 @@ import {
 export interface AppointmentDetailsData {
   id: string;
   parsedDate: Date;
+  parsedEnd: Date;
+  service: { id: string; name: string } | null;
+  price_cents: number | null;
   created_at: string;
   client: { id: string; name: string; email: string; phone: string } | null;
 }
@@ -75,8 +82,8 @@ const AppointmentDetails: React.FC<AppointmentDetailsProps> = ({
   }, [onClose]);
 
   const start = appointment.parsedDate;
-  // Cada agendamento ocupa 1 hora
-  const end = addHours(start, 1);
+  const end = appointment.parsedEnd;
+  const durationMinutes = differenceInMinutes(end, start);
 
   let status: AppointmentStatus = 'upcoming';
 
@@ -135,8 +142,20 @@ const AppointmentDetails: React.FC<AppointmentDetailsProps> = ({
           <li>
             <FiClock />
             {`${format(start, 'HH:mm')} – ${format(end, 'HH:mm')}`}
-            <small>(1 hora)</small>
+            <small>{`(${durationMinutes} min)`}</small>
           </li>
+
+          <li>
+            <FiTag />
+            {appointment.service?.name || 'Serviço não informado'}
+          </li>
+
+          {appointment.price_cents !== null && (
+            <li>
+              <FiDollarSign />
+              {formatPrice(appointment.price_cents)}
+            </li>
+          )}
 
           <li>
             <FiScissors />
