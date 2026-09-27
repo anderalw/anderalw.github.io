@@ -2,11 +2,13 @@ import React, {
   useState,
   useEffect,
   useLayoutEffect,
+  useCallback,
   useMemo,
   useRef,
 } from 'react';
 import {
   addDays,
+  addHours,
   format,
   isBefore,
   isToday,
@@ -56,6 +58,7 @@ import { useAuth } from '../../hooks/Auth';
 import { useToast } from '../../hooks/Toast';
 import api from '../../services/api';
 import getApiErrorMessage from '../../utils/getApiErrorMessage';
+import AppointmentDetails from './AppointmentDetails';
 
 interface AgendaProvider {
   id: string;
@@ -69,7 +72,8 @@ interface AgendaAppointment {
   id: string;
   date: string;
   provider_id: string;
-  client: { id: string; name: string; phone: string } | null;
+  created_at: string;
+  client: { id: string; name: string; email: string; phone: string } | null;
 }
 
 interface Agenda {
@@ -130,6 +134,21 @@ const Dashboard: React.FC = () => {
   });
   const [loading, setLoading] = useState(true);
   const [now, setNow] = useState(new Date());
+  const [selectedAppointmentId, setSelectedAppointmentId] = useState<
+    string | null
+  >(null);
+  // Card que abriu os detalhes, para devolver o foco a ele ao fechar
+  const openerRef = useRef<HTMLElement | null>(null);
+
+  const openDetails = useCallback((appointmentId: string, opener: HTMLElement) => {
+    openerRef.current = opener;
+    setSelectedAppointmentId(appointmentId);
+  }, []);
+
+  const closeDetails = useCallback(() => {
+    setSelectedAppointmentId(null);
+    openerRef.current?.focus();
+  }, []);
 
   // Atualiza a linha da hora atual a cada minuto
   useEffect(() => {
@@ -272,6 +291,31 @@ const Dashboard: React.FC = () => {
 
     return (currentHour - startHour) * hourHeight;
   }, [selectedDate, now, startHour, endHour, hourHeight]);
+
+  // Agendamento aberto no painel de detalhes, com o barbeiro e a cor dele
+  const selectedDetails = useMemo(() => {
+    const appointment = appointments.find(
+      item => item.id === selectedAppointmentId,
+    );
+
+    if (!appointment) {
+      return null;
+    }
+
+    const providerIndex = agenda.providers.findIndex(
+      provider => provider.id === appointment.provider_id,
+    );
+
+    if (providerIndex === -1) {
+      return null;
+    }
+
+    return {
+      appointment,
+      provider: agenda.providers[providerIndex],
+      color: PROVIDER_COLORS[providerIndex % PROVIDER_COLORS.length],
+    };
+  }, [appointments, agenda.providers, selectedAppointmentId]);
 
   const appointmentsCountText = useMemo(() => {
     const count = appointments.length;
@@ -448,8 +492,14 @@ const Dashboard: React.FC = () => {
                           return (
                             <AppointmentCard
                               key={appointment.id}
+                              type="button"
+                              onClick={event =>
+                                openDetails(appointment.id, event.currentTarget)
+                              }
+                              aria-haspopup="dialog"
                               color={color}
-                              past={isBefore(parsedDate, now)}
+                              // Esmaece só depois de terminar (1 hora)
+                              past={!isBefore(now, addHours(parsedDate, 1))}
                               compact={compact}
                               style={{ top: top + 2, height: hourHeight - 4 }}
                               title={`${timeRange} · ${clientName} · ${provider.name}`}
@@ -472,6 +522,16 @@ const Dashboard: React.FC = () => {
           )}
         </AgendaArea>
       </Content>
+
+      {selectedDetails && (
+        <AppointmentDetails
+          appointment={selectedDetails.appointment}
+          provider={selectedDetails.provider}
+          color={selectedDetails.color}
+          now={now}
+          onClose={closeDetails}
+        />
+      )}
     </Container>
   );
 };

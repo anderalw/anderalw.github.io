@@ -408,21 +408,43 @@ interface AppointmentCardProps {
   compact: boolean;
 }
 
-export const AppointmentCard = styled.div<AppointmentCardProps>`
+// Botão: abre os detalhes do agendamento (clique ou Enter pelo teclado)
+export const AppointmentCard = styled.button<AppointmentCardProps>`
   position: absolute;
   left: 4px;
   right: 4px;
   z-index: 1;
+  display: block;
   padding: ${props => (props.compact ? '2px 8px' : '6px 8px')};
+  border: 0;
   border-radius: 6px;
   border-left: 4px solid ${props => props.color};
   background: ${props => shade(0.55, props.color)};
+  color: inherit;
+  font: inherit;
+  text-align: left;
   overflow: hidden;
-  opacity: ${props => (props.past ? 0.55 : 1)};
-  transition: transform 0.1s;
+  /* Já terminou: fundo e texto mais escuros. Sem opacity no card, para o
+     que está por baixo (ex: "Folga") não aparecer através dele */
+  ${props =>
+    props.past &&
+    css`
+      background: ${shade(0.78, props.color)};
+
+      > * {
+        opacity: 0.6;
+      }
+    `}
+  transition: transform 0.1s, box-shadow 0.1s;
 
   &:hover {
     transform: scale(1.02);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.35);
+  }
+
+  &:focus-visible {
+    outline: 2px solid #f4ede8;
+    outline-offset: 1px;
   }
 
   time {
