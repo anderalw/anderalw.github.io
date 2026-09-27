@@ -159,3 +159,64 @@ export const DetailList = styled.ul`
     color: #999591;
   }
 `;
+
+export const PanelActions = styled.div`
+  display: flex;
+  justify-content: flex-end;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 20px;
+
+  button {
+    height: 40px;
+    padding: 0 16px;
+    border-radius: 8px;
+    font: inherit;
+    font-weight: 500;
+    transition: background-color 0.2s, border-color 0.2s;
+
+    &:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+  }
+`;
+
+export const SecondaryButton = styled.button`
+  border: 1px solid #666360;
+  background: transparent;
+  color: #f4ede8;
+
+  &:hover:not(:disabled) {
+    background: #3e3b47;
+  }
+`;
+
+export const DangerButton = styled.button`
+  border: 1px solid #c53030;
+  background: transparent;
+  color: #ff6b6b;
+
+  &:hover:not(:disabled) {
+    background: #c5303022;
+  }
+`;
+
+export const ConfirmText = styled.p`
+  margin-top: 4px;
+  color: #f4ede8;
+  line-height: 1.5;
+
+  small {
+    display: block;
+    margin-top: 6px;
+    color: #999591;
+  }
+`;
+
+export const SectionTitle = styled.h3`
+  font-size: 16px;
+  font-weight: 500;
+  color: #f4ede8;
+  margin-bottom: 14px;
+`;

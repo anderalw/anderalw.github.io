@@ -1,4 +1,4 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { differenceInMinutes, format, isBefore, parseISO } from 'date-fns';
 import ptBR from 'date-fns/locale/pt-BR';
 import {
@@ -12,7 +12,11 @@ import {
   FiX,
 } from 'react-icons/fi';
 
+import api from '../../../services/api';
+import { useToast } from '../../../hooks/Toast';
+import getApiErrorMessage from '../../../utils/getApiErrorMessage';
 import { formatPrice } from '../../../utils/money';
+import RescheduleForm from '../../../components/RescheduleForm';
 
 import {
   Overlay,
@@ -21,6 +25,11 @@ import {
   AppointmentStatus,
   CloseButton,
   DetailList,
+  PanelActions,
+  SecondaryButton,
+  DangerButton,
+  ConfirmText,
+  SectionTitle,
 } from './styles';
 
 export interface AppointmentDetailsData {
@@ -35,11 +44,17 @@ export interface AppointmentDetailsData {
 
 interface AppointmentDetailsProps {
   appointment: AppointmentDetailsData;
-  provider: { name: string; avatar_url: string | null };
+  provider: { id: string; name: string; avatar_url: string | null };
+  // Barbeiros para onde o agendamento pode ser remarcado
+  providers: Array<{ id: string; name: string }>;
   color: string;
   now: Date;
   onClose(): void;
+  // Depois de cancelar ou remarcar: recarregar a agenda e avisar
+  onChanged(message: { title: string; description: string }): void;
 }
+
+type Mode = 'view' | 'reschedule' | 'confirm-cancel';
 
 const STATUS_LABELS: Record<AppointmentStatus, string> = {
   past: 'Concluído',
@@ -60,11 +75,16 @@ function avatarFallback(name: string): string {
 const AppointmentDetails: React.FC<AppointmentDetailsProps> = ({
   appointment,
   provider,
+  providers,
   color,
   now,
   onClose,
+  onChanged,
 }) => {
   const closeButtonRef = useRef<HTMLButtonElement>(null);
+  const { addToast } = useToast();
+  const [mode, setMode] = useState<Mode>('view');
+  const [canceling, setCanceling] = useState(false);
 
   // Foco no botão de fechar ao abrir, e Esc fecha o painel
   useEffect(() => {
@@ -100,6 +120,31 @@ const AppointmentDetails: React.FC<AppointmentDetailsProps> = ({
     ? `tel:${client.phone.replace(/[^\d+]/g, '')}`
     : null;
 
+  const when = format(start, "dd/MM/yyyy 'às' HH:mm");
+
+  const handleCancel = useCallback(async () => {
+    setCanceling(true);
+
+    try {
+      await api.patch(`/appointments/${appointment.id}/cancel`);
+
+      onChanged({
+        title: 'Agendamento cancelado',
+        description: `${clientName} em ${when}. O horário ficou livre.`,
+      });
+    } catch (err) {
+      addToast({
+        type: 'error',
+        title: 'Não foi possível cancelar',
+        description: getApiErrorMessage(
+          err,
+          'Ocorreu um erro ao cancelar, tente novamente.',
+        ),
+      });
+      setCanceling(false);
+    }
+  }, [appointment.id, clientName, when, onChanged, addToast]);
+
   return (
     <Overlay
       // Fecha ao clicar fora do painel (no fundo escurecido)
@@ -131,65 +176,135 @@ const AppointmentDetails: React.FC<AppointmentDetailsProps> = ({
 
         <h2 id="appointment-details-title">{clientName}</h2>
 
-        <DetailList>
-          <li>
-            <FiCalendar />
-            {capitalize(
-              format(start, "cccc, d 'de' MMMM 'de' yyyy", { locale: ptBR }),
-            )}
-          </li>
-
-          <li>
-            <FiClock />
-            {`${format(start, 'HH:mm')} – ${format(end, 'HH:mm')}`}
-            <small>{`(${durationMinutes} min)`}</small>
-          </li>
-
-          <li>
-            <FiTag />
-            {appointment.service?.name || 'Serviço não informado'}
-          </li>
-
-          {appointment.price_cents !== null && (
-            <li>
-              <FiDollarSign />
-              {formatPrice(appointment.price_cents)}
-            </li>
-          )}
-
-          <li>
-            <FiScissors />
-            <img
-              src={provider.avatar_url || avatarFallback(provider.name)}
-              alt=""
-              onError={e => {
-                e.currentTarget.src = avatarFallback(provider.name);
-              }}
+        {mode === 'reschedule' && (
+          <>
+            <SectionTitle>Remarcar agendamento</SectionTitle>
+            <RescheduleForm
+              appointmentId={appointment.id}
+              currentProviderId={provider.id}
+              currentDate={start}
+              providers={providers}
+              onCancel={() => setMode('view')}
+              onRescheduled={newDate =>
+                onChanged({
+                  title: 'Agendamento remarcado',
+                  description: `${clientName}: de ${when} para ${format(
+                    newDate,
+                    "dd/MM/yyyy 'às' HH:mm",
+                  )}.`,
+                })
+              }
             />
-            {provider.name}
-          </li>
+          </>
+        )}
 
-          {client?.phone && phoneHref && (
-            <li>
-              <FiPhone />
-              <a href={phoneHref}>{client.phone}</a>
-            </li>
-          )}
+        {mode === 'confirm-cancel' && (
+          <>
+            <ConfirmText>
+              {`Cancelar o agendamento de ${clientName} em ${when}?`}
+              <small>
+                O horário ficará livre na agenda e o agendamento continua no
+                histórico como cancelado.
+              </small>
+            </ConfirmText>
+            <PanelActions>
+              <SecondaryButton type="button" onClick={() => setMode('view')}>
+                Voltar
+              </SecondaryButton>
+              <DangerButton
+                type="button"
+                onClick={handleCancel}
+                disabled={canceling}
+              >
+                {canceling ? 'Cancelando...' : 'Sim, cancelar'}
+              </DangerButton>
+            </PanelActions>
+          </>
+        )}
 
-          {client?.email && (
-            <li>
-              <FiMail />
-              <a href={`mailto:${client.email}`}>{client.email}</a>
-            </li>
-          )}
-        </DetailList>
+        {mode === 'view' && (
+          <>
+            <DetailList>
+              <li>
+                <FiCalendar />
+                {capitalize(
+                  format(start, "cccc, d 'de' MMMM 'de' yyyy", {
+                    locale: ptBR,
+                  }),
+                )}
+              </li>
 
-        <footer>
-          {`Agendado em ${format(
-            parseISO(appointment.created_at),
-            "dd/MM/yyyy 'às' HH:mm",
-          )}`}
-        </footer>
+              <li>
+                <FiClock />
+                {`${format(start, 'HH:mm')} – ${format(end, 'HH:mm')}`}
+                <small>{`(${durationMinutes} min)`}</small>
+              </li>
+
+              <li>
+                <FiTag />
+                {appointment.service?.name || 'Serviço não informado'}
+              </li>
+
+              {appointment.price_cents !== null && (
+                <li>
+                  <FiDollarSign />
+                  {formatPrice(appointment.price_cents)}
+                </li>
+              )}
+
+              <li>
+                <FiScissors />
+                <img
+                  src={provider.avatar_url || avatarFallback(provider.name)}
+                  alt=""
+                  onError={e => {
+                    e.currentTarget.src = avatarFallback(provider.name);
+                  }}
+                />
+                {provider.name}
+              </li>
+
+              {client?.phone && phoneHref && (
+                <li>
+                  <FiPhone />
+                  <a href={phoneHref}>{client.phone}</a>
+                </li>
+              )}
+
+              {client?.email && (
+                <li>
+                  <FiMail />
+                  <a href={`mailto:${client.email}`}>{client.email}</a>
+                </li>
+              )}
+            </DetailList>
+
+            {/* Só dá para alterar o que ainda não começou */}
+            {status === 'upcoming' && (
+              <PanelActions>
+                <SecondaryButton
+                  type="button"
+                  onClick={() => setMode('reschedule')}
+                >
+                  Remarcar
+                </SecondaryButton>
+                <DangerButton
+                  type="button"
+                  onClick={() => setMode('confirm-cancel')}
+                >
+                  Cancelar agendamento
+                </DangerButton>
+              </PanelActions>
+            )}
+
+            <footer>
+              {`Agendado em ${format(
+                parseISO(appointment.created_at),
+                "dd/MM/yyyy 'às' HH:mm",
+              )}`}
+            </footer>
+          </>
+        )}
       </Dialog>
     </Overlay>
   );

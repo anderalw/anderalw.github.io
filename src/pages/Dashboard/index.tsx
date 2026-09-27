@@ -166,6 +166,18 @@ const Dashboard: React.FC = () => {
     openerRef.current?.focus();
   }, []);
 
+  // Muda para recarregar a agenda depois de cancelar ou remarcar
+  const [refreshKey, setRefreshKey] = useState(0);
+
+  const handleAppointmentChanged = useCallback(
+    (message: { title: string; description: string }) => {
+      setSelectedAppointmentId(null);
+      setRefreshKey(key => key + 1);
+      addToast({ type: 'success', ...message });
+    },
+    [addToast],
+  );
+
   // Atualiza a linha da hora atual a cada minuto
   useEffect(() => {
     const interval = setInterval(() => setNow(new Date()), 60 * 1000);
@@ -213,7 +225,7 @@ const Dashboard: React.FC = () => {
     return () => {
       active = false;
     };
-  }, [selectedDate, addToast]);
+  }, [selectedDate, addToast, refreshKey]);
 
   const appointments = useMemo(
     () =>
@@ -606,6 +618,8 @@ const Dashboard: React.FC = () => {
           color={selectedDetails.color}
           now={now}
           onClose={closeDetails}
+          providers={agenda.providers}
+          onChanged={handleAppointmentChanged}
         />
       )}
     </Container>
