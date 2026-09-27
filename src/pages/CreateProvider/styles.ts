@@ -1,4 +1,5 @@
 import styled from 'styled-components';
+import { Link } from 'react-router-dom';
 
 export const Container = styled.div`
   height: 100vh;
@@ -28,6 +29,24 @@ export const Content = styled.div`
     width: 100%;
     display: flex;
     flex-direction: column;
+  }
+`;
+
+export const BackLink = styled(Link)`
+  align-self: flex-start;
+  display: flex;
+  align-items: center;
+  margin-bottom: 24px;
+  color: #999591;
+  text-decoration: none;
+  transition: color 0.2s;
+
+  &:hover {
+    color: #f4ede8;
+  }
+
+  svg {
+    margin-right: 8px;
   }
 `;
 

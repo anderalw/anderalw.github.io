@@ -1,11 +1,10 @@
 import React from 'react';
-import { Switch } from 'react-router-dom';
+import { Redirect, Switch } from 'react-router-dom';
 
 import Route from './Route';
 
 import Landing from '../pages/Landing';
 import SignIn from '../pages/SignIn';
-import SignUp from '../pages/SignUp';
 import Dashboard from '../pages/Dashboard';
 import CreateAppointment from '../pages/CreateAppointment';
 import SignInClient from '../pages/SignInClient';
@@ -18,7 +17,6 @@ const Routes: React.FC = () => (
 
     {/* Rotas dos Barbeiros */}
     <Route path="/barbeiro" exact component={SignIn} />
-    <Route path="/barbeiro/registo" component={SignUp} />
     <Route path="/dashboard" component={Dashboard} isPrivate />
     <Route path="/admin/create-provider" component={CreateProvider} isPrivate />
 
@@ -26,6 +24,9 @@ const Routes: React.FC = () => (
     <Route path="/cliente/login" component={SignInClient} />
     <Route path="/cliente/registo" component={SignUpClient} />
     <Route path="/agendar" component={CreateAppointment} isClient />
+
+    {/* Rotas desconhecidas (ex: o antigo /barbeiro/registo) voltam ao início */}
+    <Redirect to="/" />
   </Switch>
 );
 

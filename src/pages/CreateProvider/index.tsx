@@ -3,7 +3,7 @@ import { Redirect, useHistory } from 'react-router-dom';
 import { FormHandles } from '@unform/core';
 import { Form } from '@unform/web';
 import * as Yup from 'yup';
-import { FiUser, FiMail, FiLock } from 'react-icons/fi';
+import { FiArrowLeft, FiUser, FiMail, FiLock } from 'react-icons/fi';
 
 import api from '../../services/api';
 import { useToast } from '../../hooks/Toast';
@@ -14,7 +14,13 @@ import getApiErrorMessage from '../../utils/getApiErrorMessage';
 import Input from '../../components/Input';
 import Button from '../../components/Button';
 
-import { Container, Content, ScheduleContainer, ScheduleItem } from './styles';
+import {
+  Container,
+  Content,
+  BackLink,
+  ScheduleContainer,
+  ScheduleItem,
+} from './styles';
 
 const dayNames = ['Domingo', 'Segunda-feira', 'Terça-feira', 'Quarta-feira', 'Quinta-feira', 'Sexta-feira', 'Sábado'];
 
@@ -125,6 +131,11 @@ const CreateProvider: React.FC = () => {
   return (
     <Container>
       <Content>
+        <BackLink to="/dashboard">
+          <FiArrowLeft />
+          Voltar ao painel
+        </BackLink>
+
         <h1>Registar Novo Barbeiro</h1>
 
         <Form ref={formRef} onSubmit={handleSubmit}>

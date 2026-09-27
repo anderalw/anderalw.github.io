@@ -1,6 +1,6 @@
 import React, { useCallback, useRef } from 'react';
 
-import { FiLogIn, FiMail, FiLock } from 'react-icons/fi';
+import { FiArrowLeft, FiMail, FiLock } from 'react-icons/fi';
 import { Form } from '@unform/web';
 import { FormHandles } from '@unform/core';
 
@@ -93,9 +93,10 @@ const SignIn: React.FC = () => {
             <Link to="forgot-password">Esqueci minha senha.</Link>
           </Form>
 
-          <Link to="/signup">
-            <FiLogIn />
-            Criar Conta
+          {/* Contas de barbeiro são criadas pelo administrador no painel */}
+          <Link to="/">
+            <FiArrowLeft />
+            Voltar ao início
           </Link>
         </AnimationContainer>
       </Content>

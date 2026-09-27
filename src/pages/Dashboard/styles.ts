@@ -1,5 +1,6 @@
 import styled from 'styled-components';
 import { shade } from 'polished';
+import { Link } from 'react-router-dom';
 
 export const Container = styled.div``;
 
@@ -28,6 +29,32 @@ export const HeaderContent = styled.div`
       width: 20px;
       height: 20px;
     }
+  }
+
+  /* Com o botão de admin, é ele que empurra os dois para a direita */
+  > a + button {
+    margin-left: 24px;
+  }
+`;
+
+export const AdminLink = styled(Link)`
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+  padding: 10px 16px;
+  border-radius: 10px;
+  background: #ff9000;
+  color: #312e38;
+  font-weight: 500;
+  text-decoration: none;
+  transition: background-color 0.2s;
+
+  &:hover {
+    background: ${shade(0.2, '#ff9000')};
+  }
+
+  svg {
+    margin-right: 8px;
   }
 `;
 

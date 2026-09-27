@@ -3,13 +3,14 @@ import { isToday, format, isAfter } from 'date-fns';
 import ptBR from 'date-fns/locale/pt-BR';
 import DayPicker, { DayModifiers } from 'react-day-picker';
 import 'react-day-picker/lib/style.css';
-import { FiPower, FiClock } from 'react-icons/fi';
+import { FiPower, FiClock, FiUserPlus } from 'react-icons/fi';
 import { parseISO } from 'date-fns/esm';
 import { Link } from 'react-router-dom';
 import {
   Container,
   Header,
   HeaderContent,
+  AdminLink,
   Profile,
   Content,
   Schedule,
@@ -153,6 +154,14 @@ const Dashboard: React.FC = () => {
               </Link>
             </div>
           </Profile>
+
+          {user.is_admin && (
+            <AdminLink to="/admin/create-provider">
+              <FiUserPlus />
+              Cadastrar barbeiro
+            </AdminLink>
+          )}
+
           <button type="button" onClick={signOut}>
             <FiPower />
           </button>
