@@ -6,9 +6,8 @@ import * as Yup from 'yup';
 import { Link, useHistory } from 'react-router-dom';
 
 import { useToast } from '../../hooks/Toast';
+import { useAuth } from '../../hooks/Auth';
 import getValidationErrors from '../../utils/getValidationErros';
-
-import api from '../../services/api';
 
 import logoImg from '../../assets/logo.svg';
 import Input from '../../components/Input';
@@ -19,6 +18,7 @@ import { Container, Content, Background, AnimationContainer } from './styles';
 const SignInClient: React.FC = () => {
   const formRef = useRef<FormHandles>(null);
   const { addToast } = useToast();
+  const { signInClient } = useAuth();
   const history = useHistory();
 
   const handleSubmit = useCallback(
@@ -33,17 +33,8 @@ const SignInClient: React.FC = () => {
 
         await schema.validate(data, { abortEarly: false });
 
-        // Faz o login na rota exclusiva de clientes
-        const response = await api.post('/clients/sessions', data);
-        
-        const { token, client } = response.data;
-
-        // Guarda os dados no armazenamento local do navegador
-        localStorage.setItem('@GoBarber:clientToken', token);
-        localStorage.setItem('@GoBarber:client', JSON.stringify(client));
-
-        // Envia o token no cabeçalho das próximas requisições
-        api.defaults.headers.authorization = `Bearer ${token}`;
+        // Faz o login na rota exclusiva de clientes e guarda a sessão
+        await signInClient({ email: data.email, password: data.password });
 
         // Redireciona para a página de agendamento
         history.push('/agendar');
@@ -61,7 +52,7 @@ const SignInClient: React.FC = () => {
         });
       }
     },
-    [addToast, history],
+    [addToast, history, signInClient],
   );
 
   return (

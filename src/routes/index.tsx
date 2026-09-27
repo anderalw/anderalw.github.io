@@ -25,7 +25,7 @@ const Routes: React.FC = () => (
     {/* Rotas dos Clientes */}
     <Route path="/cliente/login" component={SignInClient} />
     <Route path="/cliente/registo" component={SignUpClient} />
-    <Route path="/agendar" component={CreateAppointment} /> 
+    <Route path="/agendar" component={CreateAppointment} isClient />
   </Switch>
 );
 

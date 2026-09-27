@@ -1,9 +1,9 @@
-import React, { useEffect, useState, useCallback, useMemo } from 'react';
-import { useHistory } from 'react-router-dom';
+import React, { useEffect, useState, useCallback } from 'react';
 import { format } from 'date-fns';
 
 import api from '../../services/api';
 import { useToast } from '../../hooks/Toast';
+import { useAuth } from '../../hooks/Auth';
 
 import {
   Container,
@@ -27,7 +27,6 @@ interface AvailabilityItem {
 }
 
 const CreateAppointment: React.FC = () => {
-  const history = useHistory();
   const { addToast } = useToast();
 
   const [providers, setProviders] = useState<Provider[]>([]);
@@ -36,11 +35,8 @@ const CreateAppointment: React.FC = () => {
   const [selectedHour, setSelectedHour] = useState<number>(0);
   const [availability, setAvailability] = useState<AvailabilityItem[]>([]);
 
-  // 1. Recuperar o cliente que fez login
-  const client = useMemo(() => {
-    const clientData = localStorage.getItem('@GoBarber:client');
-    return clientData ? JSON.parse(clientData) : null;
-  }, []);
+  // 1. Cliente com sessão iniciada (a rota só abre para clientes)
+  const { client, signOut } = useAuth();
 
   // 2. Carregar a lista de Barbeiros ao abrir a página
   useEffect(() => {
@@ -90,10 +86,6 @@ const CreateAppointment: React.FC = () => {
       const [year, month, day] = selectedDate.split('-');
       const date = new Date(Number(year), Number(month) - 1, Number(day), selectedHour, 0, 0);
 
-      if (!client || !client.id) {
-        throw new Error('Cliente não autenticado');
-      }
-
       // O backend identifica o cliente pelo token, não é preciso enviar o id
       await api.post('/appointments', {
         provider_id: selectedProvider,
@@ -106,7 +98,9 @@ const CreateAppointment: React.FC = () => {
         description: `Horário reservado com sucesso para dia ${format(date, 'dd/MM/yyyy às HH:mm')}.`,
       });
 
-      history.push('/');
+      // Limpa a seleção para permitir um novo agendamento
+      setSelectedDate('');
+      setSelectedHour(0);
     } catch (err) {
       addToast({
         type: 'error',
@@ -114,11 +108,37 @@ const CreateAppointment: React.FC = () => {
         description: 'Ocorreu um erro ao tentar criar o agendamento, tente novamente.',
       });
     }
-  }, [selectedDate, selectedHour, selectedProvider, client, history, addToast]);
+  }, [selectedDate, selectedHour, selectedProvider, addToast]);
 
   return (
     <Container>
       <Content>
+        <div
+          style={{
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            marginBottom: '16px',
+          }}
+        >
+          <span>
+            Olá, <strong style={{ color: '#ff9000' }}>{client?.name}</strong>
+          </span>
+          <button
+            type="button"
+            onClick={signOut}
+            style={{
+              marginTop: 0,
+              background: 'transparent',
+              border: 0,
+              color: '#999591',
+              cursor: 'pointer',
+            }}
+          >
+            Sair
+          </button>
+        </div>
+
         <h1>Agendar Horário</h1>
 
         <Section>
