@@ -55,16 +55,7 @@ const CreateProvider: React.FC = () => {
 
       await schema.validate(data, { abortEarly: false });
 
-      // 1. Criar o utilizador
-      const response = await api.post('/users', {
-        name: data.name,
-        email: data.email,
-        password: data.password,
-      });
-
-      const newProviderId = response.data.id;
-
-      // 2. Filtrar apenas os dias ativados pelo Administrador
+      // 1. Filtrar apenas os dias ativados pelo Administrador
       const activeSchedules = schedules
         .filter(schedule => schedule.enabled)
         .map(({ day_of_week, start_time, end_time }) => ({
@@ -73,7 +64,34 @@ const CreateProvider: React.FC = () => {
           end_time,
         }));
 
-      // 3. Enviar os horários se houver algum dia selecionado
+      // 2. Validar os horários antes de criar o barbeiro, para não deixar
+      // um barbeiro registado sem horários se estes forem recusados
+      const invalidSchedule = activeSchedules.find(
+        ({ start_time, end_time }) =>
+          !start_time.endsWith(':00') ||
+          !end_time.endsWith(':00') ||
+          start_time >= end_time,
+      );
+
+      if (invalidSchedule) {
+        addToast({
+          type: 'error',
+          title: 'Horário inválido',
+          description: `${dayNames[invalidSchedule.day_of_week]}: use horas cheias (ex: 09:00) e um início antes do fim.`,
+        });
+        return;
+      }
+
+      // 3. Criar o utilizador
+      const response = await api.post('/users', {
+        name: data.name,
+        email: data.email,
+        password: data.password,
+      });
+
+      const newProviderId = response.data.id;
+
+      // 4. Enviar os horários se houver algum dia selecionado
       if (activeSchedules.length > 0) {
         await api.post(`/schedules/${newProviderId}`, {
           schedules: activeSchedules,
@@ -124,12 +142,14 @@ const CreateProvider: React.FC = () => {
                   <div className="time-inputs">
                     <input
                       type="time"
+                      step={3600}
                       value={schedule.start_time}
                       onChange={(e) => handleScheduleChange(index, 'start_time', e.target.value)}
                     />
                     <span>até</span>
                     <input
                       type="time"
+                      step={3600}
                       value={schedule.end_time}
                       onChange={(e) => handleScheduleChange(index, 'end_time', e.target.value)}
                     />
