@@ -7,6 +7,7 @@ import Landing from '../pages/Landing';
 import SignIn from '../pages/SignIn';
 import Dashboard from '../pages/Dashboard';
 import CreateAppointment from '../pages/CreateAppointment';
+import MyAppointments from '../pages/MyAppointments';
 import SignInClient from '../pages/SignInClient';
 import SignUpClient from '../pages/SignUpClient';
 import CreateProvider from '../pages/CreateProvider';
@@ -26,6 +27,7 @@ const Routes: React.FC = () => (
     <Route path="/cliente/login" component={SignInClient} />
     <Route path="/cliente/registo" component={SignUpClient} />
     <Route path="/agendar" component={CreateAppointment} isClient />
+    <Route path="/meus-agendamentos" component={MyAppointments} isClient />
 
     {/* Rotas desconhecidas (ex: o antigo /barbeiro/registo) voltam ao início */}
     <Redirect to="/" />

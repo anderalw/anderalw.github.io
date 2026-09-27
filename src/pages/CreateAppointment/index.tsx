@@ -1,5 +1,6 @@
 import React, { useEffect, useState, useCallback, useMemo } from 'react';
 import { format } from 'date-fns';
+import { Link } from 'react-router-dom';
 import ptBR from 'date-fns/locale/pt-BR';
 
 import api from '../../services/api';
@@ -178,19 +179,27 @@ const CreateAppointment: React.FC = () => {
           <span>
             Olá, <strong style={{ color: '#ff9000' }}>{client?.name}</strong>
           </span>
-          <button
-            type="button"
-            onClick={signOut}
-            style={{
-              marginTop: 0,
-              background: 'transparent',
-              border: 0,
-              color: '#999591',
-              cursor: 'pointer',
-            }}
-          >
-            Sair
-          </button>
+          <div style={{ display: 'flex', gap: '16px', alignItems: 'center' }}>
+            <Link
+              to="/meus-agendamentos"
+              style={{ color: '#ff9000', textDecoration: 'none' }}
+            >
+              Meus agendamentos
+            </Link>
+            <button
+              type="button"
+              onClick={signOut}
+              style={{
+                marginTop: 0,
+                background: 'transparent',
+                border: 0,
+                color: '#999591',
+                cursor: 'pointer',
+              }}
+            >
+              Sair
+            </button>
+          </div>
         </div>
 
         <h1>Agendar Horário</h1>
@@ -255,7 +264,9 @@ const CreateAppointment: React.FC = () => {
           <Section>
             <strong>4. Escolha o horário</strong>
             {!selectedService && (
-              <HelpText>Escolha um serviço para ver os horários livres.</HelpText>
+              <HelpText>
+                Escolha um serviço para ver os horários livres.
+              </HelpText>
             )}
             {selectedService && loadingTimes && (
               <HelpText>Carregando horários...</HelpText>
