@@ -21,6 +21,7 @@ import 'react-day-picker/lib/style.css';
 import {
   FiPower,
   FiUserPlus,
+  FiScissors,
   FiChevronLeft,
   FiChevronRight,
 } from 'react-icons/fi';
@@ -349,10 +350,16 @@ const Dashboard: React.FC = () => {
           </Profile>
 
           {user.is_admin && (
-            <AdminLink to="/admin/create-provider">
-              <FiUserPlus />
-              Cadastrar barbeiro
-            </AdminLink>
+            <>
+              <AdminLink to="/admin/services">
+                <FiScissors />
+                Serviços
+              </AdminLink>
+              <AdminLink to="/admin/create-provider">
+                <FiUserPlus />
+                Cadastrar barbeiro
+              </AdminLink>
+            </>
           )}
 
           <button type="button" onClick={signOut}>

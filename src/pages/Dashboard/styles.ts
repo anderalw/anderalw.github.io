@@ -61,6 +61,11 @@ export const HeaderContent = styled.div`
   > a + button {
     margin-left: 24px;
   }
+
+  /* Botões de admin lado a lado: só o primeiro empurra para a direita */
+  > a + a {
+    margin-left: 12px;
+  }
 `;
 
 export const AdminLink = styled(Link)`

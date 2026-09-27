@@ -10,6 +10,7 @@ import CreateAppointment from '../pages/CreateAppointment';
 import SignInClient from '../pages/SignInClient';
 import SignUpClient from '../pages/SignUpClient';
 import CreateProvider from '../pages/CreateProvider';
+import ManageServices from '../pages/ManageServices';
 
 const Routes: React.FC = () => (
   <Switch>
@@ -19,6 +20,7 @@ const Routes: React.FC = () => (
     <Route path="/barbeiro" exact component={SignIn} />
     <Route path="/dashboard" component={Dashboard} isPrivate />
     <Route path="/admin/create-provider" component={CreateProvider} isPrivate />
+    <Route path="/admin/services" component={ManageServices} isPrivate />
 
     {/* Rotas dos Clientes */}
     <Route path="/cliente/login" component={SignInClient} />
