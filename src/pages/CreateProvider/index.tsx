@@ -1,5 +1,5 @@
 import React, { useRef, useCallback, useState } from 'react';
-import { useHistory } from 'react-router-dom';
+import { Redirect, useHistory } from 'react-router-dom';
 import { FormHandles } from '@unform/core';
 import { Form } from '@unform/web';
 import * as Yup from 'yup';
@@ -31,10 +31,6 @@ const CreateProvider: React.FC = () => {
     { day_of_week: 5, start_time: '09:00', end_time: '18:00', enabled: false },
     { day_of_week: 6, start_time: '09:00', end_time: '18:00', enabled: false },
   ]);
-
-  if (!user.is_admin) {
-    history.push('/dashboard');
-  }
 
   // Função para atualizar um campo específico de um dia na grelha
   const handleScheduleChange = (index: number, field: string, value: string | boolean) => {
@@ -113,6 +109,11 @@ const CreateProvider: React.FC = () => {
       });
     }
   }, [addToast, history, schedules]);
+
+  // Só administradores registam barbeiros (a API também valida)
+  if (!user.is_admin) {
+    return <Redirect to="/dashboard" />;
+  }
 
   return (
     <Container>
