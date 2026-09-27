@@ -31,7 +31,7 @@ interface Appointment {
   id: string;
   date: string;
   hourFormatted: string;
-  user: {
+  client: {
     name: string;
     avatar_url: string;
   };
@@ -138,7 +138,13 @@ const Dashboard: React.FC = () => {
           <img src={logoImg} alt="GoBarber" />
 
           <Profile>
-            <img src={user.avatar_url} alt={user.name} />
+            <img
+              src={user.avatar_url || `https://ui-avatars.com/api/?name=${encodeURIComponent(user.name)}&background=28262e&color=ff9000`}
+              alt={user.name}
+              onError={(e) => {
+                e.currentTarget.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(user.name)}&background=28262e&color=ff9000`;
+              }}
+            />
 
             <div>
               <span>Bem-vindo,</span>
@@ -167,10 +173,10 @@ const Dashboard: React.FC = () => {
               <strong>Agendamento a seguir</strong>
               <div>
                 <img
-                  src={nextAppointment.user.avatar_url}
-                  alt={nextAppointment.user.name}
+                  src={nextAppointment.client.avatar_url}
+                  alt={nextAppointment.client.name}
                 />
-                <strong>{nextAppointment?.user.name}</strong>
+                <strong>{nextAppointment?.client.name}</strong>
                 <span>
                   <FiClock />
                   {nextAppointment.hourFormatted}
@@ -194,10 +200,13 @@ const Dashboard: React.FC = () => {
                 </span>
                 <div>
                   <img
-                    src={appointment.user.avatar_url}
-                    alt={appointment.user.name}
+                    src={appointment.client.avatar_url || `https://ui-avatars.com/api/?name=${encodeURIComponent(appointment.client.name)}&background=28262e&color=ff9000`}
+                    alt={appointment.client.name}
+                    onError={(e) => {
+                      e.currentTarget.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(appointment.client.name)}&background=28262e&color=ff9000`;
+                    }}
                   />
-                  <strong>{appointment.user.name}</strong>
+                  <strong>{appointment.client.name}</strong>
                 </div>
               </Appointment>
             ))}
@@ -216,11 +225,11 @@ const Dashboard: React.FC = () => {
                 </span>
                 <div>
                   <img
-                    src={appointment.user.avatar_url}
-                    alt={appointment.user.name}
+                    src={appointment.client.avatar_url}
+                    alt={appointment.client.name}
                   />
 
-                  <strong>{appointment.user.name}</strong>
+                  <strong>{appointment.client.name}</strong>
                 </div>
               </Appointment>
             ))}
