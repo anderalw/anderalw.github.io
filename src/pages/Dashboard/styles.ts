@@ -1,5 +1,5 @@
 import styled, { css } from 'styled-components';
-import { shade } from 'polished';
+import { shade, transparentize } from 'polished';
 import { Link } from 'react-router-dom';
 
 // Limites da altura de 1 hora na grade (px). A altura real é calculada
@@ -500,6 +500,40 @@ export const AppointmentCard = styled.button<AppointmentCardProps>`
         display: none;
       }
     `}
+`;
+
+interface BufferStripProps {
+  color: string;
+  past: boolean;
+}
+
+// Intervalo entre atendimentos: faixa hachurada logo abaixo do card, na cor
+// do barbeiro, para mostrar que esse tempo também está ocupado
+export const BufferStrip = styled.div<BufferStripProps>`
+  position: absolute;
+  left: 4px;
+  right: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  border-radius: 0 0 6px 6px;
+  border-left: 4px solid ${props => transparentize(0.5, props.color)};
+  background: repeating-linear-gradient(
+    -45deg,
+    ${props => transparentize(0.72, props.color)},
+    ${props => transparentize(0.72, props.color)} 4px,
+    transparent 4px,
+    transparent 8px
+  );
+  opacity: ${props => (props.past ? 0.5 : 1)};
+
+  span {
+    font-size: 11px;
+    line-height: 1;
+    color: ${props => transparentize(0.2, props.color)};
+    white-space: nowrap;
+  }
 `;
 
 export const NowLine = styled.div`

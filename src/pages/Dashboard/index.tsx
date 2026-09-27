@@ -50,6 +50,7 @@ import {
   HourCell,
   DayOffLabel,
   AppointmentCard,
+  BufferStrip,
   NowLine,
   EmptyState,
 } from './styles';
@@ -73,6 +74,8 @@ interface AgendaAppointment {
   date: string;
   // Fim do atendimento: início + duração do serviço
   end_date: string;
+  // Fim do intervalo depois do atendimento (igual a end_date sem intervalo)
+  blocked_until: string;
   provider_id: string;
   // null em agendamentos anteriores ao cadastro de serviços
   service: { id: string; name: string } | null;
@@ -150,10 +153,13 @@ const Dashboard: React.FC = () => {
   // Card que abriu os detalhes, para devolver o foco a ele ao fechar
   const openerRef = useRef<HTMLElement | null>(null);
 
-  const openDetails = useCallback((appointmentId: string, opener: HTMLElement) => {
-    openerRef.current = opener;
-    setSelectedAppointmentId(appointmentId);
-  }, []);
+  const openDetails = useCallback(
+    (appointmentId: string, opener: HTMLElement) => {
+      openerRef.current = opener;
+      setSelectedAppointmentId(appointmentId);
+    },
+    [],
+  );
 
   const closeDetails = useCallback(() => {
     setSelectedAppointmentId(null);
@@ -215,6 +221,7 @@ const Dashboard: React.FC = () => {
         ...appointment,
         parsedDate: parseISO(appointment.date),
         parsedEnd: parseISO(appointment.end_date),
+        parsedBlockedUntil: parseISO(appointment.blocked_until),
       })),
     [agenda.appointments],
   );
@@ -461,7 +468,10 @@ const Dashboard: React.FC = () => {
               <GridBody columns={agenda.providers.length}>
                 <TimeColumn>
                   {hours.map(hour => (
-                    <span key={hour}>{`${String(hour).padStart(2, '0')}:00`}</span>
+                    <span key={hour}>{`${String(hour).padStart(
+                      2,
+                      '0',
+                    )}:00`}</span>
                   ))}
                 </TimeColumn>
 
@@ -493,7 +503,11 @@ const Dashboard: React.FC = () => {
                       {appointments
                         .filter(item => item.provider_id === provider.id)
                         .map(appointment => {
-                          const { parsedDate, parsedEnd } = appointment;
+                          const {
+                            parsedDate,
+                            parsedEnd,
+                            parsedBlockedUntil,
+                          } = appointment;
                           const top =
                             (parsedDate.getHours() +
                               parsedDate.getMinutes() / 60 -
@@ -517,27 +531,61 @@ const Dashboard: React.FC = () => {
                             'HH:mm',
                           )} – ${format(parsedEnd, 'HH:mm')}`;
 
+                          // Intervalo depois do atendimento: do fim do card
+                          // até blocked_until (sem intervalo, não aparece)
+                          const cardBottom = top + 2 + height;
+                          const bufferEnd =
+                            (parsedBlockedUntil.getHours() +
+                              parsedBlockedUntil.getMinutes() / 60 -
+                              startHour) *
+                            hourHeight;
+                          const bufferTop = cardBottom + 1;
+                          const bufferHeight = bufferEnd - 1 - bufferTop;
+                          const bufferRange = `${format(
+                            parsedEnd,
+                            'HH:mm',
+                          )} – ${format(parsedBlockedUntil, 'HH:mm')}`;
+
                           return (
-                            <AppointmentCard
-                              key={appointment.id}
-                              type="button"
-                              onClick={event =>
-                                openDetails(appointment.id, event.currentTarget)
-                              }
-                              aria-haspopup="dialog"
-                              color={color}
-                              // Esmaece só depois de terminar
-                              past={!isBefore(now, parsedEnd)}
-                              // Cards baixos (horas baixas ou serviços curtos)
-                              // mostram só horário e cliente numa linha
-                              compact={compact || height < COMPACT_CARD_HEIGHT}
-                              style={{ top: top + 2, height }}
-                              title={`${timeRange} · ${clientName} · ${serviceName} · ${provider.name}`}
-                            >
-                              <time>{timeRange}</time>
-                              <strong>{clientName}</strong>
-                              <small>{serviceName}</small>
-                            </AppointmentCard>
+                            <React.Fragment key={appointment.id}>
+                              {bufferHeight > 2 && (
+                                <BufferStrip
+                                  color={color}
+                                  past={!isBefore(now, parsedBlockedUntil)}
+                                  style={{
+                                    top: bufferTop,
+                                    height: bufferHeight,
+                                  }}
+                                  title={`Intervalo ${bufferRange}`}
+                                >
+                                  {bufferHeight >= 12 && <span>intervalo</span>}
+                                </BufferStrip>
+                              )}
+                              <AppointmentCard
+                                type="button"
+                                onClick={event =>
+                                  openDetails(
+                                    appointment.id,
+                                    event.currentTarget,
+                                  )
+                                }
+                                aria-haspopup="dialog"
+                                color={color}
+                                // Esmaece só depois de terminar
+                                past={!isBefore(now, parsedEnd)}
+                                // Cards baixos (horas baixas ou serviços curtos)
+                                // mostram só horário e cliente numa linha
+                                compact={
+                                  compact || height < COMPACT_CARD_HEIGHT
+                                }
+                                style={{ top: top + 2, height }}
+                                title={`${timeRange} · ${clientName} · ${serviceName} · ${provider.name}`}
+                              >
+                                <time>{timeRange}</time>
+                                <strong>{clientName}</strong>
+                                <small>{serviceName}</small>
+                              </AppointmentCard>
+                            </React.Fragment>
                           );
                         })}
                     </ProviderColumn>
