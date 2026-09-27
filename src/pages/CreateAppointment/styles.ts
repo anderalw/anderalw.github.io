@@ -121,3 +121,43 @@ export const Hour = styled.div<HourProps>`
       color: #232129;
     `}
 `;
+// Serviço: o cliente vê nome e valor (a duração só define a agenda)
+export const ServiceOption = styled.button<ProviderProps>`
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  min-width: 160px;
+  padding: 14px 18px;
+  border: 0;
+  border-radius: 10px;
+  text-align: left;
+  font: inherit;
+  cursor: pointer;
+  transition: background-color 0.2s;
+  background: ${props => (props.selected ? '#ff9000' : '#3e3b47')};
+  color: ${props => (props.selected ? '#232129' : '#f4ede8')};
+
+  &:hover {
+    background: ${props =>
+      props.selected ? '#ff9000' : shade(0.2, '#3e3b47')};
+  }
+
+  span {
+    font-weight: 500;
+  }
+
+  small {
+    margin-top: 4px;
+    font-size: 14px;
+    color: ${props => (props.selected ? '#312e38' : '#ff9000')};
+  }
+
+  /* Content aplica margin-top: 48px a todo <button> da página */
+  && {
+    margin-top: 0;
+  }
+`;
+
+export const HelpText = styled.p`
+  color: #999591;
+`;

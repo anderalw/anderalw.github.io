@@ -1,10 +1,12 @@
-import React, { useEffect, useState, useCallback } from 'react';
+import React, { useEffect, useState, useCallback, useMemo } from 'react';
 import { format } from 'date-fns';
+import ptBR from 'date-fns/locale/pt-BR';
 
 import api from '../../services/api';
 import { useToast } from '../../hooks/Toast';
 import { useAuth } from '../../hooks/Auth';
 import getApiErrorMessage from '../../utils/getApiErrorMessage';
+import { formatPrice } from '../../utils/money';
 
 import {
   Container,
@@ -12,8 +14,10 @@ import {
   Section,
   ProviderContainer,
   ProviderName,
+  ServiceOption,
   HourList,
   Hour,
+  HelpText,
 } from './styles';
 
 interface Provider {
@@ -22,25 +26,45 @@ interface Provider {
   avatar_url: string;
 }
 
-interface AvailabilityItem {
-  hour: number;
-  available: boolean;
+interface Service {
+  id: string;
+  name: string;
+  price_cents: number;
+}
+
+// Horário livre para o serviço escolhido, no formato 'HH:mm'
+interface AvailableTime {
+  time: string;
+}
+
+function avatarFallback(name: string): string {
+  return `https://ui-avatars.com/api/?name=${encodeURIComponent(
+    name,
+  )}&background=28262e&color=ff9000`;
 }
 
 const CreateAppointment: React.FC = () => {
   const { addToast } = useToast();
-
-  const [providers, setProviders] = useState<Provider[]>([]);
-  const [selectedProvider, setSelectedProvider] = useState<string>('');
-  const [selectedDate, setSelectedDate] = useState<string>('');
-  const [selectedHour, setSelectedHour] = useState<number>(0);
-  const [availability, setAvailability] = useState<AvailabilityItem[]>([]);
-
-  // 1. Cliente com sessão iniciada (a rota só abre para clientes)
+  // Cliente com sessão iniciada (a rota só abre para clientes)
   const { client, signOut } = useAuth();
 
-  // 2. Carregar a lista de Barbeiros ao abrir a página
+  const [services, setServices] = useState<Service[]>([]);
+  const [providers, setProviders] = useState<Provider[]>([]);
+  const [selectedService, setSelectedService] = useState('');
+  const [selectedProvider, setSelectedProvider] = useState('');
+  const [selectedDate, setSelectedDate] = useState('');
+  const [selectedTime, setSelectedTime] = useState('');
+  const [availableTimes, setAvailableTimes] = useState<AvailableTime[]>([]);
+  const [loadingTimes, setLoadingTimes] = useState(false);
+  // Muda a cada agendamento feito, para recarregar os horários livres
+  const [refreshKey, setRefreshKey] = useState(0);
+
+  // Serviços ativos e barbeiros, ao abrir a página
   useEffect(() => {
+    api.get<Service[]>('/services').then(response => {
+      setServices(response.data);
+    });
+
     api.get<Provider[]>('/providers').then(response => {
       setProviders(response.data);
       if (response.data.length > 0) {
@@ -49,67 +73,96 @@ const CreateAppointment: React.FC = () => {
     });
   }, []);
 
-  // 3. Buscar os horários disponíveis quando a data ou barbeiro mudam
+  // Horários livres: dependem do serviço (duração), do barbeiro e do dia
   useEffect(() => {
-    if (!selectedProvider || !selectedDate) {
-      setAvailability([]);
-      return;
+    setSelectedTime('');
+
+    if (!selectedService || !selectedProvider || !selectedDate) {
+      setAvailableTimes([]);
+      return undefined;
     }
 
-    // O input nativo devolve 'YYYY-MM-DD', precisamos de separar
+    let active = true;
+    // O input nativo devolve 'YYYY-MM-DD'
     const [year, month, day] = selectedDate.split('-');
 
-    api.get(`/providers/${selectedProvider}/day-availability`, {
-      params: {
-        year,
-        month,
-        day,
-      },
-    }).then(response => {
-      setAvailability(response.data);
-      setSelectedHour(0); // Limpa a hora selecionada ao mudar de dia
-    });
-  }, [selectedDate, selectedProvider]);
+    setLoadingTimes(true);
 
-  // 4. Ação do botão final para criar o agendamento
+    api
+      .get<AvailableTime[]>(`/providers/${selectedProvider}/day-availability`, {
+        params: { year, month, day, service_id: selectedService },
+      })
+      .then(response => {
+        if (active) setAvailableTimes(response.data);
+      })
+      .catch(() => {
+        if (active) setAvailableTimes([]);
+      })
+      .finally(() => {
+        if (active) setLoadingTimes(false);
+      });
+
+    return () => {
+      active = false;
+    };
+  }, [selectedService, selectedProvider, selectedDate, refreshKey]);
+
+  const service = useMemo(
+    () => services.find(item => item.id === selectedService),
+    [services, selectedService],
+  );
+  const provider = useMemo(
+    () => providers.find(item => item.id === selectedProvider),
+    [providers, selectedProvider],
+  );
+
+  const appointmentDate = useMemo(() => {
+    if (!selectedDate || !selectedTime) return null;
+
+    const [year, month, day] = selectedDate.split('-').map(Number);
+    const [hours, minutes] = selectedTime.split(':').map(Number);
+
+    return new Date(year, month - 1, day, hours, minutes);
+  }, [selectedDate, selectedTime]);
+
   const handleCreateAppointment = useCallback(async () => {
+    if (!service || !provider || !appointmentDate) return;
+
     try {
-      if (!selectedDate) {
-        addToast({ type: 'error', title: 'Erro', description: 'Por favor, escolha uma data.' });
-        return;
-      }
-      if (selectedHour === 0) {
-        addToast({ type: 'error', title: 'Erro', description: 'Por favor, escolha um horário.' });
-        return;
-      }
-
-      // Monta a data final para enviar ao backend
-      const [year, month, day] = selectedDate.split('-');
-      const date = new Date(Number(year), Number(month) - 1, Number(day), selectedHour, 0, 0);
-
       // O backend identifica o cliente pelo token, não é preciso enviar o id
       await api.post('/appointments', {
-        provider_id: selectedProvider,
-        date,
+        provider_id: provider.id,
+        service_id: service.id,
+        date: appointmentDate,
       });
 
       addToast({
         type: 'success',
         title: 'Agendamento concluído!',
-        description: `Horário reservado com sucesso para dia ${format(date, 'dd/MM/yyyy às HH:mm')}.`,
+        description: `${service.name} com ${provider.name} em ${format(
+          appointmentDate,
+          "dd/MM/yyyy 'às' HH:mm",
+        )}.`,
       });
 
-      // Limpa a seleção para permitir um novo agendamento
-      setSelectedDate('');
-      setSelectedHour(0);
+      // Limpa o horário e recarrega a lista para permitir um novo agendamento
+      setSelectedTime('');
+      setRefreshKey(key => key + 1);
     } catch (err) {
       addToast({
         type: 'error',
         title: 'Erro ao agendar',
-        description: getApiErrorMessage(err, 'Ocorreu um erro ao tentar criar o agendamento, tente novamente.'),
+        description: getApiErrorMessage(
+          err,
+          'Ocorreu um erro ao tentar criar o agendamento, tente novamente.',
+        ),
       });
+      // O horário pode ter sido ocupado por outra pessoa
+      setRefreshKey(key => key + 1);
     }
-  }, [selectedDate, selectedHour, selectedProvider, addToast]);
+  }, [service, provider, appointmentDate, addToast]);
+
+  const canConfirm = !!(service && provider && appointmentDate);
 
   return (
     <Container>
@@ -143,23 +196,45 @@ const CreateAppointment: React.FC = () => {
         <h1>Agendar Horário</h1>
 
         <Section>
-          <strong>1. Escolha o profissional</strong>
+          <strong>1. Escolha o serviço</strong>
+          {services.length === 0 ? (
+            <HelpText>Nenhum serviço disponível no momento.</HelpText>
+          ) : (
+            <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap' }}>
+              {services.map(item => (
+                <ServiceOption
+                  key={item.id}
+                  type="button"
+                  selected={item.id === selectedService}
+                  aria-pressed={item.id === selectedService}
+                  onClick={() => setSelectedService(item.id)}
+                >
+                  <span>{item.name}</span>
+                  <small>{formatPrice(item.price_cents)}</small>
+                </ServiceOption>
+              ))}
+            </div>
+          )}
+        </Section>
+
+        <Section>
+          <strong>2. Escolha o profissional</strong>
           <div style={{ display: 'flex', gap: '16px', flexWrap: 'wrap' }}>
-            {providers.map(provider => (
+            {providers.map(item => (
               <ProviderContainer
-                key={provider.id}
-                selected={provider.id === selectedProvider}
-                onClick={() => setSelectedProvider(provider.id)}
+                key={item.id}
+                selected={item.id === selectedProvider}
+                onClick={() => setSelectedProvider(item.id)}
               >
-                <img 
-                  src={provider.avatar_url || `https://ui-avatars.com/api/?name=${encodeURIComponent(provider.name)}&background=28262e&color=ff9000`} 
-                  alt={provider.name} 
-                  onError={(e) => {
-                    e.currentTarget.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(provider.name)}&background=28262e&color=ff9000`;
+                <img
+                  src={item.avatar_url || avatarFallback(item.name)}
+                  alt={item.name}
+                  onError={e => {
+                    e.currentTarget.src = avatarFallback(item.name);
                   }}
                 />
-                <ProviderName selected={provider.id === selectedProvider}>
-                  {provider.name}
+                <ProviderName selected={item.id === selectedProvider}>
+                  {item.name}
                 </ProviderName>
               </ProviderContainer>
             ))}
@@ -167,37 +242,61 @@ const CreateAppointment: React.FC = () => {
         </Section>
 
         <Section>
-          <strong>2. Escolha a data</strong>
-          <input 
-            type="date" 
+          <strong>3. Escolha a data</strong>
+          <input
+            type="date"
             value={selectedDate}
+            min={format(new Date(), 'yyyy-MM-dd')}
             onChange={e => setSelectedDate(e.target.value)}
           />
         </Section>
 
-        {/* Esta secção só aparece depois de o cliente escolher uma data no calendário */}
         {selectedDate && (
           <Section>
-            <strong>3. Escolha o horário</strong>
+            <strong>4. Escolha o horário</strong>
+            {!selectedService && (
+              <HelpText>Escolha um serviço para ver os horários livres.</HelpText>
+            )}
+            {selectedService && loadingTimes && (
+              <HelpText>Carregando horários...</HelpText>
+            )}
+            {selectedService &&
+              !loadingTimes &&
+              availableTimes.length === 0 && (
+                <HelpText>
+                  Nenhum horário livre neste dia. Tente outra data ou outro
+                  profissional.
+                </HelpText>
+              )}
             <HourList>
-              {availability.map(({ hour, available }) => (
+              {availableTimes.map(({ time }) => (
                 <Hour
-                  key={hour}
-                  available={available}
-                  selected={selectedHour === hour}
-                  onClick={() => available && setSelectedHour(hour)}
+                  key={time}
+                  available
+                  selected={selectedTime === time}
+                  onClick={() => setSelectedTime(time)}
                 >
-                  {String(hour).padStart(2, '0')}:00
+                  {time}
                 </Hour>
               ))}
             </HourList>
           </Section>
         )}
 
-        <button 
-          type="button" 
+        {canConfirm && service && provider && appointmentDate && (
+          <HelpText>
+            {`${service.name} (${formatPrice(service.price_cents)}) com ${
+              provider.name
+            }, ${format(appointmentDate, "EEEE, d 'de' MMMM 'às' HH:mm", {
+              locale: ptBR,
+            })}.`}
+          </HelpText>
+        )}
+
+        <button
+          type="button"
           onClick={handleCreateAppointment}
-          disabled={selectedHour === 0}
+          disabled={!canConfirm}
           style={{
             width: '100%',
             background: '#ff9000',
@@ -206,8 +305,8 @@ const CreateAppointment: React.FC = () => {
             padding: '16px',
             color: '#312e38',
             fontWeight: 500,
-            cursor: selectedHour === 0 ? 'not-allowed' : 'pointer',
-            opacity: selectedHour === 0 ? 0.5 : 1
+            cursor: canConfirm ? 'pointer' : 'not-allowed',
+            opacity: canConfirm ? 1 : 0.5,
           }}
         >
           Confirmar Agendamento
