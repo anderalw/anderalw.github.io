@@ -1,4 +1,10 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, {
+  useState,
+  useEffect,
+  useLayoutEffect,
+  useMemo,
+  useRef,
+} from 'react';
 import {
   addDays,
   format,
@@ -18,7 +24,9 @@ import {
 } from 'react-icons/fi';
 import { Link } from 'react-router-dom';
 import {
-  HOUR_HEIGHT,
+  MIN_HOUR_HEIGHT,
+  MAX_HOUR_HEIGHT,
+  COMPACT_HOUR_HEIGHT,
   Container,
   Header,
   HeaderContent,
@@ -215,6 +223,37 @@ const Dashboard: React.FC = () => {
     [startHour, endHour],
   );
 
+  const gridHeaderRef = useRef<HTMLDivElement>(null);
+  const [hourHeight, setHourHeight] = useState(64);
+
+  // Divide o espaço livre abaixo do cabeçalho dos barbeiros pelas horas do
+  // dia, para a agenda caber na tela sem barra de rolagem
+  useLayoutEffect(() => {
+    function fitToScreen(): void {
+      const gridHeader = gridHeaderRef.current;
+
+      if (!gridHeader || hours.length === 0) {
+        return;
+      }
+
+      const bodyTop = gridHeader.getBoundingClientRect().bottom;
+      // Espaço inferior do <main> (padding de 24px)
+      const available = window.innerHeight - bodyTop - 24;
+      const fitted = Math.floor(available / hours.length);
+
+      setHourHeight(
+        Math.min(MAX_HOUR_HEIGHT, Math.max(MIN_HOUR_HEIGHT, fitted)),
+      );
+    }
+
+    fitToScreen();
+    window.addEventListener('resize', fitToScreen);
+
+    return () => window.removeEventListener('resize', fitToScreen);
+  }, [hours.length, agenda.providers.length, loading]);
+
+  const compact = hourHeight < COMPACT_HOUR_HEIGHT;
+
   const selectedDateAsText = useMemo(
     () => format(selectedDate, "cccc, d 'de' MMMM 'de' yyyy", { locale: ptBR }),
     [selectedDate],
@@ -231,8 +270,8 @@ const Dashboard: React.FC = () => {
       return null;
     }
 
-    return (currentHour - startHour) * HOUR_HEIGHT;
-  }, [selectedDate, now, startHour, endHour]);
+    return (currentHour - startHour) * hourHeight;
+  }, [selectedDate, now, startHour, endHour, hourHeight]);
 
   const appointmentsCountText = useMemo(() => {
     const count = appointments.length;
@@ -321,8 +360,12 @@ const Dashboard: React.FC = () => {
           {!loading && agenda.providers.length === 0 ? (
             <EmptyState>Nenhum barbeiro cadastrado.</EmptyState>
           ) : (
-            <Grid>
-              <GridHeader columns={agenda.providers.length}>
+            <Grid
+              style={
+                { '--hour-height': `${hourHeight}px` } as React.CSSProperties
+              }
+            >
+              <GridHeader ref={gridHeaderRef} columns={agenda.providers.length}>
                 <div />
                 {agenda.providers.map((provider, index) => (
                   <ProviderHeader
@@ -391,7 +434,7 @@ const Dashboard: React.FC = () => {
                             (parsedDate.getHours() +
                               parsedDate.getMinutes() / 60 -
                               startHour) *
-                            HOUR_HEIGHT;
+                            hourHeight;
                           const clientName =
                             appointment.client?.name || 'Cliente removido';
                           const timeRange = `${format(
@@ -407,7 +450,8 @@ const Dashboard: React.FC = () => {
                               key={appointment.id}
                               color={color}
                               past={isBefore(parsedDate, now)}
-                              style={{ top: top + 2, height: HOUR_HEIGHT - 4 }}
+                              compact={compact}
+                              style={{ top: top + 2, height: hourHeight - 4 }}
                               title={`${timeRange} · ${clientName} · ${provider.name}`}
                             >
                               <time>{timeRange}</time>

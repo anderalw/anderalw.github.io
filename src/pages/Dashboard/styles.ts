@@ -2,8 +2,13 @@ import styled, { css } from 'styled-components';
 import { shade } from 'polished';
 import { Link } from 'react-router-dom';
 
-// Altura de 1 hora na grade da agenda (px)
-export const HOUR_HEIGHT = 64;
+// Limites da altura de 1 hora na grade (px). A altura real é calculada
+// para o dia inteiro caber na tela e chega ao CSS pela variável
+// --hour-height, definida no Grid
+export const MIN_HOUR_HEIGHT = 28;
+export const MAX_HOUR_HEIGHT = 120;
+// Abaixo desta altura, o card mostra só horário e cliente
+export const COMPACT_HOUR_HEIGHT = 60;
 // Largura da coluna com as horas (px)
 const TIME_COLUMN_WIDTH = 64;
 
@@ -13,9 +18,17 @@ export const Container = styled.div`
   flex-direction: column;
 `;
 
+// Telas baixas (ex: notebooks): cabeçalho mais compacto para sobrar
+// altura para a agenda
+const SHORT_SCREEN = '(max-height: 760px)';
+
 export const Header = styled.header`
   padding: 24px 24px;
   background: #28262e;
+
+  @media ${SHORT_SCREEN} {
+    padding: 10px 24px;
+  }
 `;
 
 export const HeaderContent = styled.div`
@@ -26,6 +39,10 @@ export const HeaderContent = styled.div`
 
   > img {
     height: 64px;
+
+    @media ${SHORT_SCREEN} {
+      height: 44px;
+    }
   }
 
   button {
@@ -76,6 +93,11 @@ export const Profile = styled.div`
     width: 56px;
     height: 56px;
     border-radius: 50%;
+
+    @media ${SHORT_SCREEN} {
+      width: 40px;
+      height: 40px;
+    }
   }
 
   div {
@@ -103,10 +125,15 @@ export const Content = styled.main`
   width: 100%;
   max-width: 1440px;
   margin: 0 auto;
+  /* O padding de baixo (24px) entra no cálculo da altura das horas */
   padding: 24px;
   display: flex;
   align-items: flex-start;
   min-height: 0;
+
+  @media ${SHORT_SCREEN} {
+    padding-top: 12px;
+  }
 `;
 
 export const Sidebar = styled.aside`
@@ -178,6 +205,10 @@ export const Toolbar = styled.div`
   flex-wrap: wrap;
   margin-bottom: 16px;
 
+  @media ${SHORT_SCREEN} {
+    margin-bottom: 8px;
+  }
+
   h1 {
     font-size: 24px;
     font-weight: 500;
@@ -232,12 +263,11 @@ export const NavButton = styled.button`
   }
 `;
 
-/* Contêiner com scroll: o cabeçalho dos barbeiros e a coluna das horas
-   ficam fixos (sticky) enquanto a grade rola */
+/* Sem barra de rolagem: a altura das horas é ajustada para o dia caber
+   na tela, e as colunas dividem a largura disponível */
 export const Grid = styled.div`
   position: relative;
-  overflow: auto;
-  max-height: calc(100vh - 240px);
+  overflow: hidden;
   background: #28262e;
   border-radius: 10px;
 `;
@@ -250,23 +280,13 @@ const gridColumns = css<ColumnsProps>`
   display: grid;
   grid-template-columns: ${TIME_COLUMN_WIDTH}px repeat(
       ${props => Math.max(props.columns, 1)},
-      minmax(180px, 1fr)
+      minmax(0, 1fr)
     );
 `;
 
 export const GridHeader = styled.div<ColumnsProps>`
   ${gridColumns}
-  position: sticky;
-  top: 0;
-  z-index: 3;
-  background: #28262e;
   border-bottom: 1px solid #3e3b47;
-
-  > div:first-child {
-    position: sticky;
-    left: 0;
-    background: #28262e;
-  }
 `;
 
 export const ProviderHeader = styled.div<{ color: string }>`
@@ -277,11 +297,20 @@ export const ProviderHeader = styled.div<{ color: string }>`
   border-top: 3px solid ${props => props.color};
   min-width: 0;
 
+  @media ${SHORT_SCREEN} {
+    padding: 6px 12px;
+  }
+
   img {
     width: 40px;
     height: 40px;
     border-radius: 50%;
     flex-shrink: 0;
+
+    @media ${SHORT_SCREEN} {
+      width: 32px;
+      height: 32px;
+    }
   }
 
   div {
@@ -323,14 +352,9 @@ export const GridBody = styled.div<ColumnsProps>`
 `;
 
 export const TimeColumn = styled.div`
-  position: sticky;
-  left: 0;
-  z-index: 2;
-  background: #28262e;
-
   span {
     display: block;
-    height: ${HOUR_HEIGHT}px;
+    height: var(--hour-height);
     padding-right: 8px;
     text-align: right;
     font-size: 12px;
@@ -350,7 +374,7 @@ export const ProviderColumn = styled.div`
 `;
 
 export const HourCell = styled.div<{ off: boolean }>`
-  height: ${HOUR_HEIGHT}px;
+  height: var(--hour-height);
   border-bottom: 1px solid #3e3b47;
 
   /* Fora do expediente: hachurado, como os horários bloqueados do Google Agenda */
@@ -380,6 +404,8 @@ export const DayOffLabel = styled.span`
 interface AppointmentCardProps {
   color: string;
   past: boolean;
+  // Horas baixas: esconde o telefone e junta horário e cliente
+  compact: boolean;
 }
 
 export const AppointmentCard = styled.div<AppointmentCardProps>`
@@ -387,7 +413,7 @@ export const AppointmentCard = styled.div<AppointmentCardProps>`
   left: 4px;
   right: 4px;
   z-index: 1;
-  padding: 6px 8px;
+  padding: ${props => (props.compact ? '2px 8px' : '6px 8px')};
   border-radius: 6px;
   border-left: 4px solid ${props => props.color};
   background: ${props => shade(0.55, props.color)};
@@ -421,6 +447,32 @@ export const AppointmentCard = styled.div<AppointmentCardProps>`
     color: #f4ede8;
     opacity: 0.75;
   }
+
+  ${props =>
+    props.compact &&
+    css`
+      white-space: nowrap;
+      text-overflow: ellipsis;
+      line-height: 18px;
+
+      time,
+      strong {
+        display: inline;
+      }
+
+      time {
+        margin-right: 6px;
+        font-size: 11px;
+      }
+
+      strong {
+        font-size: 13px;
+      }
+
+      small {
+        display: none;
+      }
+    `}
 `;
 
 export const NowLine = styled.div`
