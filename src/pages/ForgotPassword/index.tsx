@@ -21,7 +21,6 @@ import api from '../../services/api';
 
 interface ForgotPasswordFormData {
   email: string;
-  password: string;
 }
 
 const ForgotPassword: React.FC = () => {
@@ -55,7 +54,7 @@ const ForgotPassword: React.FC = () => {
           type: 'success',
           title: 'E-mail de recuperação enviado',
           description:
-            'Enviamos um e-mail para confirmar a recuperação de senha, cheque sua caixa de entrada',
+            'Enviamos um e-mail para confirmar a recuperação de senha, confira sua caixa de entrada',
         });
       } catch (err) {
         if (err instanceof Yup.ValidationError) {
@@ -96,7 +95,7 @@ const ForgotPassword: React.FC = () => {
             </Button>
           </Form>
 
-          <Link to="/">
+          <Link to="/barbeiro">
             <FiLogIn />
             Voltar ao login
           </Link>

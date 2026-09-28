@@ -36,7 +36,7 @@ const SignInClient: React.FC = () => {
           email: Yup.string()
             .required('E-mail obrigatório')
             .email('Digite um e-mail válido'),
-          password: Yup.string().required('Password obrigatória'),
+          password: Yup.string().required('Senha obrigatória'),
         });
 
         await schema.validate(data, { abortEarly: false });
@@ -58,7 +58,7 @@ const SignInClient: React.FC = () => {
           title: 'Erro na autenticação',
           description: getApiErrorMessage(
             err,
-            'Ocorreu um erro ao fazer login, verifique as suas credenciais.',
+            'Ocorreu um erro ao fazer login, confira seu e-mail e senha.',
           ),
         });
       }
@@ -80,13 +80,13 @@ const SignInClient: React.FC = () => {
               name="password"
               icon={FiLock}
               type="password"
-              placeholder="Password"
+              placeholder="Senha"
             />
 
             <Button type="submit">Entrar</Button>
           </Form>
 
-          <Link to="/cliente/registo">
+          <Link to="/cliente/cadastro">
             <FiLogIn />
             Criar conta de cliente
           </Link>

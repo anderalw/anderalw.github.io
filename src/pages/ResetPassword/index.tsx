@@ -49,10 +49,17 @@ const ResetPassword: React.FC = () => {
         });
 
         const { password, password_confirmation } = data;
-        const token = location.search.replace('?token=', '');
+        const token = new URLSearchParams(location.search).get('token');
 
         if (!token) {
-          throw new Error();
+          addToast({
+            type: 'error',
+            title: 'Link inválido',
+            description:
+              'Abra o link enviado no e-mail de recuperação ou peça um novo.',
+          });
+
+          return;
         }
 
         await api.post('/password/reset', {
@@ -61,7 +68,13 @@ const ResetPassword: React.FC = () => {
           token,
         });
 
-        history.push('/');
+        addToast({
+          type: 'success',
+          title: 'Senha alterada',
+          description: 'Faça login com a nova senha.',
+        });
+
+        history.push('/barbeiro');
       } catch (err) {
         if (err instanceof Yup.ValidationError) {
           const errors = getValidationErrors(err);
@@ -72,10 +85,10 @@ const ResetPassword: React.FC = () => {
         }
         addToast({
           type: 'error',
-          title: 'Erro ao resetar senha',
+          title: 'Erro ao redefinir a senha',
           description: getApiErrorMessage(
             err,
-            'Ocorreu um erro ao resetar senha, tente novamente.',
+            'Ocorreu um erro ao redefinir a senha, tente novamente.',
           ),
         });
       }
@@ -90,7 +103,7 @@ const ResetPassword: React.FC = () => {
           <img src={logoImg} alt="GoBarber" />
 
           <Form ref={formRef} onSubmit={handleSubmit}>
-            <h1>Resetar senha</h1>
+            <h1>Redefinir senha</h1>
 
             <Input
               name="password"

@@ -59,6 +59,7 @@ import { useAuth } from '../../hooks/Auth';
 import { useToast } from '../../hooks/Toast';
 import api from '../../services/api';
 import getApiErrorMessage from '../../utils/getApiErrorMessage';
+import avatarFallback from '../../utils/avatarFallback';
 import AppointmentDetails from './AppointmentDetails';
 
 interface AgendaProvider {
@@ -127,12 +128,6 @@ const MONTHS = [
 
 function toHour(time: string): number {
   return Number(time.split(':')[0]);
-}
-
-function avatarFallback(name: string): string {
-  return `https://ui-avatars.com/api/?name=${encodeURIComponent(
-    name,
-  )}&background=28262e&color=ff9000`;
 }
 
 const Dashboard: React.FC = () => {
@@ -375,7 +370,7 @@ const Dashboard: React.FC = () => {
 
             <div>
               <span>Bem-vindo,</span>
-              <Link to="/profile">
+              <Link to="/perfil">
                 <strong>{user.name}</strong>
               </Link>
             </div>

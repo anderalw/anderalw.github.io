@@ -93,7 +93,7 @@ const SignIn: React.FC = () => {
 
             <Button type="submit">Entrar</Button>
 
-            <Link to="forgot-password">Esqueci minha senha.</Link>
+            <Link to="/barbeiro/esqueci-senha">Esqueci minha senha.</Link>
           </Form>
 
           {/* Contas de barbeiro são criadas pelo administrador no painel */}

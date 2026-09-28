@@ -7,6 +7,7 @@ import { useAuth } from '../../hooks/Auth';
 import { useToast } from '../../hooks/Toast';
 import getApiErrorMessage from '../../utils/getApiErrorMessage';
 import { formatPrice } from '../../utils/money';
+import avatarFallback from '../../utils/avatarFallback';
 import RescheduleForm from '../../components/RescheduleForm';
 
 import {
@@ -39,12 +40,6 @@ interface Provider {
 
 // Um agendamento por vez fica em modo de remarcar ou de confirmar cancelamento
 type ActiveAction = { id: string; type: 'reschedule' | 'cancel' } | null;
-
-function avatarFallback(name: string): string {
-  return `https://ui-avatars.com/api/?name=${encodeURIComponent(
-    name,
-  )}&background=28262e&color=ff9000`;
-}
 
 function capitalize(text: string): string {
   return text.charAt(0).toUpperCase() + text.slice(1);

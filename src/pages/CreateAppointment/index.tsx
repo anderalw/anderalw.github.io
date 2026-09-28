@@ -8,6 +8,7 @@ import { useToast } from '../../hooks/Toast';
 import { useAuth } from '../../hooks/Auth';
 import getApiErrorMessage from '../../utils/getApiErrorMessage';
 import { formatPrice } from '../../utils/money';
+import avatarFallback from '../../utils/avatarFallback';
 
 import {
   Container,
@@ -36,12 +37,6 @@ interface Service {
 // Horário livre para o serviço escolhido, no formato 'HH:mm'
 interface AvailableTime {
   time: string;
-}
-
-function avatarFallback(name: string): string {
-  return `https://ui-avatars.com/api/?name=${encodeURIComponent(
-    name,
-  )}&background=28262e&color=ff9000`;
 }
 
 const CreateAppointment: React.FC = () => {

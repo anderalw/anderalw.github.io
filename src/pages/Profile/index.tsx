@@ -10,6 +10,7 @@ import { useToast } from '../../hooks/Toast';
 
 import getValidationErrors from '../../utils/getValidationErros';
 import getApiErrorMessage from '../../utils/getApiErrorMessage';
+import avatarFallback from '../../utils/avatarFallback';
 
 import Input from '../../components/Input';
 import Button from '../../components/Button';
@@ -44,14 +45,14 @@ const Profile: React.FC = () => {
             .email('Digite um e-mail válido'),
           old_password: Yup.string(),
           password: Yup.string().when('old_password', {
-            is: val => !!val.length,
-            then: Yup.string().required('Campo Obrigatório'),
+            is: (val: string) => !!val.length,
+            then: Yup.string().required('Campo obrigatório'),
             otherwise: Yup.string(),
           }),
           password_confirmation: Yup.string()
             .when('old_password', {
-              is: val => !!val.length,
-              then: Yup.string().required('Campo Obrigatório'),
+              is: (val: string) => !!val.length,
+              then: Yup.string().required('Campo obrigatório'),
               otherwise: Yup.string(),
             })
             .oneOf([Yup.ref('password'), null], 'Confirmação incorreta'),
@@ -84,7 +85,7 @@ const Profile: React.FC = () => {
 
         addToast({
           type: 'success',
-          title: 'Perfil Atualizado!',
+          title: 'Perfil atualizado!',
           description: 'Suas informações foram atualizadas com sucesso!',
         });
       } catch (err) {
@@ -109,20 +110,38 @@ const Profile: React.FC = () => {
   );
 
   const handleAvatarChange = useCallback(
-    (e: ChangeEvent<HTMLInputElement>) => {
-      if (e.target.files) {
-        const data = new FormData();
+    async (e: ChangeEvent<HTMLInputElement>) => {
+      // O React 16 recicla o evento depois do await; guarda o campo antes
+      const input = e.target;
+      const file = input.files?.[0];
 
-        data.append('avatar', e.target.files[0]);
+      // Nenhum arquivo quando a janela de seleção é cancelada
+      if (!file) return;
 
-        api.patch('/users/avatar', data).then(response => {
-          updateUser(response.data);
+      const data = new FormData();
+      data.append('avatar', file);
 
-          addToast({
-            type: 'success',
-            title: 'Avatar atualizado!',
-          });
+      try {
+        const response = await api.patch('/users/avatar', data);
+
+        updateUser(response.data);
+
+        addToast({
+          type: 'success',
+          title: 'Foto atualizada!',
         });
+      } catch (err) {
+        addToast({
+          type: 'error',
+          title: 'Erro ao enviar a foto',
+          description: getApiErrorMessage(
+            err,
+            'Não foi possível enviar a foto, tente novamente.',
+          ),
+        });
+      } finally {
+        // Permite escolher o mesmo arquivo de novo depois de um erro
+        input.value = '';
       }
     },
     [addToast, updateUser],
@@ -147,12 +166,23 @@ const Profile: React.FC = () => {
           onSubmit={handleSubmit}
         >
           <AvatarInput>
-            <img src={user.avatar_url} alt={user.name} />
+            <img
+              src={user.avatar_url || avatarFallback(user.name)}
+              alt={user.name}
+              onError={e => {
+                e.currentTarget.src = avatarFallback(user.name);
+              }}
+            />
 
             <label htmlFor="avatar">
               <FiCamera />
 
-              <input type="file" id="avatar" onChange={handleAvatarChange} />
+              <input
+                type="file"
+                id="avatar"
+                accept="image/*"
+                onChange={handleAvatarChange}
+              />
             </label>
           </AvatarInput>
           <h1>Meu perfil</h1>
