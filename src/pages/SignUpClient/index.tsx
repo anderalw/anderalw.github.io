@@ -38,8 +38,8 @@ const SignUpClient: React.FC = () => {
           email: Yup.string()
             .required('E-mail obrigatório')
             .email('Digite um e-mail válido'),
-          password: Yup.string().min(6, 'No mínimo 6 dígitos'),
-          phone: Yup.string().required('Telemóvel obrigatório'),
+          password: Yup.string().min(6, 'No mínimo 6 caracteres'),
+          phone: Yup.string().required('Celular obrigatório'),
         });
 
         await schema.validate(data, { abortEarly: false });
@@ -49,8 +49,8 @@ const SignUpClient: React.FC = () => {
 
         addToast({
           type: 'success',
-          title: 'Registo efetuado!',
-          description: 'Já pode fazer login para agendar o seu horário.',
+          title: 'Cadastro concluído!',
+          description: 'Agora é só fazer login para agendar seu horário.',
         });
 
         history.push('/cliente/login');
@@ -63,10 +63,10 @@ const SignUpClient: React.FC = () => {
 
         addToast({
           type: 'error',
-          title: 'Erro no registo',
+          title: 'Erro no cadastro',
           description: getApiErrorMessage(
             err,
-            'Ocorreu um erro ao fazer o registo, tente novamente.',
+            'Ocorreu um erro ao fazer o cadastro, tente novamente.',
           ),
         });
       }
@@ -82,19 +82,19 @@ const SignUpClient: React.FC = () => {
           <img src={logoImg} alt="GoBarber" />
 
           <Form ref={formRef} onSubmit={handleSubmit}>
-            <h1>Crie a sua conta de Cliente</h1>
+            <h1>Crie sua conta de cliente</h1>
 
             <Input name="name" icon={FiUser} placeholder="Nome completo" />
             <Input name="email" icon={FiMail} placeholder="E-mail" />
-            <Input name="phone" icon={FiPhone} placeholder="Telemóvel" />
+            <Input name="phone" icon={FiPhone} placeholder="Celular" />
             <Input
               name="password"
               icon={FiLock}
               type="password"
-              placeholder="Password"
+              placeholder="Senha"
             />
 
-            <Button type="submit">Registar</Button>
+            <Button type="submit">Cadastrar</Button>
           </Form>
 
           <Link to="/cliente/login">

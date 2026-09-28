@@ -54,7 +54,7 @@ const CreateProvider: React.FC = () => {
     { day_of_week: 6, start_time: '09:00', end_time: '18:00', enabled: false },
   ]);
 
-  // Função para atualizar um campo específico de um dia na grelha
+  // Atualiza um campo de um dia na tabela de horários
   const handleScheduleChange = (
     index: number,
     field: string,
@@ -90,7 +90,7 @@ const CreateProvider: React.FC = () => {
           }));
 
         // 2. Validar os horários antes de criar o barbeiro, para não deixar
-        // um barbeiro registado sem horários se estes forem recusados
+        // um barbeiro cadastrado sem horários se estes forem recusados
         const invalidSchedule = activeSchedules.find(
           ({ start_time, end_time }) =>
             !start_time.endsWith(':00') ||
@@ -109,7 +109,7 @@ const CreateProvider: React.FC = () => {
           return;
         }
 
-        // 3. Criar o utilizador
+        // 3. Criar o usuário
         const response = await api.post('/users', {
           name: data.name,
           email: data.email,
@@ -127,9 +127,9 @@ const CreateProvider: React.FC = () => {
 
         addToast({
           type: 'success',
-          title: 'Barbeiro registado!',
+          title: 'Barbeiro cadastrado!',
           description:
-            'O novo profissional e os seus horários foram configurados.',
+            'O novo profissional e seus horários foram configurados.',
         });
 
         history.push('/dashboard');
@@ -141,10 +141,10 @@ const CreateProvider: React.FC = () => {
 
         addToast({
           type: 'error',
-          title: 'Erro no registo',
+          title: 'Erro no cadastro',
           description: getApiErrorMessage(
             err,
-            'Ocorreu um erro ao registar o barbeiro, valide os dados.',
+            'Ocorreu um erro ao cadastrar o barbeiro, confira os dados.',
           ),
         });
       }
@@ -165,20 +165,20 @@ const CreateProvider: React.FC = () => {
           Voltar ao painel
         </BackLink>
 
-        <h1>Registar Novo Barbeiro</h1>
+        <h1>Cadastrar barbeiro</h1>
 
         <Form ref={formRef} onSubmit={handleSubmit}>
-          <Input name="name" icon={FiUser} placeholder="Nome Completo" />
+          <Input name="name" icon={FiUser} placeholder="Nome completo" />
           <Input name="email" icon={FiMail} type="email" placeholder="E-mail" />
           <Input
             name="password"
             icon={FiLock}
             type="password"
-            placeholder="Palavra-passe provisória"
+            placeholder="Senha provisória"
           />
 
           <ScheduleContainer>
-            <h2>Horários de Trabalho</h2>
+            <h2>Horários de trabalho</h2>
 
             {schedules.map((schedule, index) => (
               <ScheduleItem key={schedule.day_of_week}>
@@ -222,7 +222,7 @@ const CreateProvider: React.FC = () => {
             ))}
           </ScheduleContainer>
 
-          <Button type="submit">Registar e Configurar Horários</Button>
+          <Button type="submit">Cadastrar e configurar horários</Button>
         </Form>
       </Content>
     </Container>

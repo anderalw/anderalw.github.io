@@ -20,7 +20,7 @@ const Landing: React.FC = () => {
 
         <h1>O seu estilo nas mãos dos melhores especialistas.</h1>
         <p>
-          Agende o seu horário de forma simples, rápida e à distância de um
+          Agende seu horário de forma simples, rápida e à distância de um
           clique.
         </p>
 

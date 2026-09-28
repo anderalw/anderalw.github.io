@@ -35,7 +35,7 @@ const Route: React.FC<RouteProps> = ({
   } else if (isClient) {
     allowed = role === 'client';
   } else {
-    // Rotas públicas (login, registo, landing) só para quem não tem sessão
+    // Rotas públicas (login, cadastro, página inicial) só para quem não tem sessão
     allowed = !role;
   }
 
