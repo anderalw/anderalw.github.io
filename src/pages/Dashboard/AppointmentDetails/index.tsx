@@ -17,6 +17,7 @@ import { useToast } from '../../../hooks/Toast';
 import getApiErrorMessage from '../../../utils/getApiErrorMessage';
 import { formatPrice } from '../../../utils/money';
 import RescheduleForm from '../../../components/RescheduleForm';
+import avatarFallback from '../../../utils/avatarFallback';
 
 import {
   Overlay,
@@ -39,7 +40,12 @@ export interface AppointmentDetailsData {
   service: { id: string; name: string } | null;
   price_cents: number | null;
   created_at: string;
-  client: { id: string; name: string; email: string; phone: string } | null;
+  client: {
+    id: string;
+    name: string;
+    email: string | null;
+    phone: string;
+  } | null;
 }
 
 interface AppointmentDetailsProps {
@@ -64,12 +70,6 @@ const STATUS_LABELS: Record<AppointmentStatus, string> = {
 
 function capitalize(text: string): string {
   return text.charAt(0).toUpperCase() + text.slice(1);
-}
-
-function avatarFallback(name: string): string {
-  return `https://ui-avatars.com/api/?name=${encodeURIComponent(
-    name,
-  )}&background=28262e&color=ff9000`;
 }
 
 const AppointmentDetails: React.FC<AppointmentDetailsProps> = ({
@@ -115,10 +115,9 @@ const AppointmentDetails: React.FC<AppointmentDetailsProps> = ({
 
   const { client } = appointment;
   const clientName = client?.name || 'Cliente removido';
+  const phone = client?.phone || null;
   // tel: aceita só dígitos e o "+" do código do país
-  const phoneHref = client?.phone
-    ? `tel:${client.phone.replace(/[^\d+]/g, '')}`
-    : null;
+  const phoneHref = phone ? `tel:${phone.replace(/[^\d+]/g, '')}` : null;
 
   const when = format(start, "dd/MM/yyyy 'às' HH:mm");
 
@@ -264,10 +263,10 @@ const AppointmentDetails: React.FC<AppointmentDetailsProps> = ({
                 {provider.name}
               </li>
 
-              {client?.phone && phoneHref && (
+              {phone && phoneHref && (
                 <li>
                   <FiPhone />
-                  <a href={phoneHref}>{client.phone}</a>
+                  <a href={phoneHref}>{phone}</a>
                 </li>
               )}
 

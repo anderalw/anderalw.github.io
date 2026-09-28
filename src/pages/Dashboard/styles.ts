@@ -380,9 +380,26 @@ export const ProviderColumn = styled.div`
   border-left: 1px solid #3e3b47;
 `;
 
-export const HourCell = styled.div<{ off: boolean }>`
+export const HourCell = styled.div<{ off: boolean; bookable?: boolean }>`
+  display: block;
+  width: 100%;
   height: var(--hour-height);
+  border: 0;
   border-bottom: 1px solid #3e3b47;
+  background: transparent;
+
+  /* Hora livre dentro do expediente: clicar abre um novo agendamento */
+  ${props =>
+    props.bookable &&
+    css`
+      cursor: pointer;
+
+      &:hover,
+      &:focus-visible {
+        background: rgba(255, 144, 0, 0.08);
+        outline: none;
+      }
+    `}
 
   /* Fora do expediente: hachurado, como os horários bloqueados do Google Agenda */
   ${props =>

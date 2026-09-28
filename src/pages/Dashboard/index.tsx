@@ -61,6 +61,7 @@ import api from '../../services/api';
 import getApiErrorMessage from '../../utils/getApiErrorMessage';
 import avatarFallback from '../../utils/avatarFallback';
 import AppointmentDetails from './AppointmentDetails';
+import NewAppointment from './NewAppointment';
 
 interface AgendaProvider {
   id: string;
@@ -82,7 +83,13 @@ interface AgendaAppointment {
   service: { id: string; name: string } | null;
   price_cents: number | null;
   created_at: string;
-  client: { id: string; name: string; email: string; phone: string } | null;
+  // email null: cliente cadastrado pelo barbeiro sem e-mail
+  client: {
+    id: string;
+    name: string;
+    email: string | null;
+    phone: string;
+  } | null;
 }
 
 interface Agenda {
@@ -147,6 +154,12 @@ const Dashboard: React.FC = () => {
   >(null);
   // Card que abriu os detalhes, para devolver o foco a ele ao fechar
   const openerRef = useRef<HTMLElement | null>(null);
+  // Hora livre clicada: abre o formulário de novo agendamento
+  const [newSlot, setNewSlot] = useState<{
+    provider: AgendaProvider;
+    start: Date;
+    color: string;
+  } | null>(null);
 
   const openDetails = useCallback(
     (appointmentId: string, opener: HTMLElement) => {
@@ -167,6 +180,7 @@ const Dashboard: React.FC = () => {
   const handleAppointmentChanged = useCallback(
     (message: { title: string; description: string }) => {
       setSelectedAppointmentId(null);
+      setNewSlot(null);
       setRefreshKey(key => key + 1);
       addToast({ type: 'success', ...message });
     },
@@ -493,17 +507,55 @@ const Dashboard: React.FC = () => {
 
                   return (
                     <ProviderColumn key={provider.id}>
-                      {hours.map(hour => (
-                        <HourCell
-                          key={hour}
-                          off={
-                            workStart === null ||
-                            workEnd === null ||
-                            hour < workStart ||
-                            hour >= workEnd
-                          }
-                        />
-                      ))}
+                      {hours.map(hour => {
+                        const off =
+                          workStart === null ||
+                          workEnd === null ||
+                          hour < workStart ||
+                          hour >= workEnd;
+                        const hourEnd = new Date(selectedDate);
+                        hourEnd.setHours(hour + 1, 0, 0, 0);
+                        // Dentro do expediente e ainda não passou
+                        const bookable = !off && isBefore(now, hourEnd);
+
+                        if (!bookable) {
+                          return <HourCell key={hour} off={off} />;
+                        }
+
+                        const label = `${String(hour).padStart(2, '0')}:00`;
+
+                        return (
+                          <HourCell
+                            key={hour}
+                            as="button"
+                            type="button"
+                            off={false}
+                            bookable
+                            aria-label={`Agendar com ${provider.name} às ${label}`}
+                            title={`Agendar com ${provider.name} a partir de ${label}`}
+                            onClick={(event: React.MouseEvent<HTMLElement>) => {
+                              // A altura do clique na hora escolhe os minutos,
+                              // de 15 em 15 (pelo teclado, a hora cheia)
+                              const offset = event.nativeEvent.offsetY || 0;
+                              const quarter = Math.min(
+                                3,
+                                Math.max(
+                                  0,
+                                  Math.floor((offset / hourHeight) * 4),
+                                ),
+                              );
+                              const start = new Date(selectedDate);
+                              start.setHours(hour, quarter * 15, 0, 0);
+
+                              setNewSlot({
+                                provider,
+                                start,
+                                color,
+                              });
+                            }}
+                          />
+                        );
+                      })}
 
                       {!provider.schedule && <DayOffLabel>Folga</DayOffLabel>}
 
@@ -612,6 +664,16 @@ const Dashboard: React.FC = () => {
           onClose={closeDetails}
           providers={agenda.providers}
           onChanged={handleAppointmentChanged}
+        />
+      )}
+
+      {newSlot && (
+        <NewAppointment
+          provider={newSlot.provider}
+          start={newSlot.start}
+          color={newSlot.color}
+          onClose={() => setNewSlot(null)}
+          onCreated={handleAppointmentChanged}
         />
       )}
     </Container>
