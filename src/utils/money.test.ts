@@ -1,3 +1,5 @@
+import { describe, expect, it } from 'vitest';
+
 import { formatPrice, parsePrice } from './money';
 
 describe('money', () => {
