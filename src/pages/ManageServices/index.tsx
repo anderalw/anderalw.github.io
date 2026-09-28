@@ -1,6 +1,6 @@
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { Redirect } from 'react-router-dom';
-import { FiArrowLeft } from 'react-icons/fi';
+import { FiCheck, FiEdit2, FiEye, FiEyeOff, FiPlus } from 'react-icons/fi';
 
 import api from '../../services/api';
 import { useAuth } from '../../hooks/Auth';
@@ -8,19 +8,31 @@ import { useToast } from '../../hooks/Toast';
 import getApiErrorMessage from '../../utils/getApiErrorMessage';
 import { formatPrice, parsePrice } from '../../utils/money';
 
+import AppLayout from '../../components/AppLayout';
 import {
-  Container,
-  Content,
-  BackLink,
+  Page,
+  PageHeader,
   Card,
-  Row,
-  Field,
-  PrimaryButton,
-  SecondaryButton,
-  ServiceList,
-  ServiceItem,
-  StatusTag,
+  CardHeader,
+  CardBody,
+  FieldGrid,
+  Label,
+  TextInput,
+  Select,
+  UIButton,
+  Table,
+  Badge,
+} from '../../components/ui';
+
+import {
+  Columns,
+  SideColumn,
+  Form,
+  ServiceRow,
+  SkeletonBar,
   EmptyText,
+  InlineRow,
+  Counter,
 } from './styles';
 
 interface Service {
@@ -62,6 +74,7 @@ const ManageServices: React.FC = () => {
   const [saving, setSaving] = useState(false);
   const [bufferMinutes, setBufferMinutes] = useState(0);
   const [savedBufferMinutes, setSavedBufferMinutes] = useState(0);
+  const nameInputRef = useRef<HTMLInputElement>(null);
 
   const showError = useCallback(
     (err: unknown, fallback: string) => {
@@ -194,6 +207,7 @@ const ManageServices: React.FC = () => {
       duration_minutes: String(service.duration_minutes),
       price: (service.price_cents / 100).toFixed(2).replace('.', ','),
     });
+    nameInputRef.current?.focus();
   }, []);
 
   const handleToggleActive = useCallback(
@@ -219,158 +233,239 @@ const ManageServices: React.FC = () => {
     return <Redirect to="/dashboard" />;
   }
 
+  const activeCount = services.filter(service => service.active).length;
+
   return (
-    <Container>
-      <Content>
-        <BackLink to="/dashboard">
-          <FiArrowLeft />
-          Voltar ao painel
-        </BackLink>
+    <AppLayout>
+      <Page>
+        <PageHeader>
+          <div>
+            <h1>Serviços</h1>
+            <p>
+              O que os clientes podem agendar, com a duração que ocupa na agenda
+              e o valor.
+            </p>
+          </div>
+        </PageHeader>
 
-        <h1>Serviços</h1>
+        <Columns>
+          <Card>
+            <CardHeader>
+              <h2>Catálogo</h2>
+              <Counter>
+                {loading
+                  ? '–'
+                  : `${activeCount} ${activeCount === 1 ? 'ativo' : 'ativos'}`}
+              </Counter>
+            </CardHeader>
 
-        <Card>
-          <h2>Intervalo entre atendimentos</h2>
-          <p>
-            Tempo livre depois de cada atendimento, antes do próximo horário
-            disponível.
-          </p>
+            {!loading && services.length === 0 ? (
+              <EmptyText>
+                Nenhum serviço cadastrado. Os clientes só conseguem agendar
+                depois que houver pelo menos um serviço ativo.
+              </EmptyText>
+            ) : (
+              <Table>
+                <thead>
+                  <tr>
+                    <th>Serviço</th>
+                    <th className="num">Duração</th>
+                    <th className="num">Valor</th>
+                    <th>Situação</th>
+                    <th aria-label="Ações" />
+                  </tr>
+                </thead>
+                <tbody>
+                  {loading
+                    ? [180, 140, 200, 160].map(width => (
+                        <tr key={width}>
+                          <td>
+                            <SkeletonBar width={width} />
+                          </td>
+                          <td>
+                            <SkeletonBar width={50} />
+                          </td>
+                          <td>
+                            <SkeletonBar width={70} />
+                          </td>
+                          <td>
+                            <SkeletonBar width={60} />
+                          </td>
+                          <td aria-hidden="true" />
+                        </tr>
+                      ))
+                    : services.map(service => (
+                        <ServiceRow
+                          key={service.id}
+                          inactive={!service.active}
+                          editing={service.id === editingId}
+                        >
+                          <td className="name">
+                            <strong>{service.name}</strong>
+                          </td>
+                          <td className="num">
+                            {formatDuration(service.duration_minutes)}
+                          </td>
+                          <td className="num">
+                            {formatPrice(service.price_cents)}
+                          </td>
+                          <td>
+                            <Badge
+                              tone={service.active ? 'success' : 'neutral'}
+                            >
+                              {service.active ? 'Ativo' : 'Desativado'}
+                            </Badge>
+                          </td>
+                          <td className="actions">
+                            <UIButton
+                              type="button"
+                              variant="ghost"
+                              size="sm"
+                              title={`Editar ${service.name}`}
+                              onClick={() => handleEdit(service)}
+                            >
+                              <FiEdit2 />
+                              Editar
+                            </UIButton>
+                            <UIButton
+                              type="button"
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => handleToggleActive(service)}
+                            >
+                              {service.active ? <FiEyeOff /> : <FiEye />}
+                              {service.active ? 'Desativar' : 'Reativar'}
+                            </UIButton>
+                          </td>
+                        </ServiceRow>
+                      ))}
+                </tbody>
+              </Table>
+            )}
+          </Card>
 
-          <Row>
-            <Field>
-              <span>Intervalo</span>
-              <select
-                value={bufferMinutes}
-                onChange={event => setBufferMinutes(Number(event.target.value))}
-              >
-                {BUFFER_OPTIONS.map(option => (
-                  <option key={option} value={option}>
-                    {option === 0 ? 'Sem intervalo' : `${option} min`}
-                  </option>
-                ))}
-              </select>
-            </Field>
-
-            <PrimaryButton
-              type="button"
-              onClick={handleSaveBuffer}
-              disabled={loading || bufferMinutes === savedBufferMinutes}
-            >
-              Salvar intervalo
-            </PrimaryButton>
-          </Row>
-        </Card>
-
-        <Card>
-          <h2>{editingId ? 'Editar serviço' : 'Novo serviço'}</h2>
-          <p>
-            A duração define o tempo que o agendamento ocupa na agenda. Mudar o
-            valor ou a duração não altera agendamentos já feitos.
-          </p>
-
-          <form onSubmit={handleSubmit}>
-            <Row>
-              <Field grow>
-                <span>Nome</span>
-                <input
-                  value={form.name}
-                  onChange={event =>
-                    setForm({ ...form, name: event.target.value })
-                  }
-                  placeholder="Ex: Cabelo e barba"
-                  maxLength={60}
-                />
-              </Field>
-
-              <Field>
-                <span>Duração (min)</span>
-                <input
-                  type="number"
-                  min={5}
-                  max={480}
-                  step={5}
-                  value={form.duration_minutes}
-                  onChange={event =>
-                    setForm({ ...form, duration_minutes: event.target.value })
-                  }
-                />
-              </Field>
-
-              <Field>
-                <span>Valor (R$)</span>
-                <input
-                  value={form.price}
-                  onChange={event =>
-                    setForm({ ...form, price: event.target.value })
-                  }
-                  placeholder="45,00"
-                  inputMode="decimal"
-                  style={{ width: 110 }}
-                />
-              </Field>
-
-              <PrimaryButton type="submit" disabled={saving}>
-                {editingId ? 'Salvar alterações' : 'Adicionar'}
-              </PrimaryButton>
-
-              {editingId && (
-                <SecondaryButton
-                  type="button"
-                  onClick={() => {
-                    setEditingId(null);
-                    setForm(EMPTY_FORM);
-                  }}
-                >
-                  Cancelar
-                </SecondaryButton>
-              )}
-            </Row>
-          </form>
-
-          {!loading && services.length === 0 && (
-            <EmptyText>
-              Nenhum serviço cadastrado. Os clientes só conseguem agendar depois
-              que houver pelo menos um serviço ativo.
-            </EmptyText>
-          )}
-
-          <ServiceList>
-            {services.map(service => (
-              <ServiceItem key={service.id} inactive={!service.active}>
-                <div className="info">
-                  <strong>
-                    {service.name}
-                    <StatusTag active={service.active}>
-                      {service.active ? 'Ativo' : 'Desativado'}
-                    </StatusTag>
-                  </strong>
-                  <small>{formatDuration(service.duration_minutes)}</small>
+          <SideColumn>
+            <Card>
+              <CardHeader>
+                <div>
+                  <h2>{editingId ? 'Editar serviço' : 'Novo serviço'}</h2>
+                  <p>Mudanças não alteram agendamentos já feitos.</p>
                 </div>
+              </CardHeader>
 
-                <span className="price">
-                  {formatPrice(service.price_cents)}
-                </span>
+              <CardBody>
+                <Form onSubmit={handleSubmit}>
+                  <Label>
+                    Nome
+                    <TextInput
+                      ref={nameInputRef}
+                      value={form.name}
+                      onChange={event =>
+                        setForm({ ...form, name: event.target.value })
+                      }
+                      placeholder="Ex: Cabelo e barba"
+                      maxLength={60}
+                    />
+                  </Label>
 
-                <div className="actions">
-                  <SecondaryButton
-                    type="button"
-                    onClick={() => handleEdit(service)}
-                  >
-                    Editar
-                  </SecondaryButton>
-                  <SecondaryButton
-                    type="button"
-                    onClick={() => handleToggleActive(service)}
-                  >
-                    {service.active ? 'Desativar' : 'Reativar'}
-                  </SecondaryButton>
+                  <FieldGrid>
+                    <Label>
+                      Duração (min)
+                      <TextInput
+                        type="number"
+                        min={5}
+                        max={480}
+                        step={5}
+                        value={form.duration_minutes}
+                        onChange={event =>
+                          setForm({
+                            ...form,
+                            duration_minutes: event.target.value,
+                          })
+                        }
+                      />
+                    </Label>
+
+                    <Label>
+                      Valor (R$)
+                      <TextInput
+                        value={form.price}
+                        onChange={event =>
+                          setForm({ ...form, price: event.target.value })
+                        }
+                        placeholder="45,00"
+                        inputMode="decimal"
+                      />
+                    </Label>
+                  </FieldGrid>
+
+                  <InlineRow>
+                    {editingId && (
+                      <UIButton
+                        type="button"
+                        variant="secondary"
+                        onClick={() => {
+                          setEditingId(null);
+                          setForm(EMPTY_FORM);
+                        }}
+                      >
+                        Cancelar
+                      </UIButton>
+                    )}
+                    <UIButton
+                      type="submit"
+                      disabled={saving}
+                      style={{ flex: 1 }}
+                    >
+                      {editingId ? <FiCheck /> : <FiPlus />}
+                      {editingId ? 'Salvar alterações' : 'Adicionar serviço'}
+                    </UIButton>
+                  </InlineRow>
+                </Form>
+              </CardBody>
+            </Card>
+
+            <Card>
+              <CardHeader>
+                <div>
+                  <h2>Intervalo entre atendimentos</h2>
+                  <p>Tempo livre depois de cada atendimento.</p>
                 </div>
-              </ServiceItem>
-            ))}
-          </ServiceList>
-        </Card>
-      </Content>
-    </Container>
+              </CardHeader>
+
+              <CardBody>
+                <InlineRow>
+                  <Label>
+                    Intervalo
+                    <Select
+                      value={bufferMinutes}
+                      onChange={event =>
+                        setBufferMinutes(Number(event.target.value))
+                      }
+                    >
+                      {BUFFER_OPTIONS.map(option => (
+                        <option key={option} value={option}>
+                          {option === 0 ? 'Sem intervalo' : `${option} min`}
+                        </option>
+                      ))}
+                    </Select>
+                  </Label>
+
+                  <UIButton
+                    type="button"
+                    variant="secondary"
+                    onClick={handleSaveBuffer}
+                    disabled={loading || bufferMinutes === savedBufferMinutes}
+                  >
+                    Salvar
+                  </UIButton>
+                </InlineRow>
+              </CardBody>
+            </Card>
+          </SideColumn>
+        </Columns>
+      </Page>
+    </AppLayout>
   );
 };
 

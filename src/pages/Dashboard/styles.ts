@@ -1,6 +1,7 @@
 import styled, { css } from 'styled-components';
 import { shade, transparentize } from 'polished';
-import { Link } from 'react-router-dom';
+
+import { colors, radius } from '../../styles/theme';
 
 // Limites da altura de 1 hora na grade (px). A altura real é calculada
 // para o dia inteiro caber na tela e chega ao CSS pela variável
@@ -11,216 +12,121 @@ export const MAX_HOUR_HEIGHT = 120;
 export const COMPACT_HOUR_HEIGHT = 60;
 // Largura da coluna com as horas (px)
 const TIME_COLUMN_WIDTH = 64;
+// Espaço entre a grade e as bordas da tela (px); o de baixo entra no
+// cálculo da altura das horas
+export const AGENDA_PADDING = 24;
 
-export const Container = styled.div`
-  min-height: 100vh;
-  display: flex;
-  flex-direction: column;
-`;
-
-// Telas baixas (ex: notebooks): cabeçalho mais compacto para sobrar
-// altura para a agenda
-const SHORT_SCREEN = '(max-height: 760px)';
-
-export const Header = styled.header`
-  padding: 24px 24px;
-  background: #28262e;
-
-  @media ${SHORT_SCREEN} {
-    padding: 10px 24px;
-  }
-`;
-
-export const HeaderContent = styled.div`
-  max-width: 1440px;
-  margin: 0 auto;
-  display: flex;
-  align-items: center;
-
-  > img {
-    height: 64px;
-
-    @media ${SHORT_SCREEN} {
-      height: 44px;
-    }
-  }
-
-  button {
-    margin-left: auto;
-    background: transparent;
-    border: 0;
-
-    svg {
-      color: #999591;
-      width: 20px;
-      height: 20px;
-    }
-  }
-
-  /* Com o botão de admin, é ele que empurra os dois para a direita */
-  > a + button {
-    margin-left: 24px;
-  }
-
-  /* Botões de admin lado a lado: só o primeiro empurra para a direita */
-  > a + a {
-    margin-left: 12px;
-  }
-`;
-
-export const AdminLink = styled(Link)`
-  margin-left: auto;
-  display: flex;
-  align-items: center;
-  padding: 10px 16px;
-  border-radius: 10px;
-  background: #ff9000;
-  color: #312e38;
-  font-weight: 500;
-  text-decoration: none;
-  transition: background-color 0.2s;
-
-  &:hover {
-    background: ${shade(0.2, '#ff9000')};
-  }
-
-  svg {
-    margin-right: 8px;
-  }
-`;
-
-export const Profile = styled.div`
-  display: flex;
-  align-items: center;
-  margin-left: 80px;
-
-  img {
-    width: 56px;
-    height: 56px;
-    border-radius: 50%;
-
-    @media ${SHORT_SCREEN} {
-      width: 40px;
-      height: 40px;
-    }
-  }
-
-  div {
-    display: flex;
-    margin-left: 16px;
-    flex-direction: column;
-    line-height: 24px;
-
-    span {
-      color: #f4ede8;
-    }
-    a {
-      text-decoration: none;
-      color: #ff9000;
-
-      &:hover {
-        opacity: 0.8;
-      }
-    }
-  }
-`;
-
-export const Content = styled.main`
-  flex: 1;
-  width: 100%;
-  max-width: 1440px;
-  margin: 0 auto;
-  /* O padding de baixo (24px) entra no cálculo da altura das horas */
-  padding: 24px;
-  display: flex;
-  align-items: flex-start;
-  min-height: 0;
-
-  @media ${SHORT_SCREEN} {
-    padding-top: 12px;
-  }
-`;
-
-export const Sidebar = styled.aside`
-  width: 300px;
-  flex-shrink: 0;
-  margin-right: 24px;
-
-  /* Em telas estreitas, a agenda fica com a largura toda */
-  @media (max-width: 1100px) {
-    display: none;
-  }
-
+// Calendário do mês, no menu lateral
+export const MiniCalendar = styled.div`
   .DayPicker {
-    background: #28262e;
-    border-radius: 10px;
     width: 100%;
+    font-size: 13px;
   }
 
   .DayPicker-wrapper {
-    padding-bottom: 0;
+    padding: 0;
     outline: none;
+  }
+
+  .DayPicker-Months {
+    justify-content: stretch;
   }
 
   .DayPicker-Month {
     width: 100%;
+    margin: 0;
     border-collapse: separate;
-    border-spacing: 4px;
-    margin: 12px;
+    border-spacing: 2px;
   }
 
   .DayPicker-Caption {
-    color: #f4ede8;
+    margin-bottom: 8px;
+    padding: 0 4px;
+
+    > div {
+      font-size: 14px;
+      font-weight: 600;
+      color: ${colors.text};
+    }
+  }
+
+  .DayPicker-NavBar {
+    position: absolute;
+    top: 0;
+    right: 0;
+  }
+
+  .DayPicker-NavButton {
+    position: static;
+    display: inline-block;
+    margin: 0 0 0 4px;
+    width: 18px;
+    height: 18px;
+    opacity: 0.6;
+    filter: invert(1);
+
+    &:hover {
+      opacity: 1;
+    }
+  }
+
+  .DayPicker-Weekday {
+    padding: 4px 0;
+    font-size: 11px;
+    color: ${colors.textSubtle};
   }
 
   .DayPicker-Day {
-    width: 32px;
-    height: 32px;
+    width: 30px;
+    height: 30px;
+    padding: 0;
     border-radius: 50%;
-    color: #f4ede8;
+    color: ${colors.textMuted};
     outline: none;
+    font-variant-numeric: tabular-nums;
   }
 
   .DayPicker:not(.DayPicker--interactionDisabled)
     .DayPicker-Day:not(.DayPicker-Day--selected):not(
       .DayPicker-Day--outside
     ):hover {
-    background: #3e3b47;
+    background: ${colors.surfaceHover};
+    color: ${colors.text};
   }
 
   .DayPicker-Day--today {
-    color: #ff9000;
+    color: ${colors.primary};
     font-weight: 700;
   }
 
   .DayPicker-Day--selected:not(.DayPicker-Day--outside) {
-    background: #ff9000 !important;
-    color: #232129 !important;
+    background: ${colors.primary} !important;
+    color: ${colors.onPrimary} !important;
+    font-weight: 600;
   }
 `;
 
+// Ocupa a altura da tela: barra de ferramentas em cima e a grade embaixo
 export const AgendaArea = styled.section`
-  flex: 1;
-  min-width: 0;
+  height: 100vh;
   display: flex;
   flex-direction: column;
+  padding: 0 ${AGENDA_PADDING}px ${AGENDA_PADDING}px;
 `;
 
 export const Toolbar = styled.div`
   display: flex;
   align-items: center;
-  flex-wrap: wrap;
-  margin-bottom: 16px;
-
-  @media ${SHORT_SCREEN} {
-    margin-bottom: 8px;
-  }
+  gap: 4px;
+  height: 64px;
+  flex-shrink: 0;
 
   h1 {
-    font-size: 24px;
-    font-weight: 500;
-    margin-left: 16px;
-    color: #f4ede8;
+    margin-left: 12px;
+    font-size: 18px;
+    font-weight: 600;
+    letter-spacing: -0.01em;
+    color: ${colors.text};
 
     &::first-letter {
       text-transform: uppercase;
@@ -229,22 +135,25 @@ export const Toolbar = styled.div`
 
   > span {
     margin-left: auto;
-    color: #999591;
+    color: ${colors.textMuted};
+    font-size: 13px;
   }
 `;
 
 export const TodayButton = styled.button`
-  background: transparent;
-  border: 1px solid #666360;
-  color: #f4ede8;
-  border-radius: 8px;
-  padding: 8px 16px;
+  height: 32px;
   margin-right: 8px;
+  padding: 0 14px;
+  border: 1px solid ${colors.borderStrong};
+  border-radius: ${radius.md};
+  background: ${colors.surface};
+  color: ${colors.text};
+  font-size: 13px;
   font-weight: 500;
-  transition: background-color 0.2s;
+  transition: background-color 0.15s;
 
   &:hover {
-    background: #3e3b47;
+    background: ${colors.surfaceHover};
   }
 `;
 
@@ -252,21 +161,22 @@ export const NavButton = styled.button`
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 36px;
-  height: 36px;
+  width: 32px;
+  height: 32px;
   border: 0;
-  border-radius: 50%;
+  border-radius: ${radius.md};
   background: transparent;
-  color: #f4ede8;
-  transition: background-color 0.2s;
+  color: ${colors.textMuted};
+  transition: background-color 0.15s, color 0.15s;
 
   &:hover {
-    background: #3e3b47;
+    background: ${colors.surfaceHover};
+    color: ${colors.text};
   }
 
   svg {
-    width: 20px;
-    height: 20px;
+    width: 18px;
+    height: 18px;
   }
 `;
 
@@ -275,8 +185,9 @@ export const NavButton = styled.button`
 export const Grid = styled.div`
   position: relative;
   overflow: hidden;
-  background: #28262e;
-  border-radius: 10px;
+  background: ${colors.surface};
+  border: 1px solid ${colors.border};
+  border-radius: ${radius.lg};
 `;
 
 interface ColumnsProps {
@@ -293,51 +204,56 @@ const gridColumns = css<ColumnsProps>`
 
 export const GridHeader = styled.div<ColumnsProps>`
   ${gridColumns}
-  border-bottom: 1px solid #3e3b47;
+  border-bottom: 1px solid ${colors.border};
 `;
 
 export const ProviderHeader = styled.div<{ color: string }>`
+  position: relative;
   display: flex;
   align-items: center;
-  padding: 12px;
-  border-left: 1px solid #3e3b47;
-  border-top: 3px solid ${props => props.color};
+  padding: 10px 12px;
+  border-left: 1px solid ${colors.border};
   min-width: 0;
 
-  @media ${SHORT_SCREEN} {
-    padding: 6px 12px;
+  /* Faixa na cor do barbeiro */
+  &::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 12px;
+    right: 12px;
+    height: 3px;
+    border-radius: 0 0 3px 3px;
+    background: ${props => props.color};
   }
 
   img {
-    width: 40px;
-    height: 40px;
+    width: 32px;
+    height: 32px;
     border-radius: 50%;
+    object-fit: cover;
     flex-shrink: 0;
-
-    @media ${SHORT_SCREEN} {
-      width: 32px;
-      height: 32px;
-    }
   }
 
   div {
-    margin-left: 12px;
+    margin-left: 10px;
     display: flex;
     flex-direction: column;
     min-width: 0;
   }
 
   strong {
-    color: #f4ede8;
+    color: ${colors.text};
+    font-weight: 600;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
   }
 
   small {
-    color: #999591;
+    color: ${colors.textMuted};
     font-size: 12px;
-    margin-top: 2px;
+    font-variant-numeric: tabular-nums;
   }
 `;
 
@@ -346,11 +262,11 @@ export const YouBadge = styled.span`
   margin-left: 6px;
   padding: 0 6px;
   border-radius: 4px;
-  background: #ff9000;
-  color: #232129;
+  background: ${colors.primarySoft};
+  color: ${colors.primary};
   font-size: 11px;
-  font-weight: 500;
-  vertical-align: middle;
+  font-weight: 600;
+  vertical-align: 1px;
 `;
 
 export const GridBody = styled.div<ColumnsProps>`
@@ -365,7 +281,7 @@ export const TimeColumn = styled.div`
     padding-right: 8px;
     text-align: right;
     font-size: 12px;
-    color: #999591;
+    color: ${colors.textMuted};
     /* O rótulo fica alinhado com a linha que abre a hora */
     transform: translateY(-7px);
   }
@@ -377,7 +293,7 @@ export const TimeColumn = styled.div`
 
 export const ProviderColumn = styled.div`
   position: relative;
-  border-left: 1px solid #3e3b47;
+  border-left: 1px solid ${colors.border};
 `;
 
 export const HourCell = styled.div<{ off: boolean; bookable?: boolean }>`
@@ -385,7 +301,7 @@ export const HourCell = styled.div<{ off: boolean; bookable?: boolean }>`
   width: 100%;
   height: var(--hour-height);
   border: 0;
-  border-bottom: 1px solid #3e3b47;
+  border-bottom: 1px solid ${colors.border};
   background: transparent;
 
   /* Hora livre dentro do expediente: clicar abre um novo agendamento */
@@ -407,10 +323,10 @@ export const HourCell = styled.div<{ off: boolean; bookable?: boolean }>`
     css`
       background: repeating-linear-gradient(
         -45deg,
-        #232129,
-        #232129 6px,
-        #28262e 6px,
-        #28262e 12px
+        ${colors.sunken},
+        ${colors.sunken} 6px,
+        ${colors.surface} 6px,
+        ${colors.surface} 12px
       );
     `}
 `;
@@ -421,7 +337,7 @@ export const DayOffLabel = styled.span`
   left: 0;
   right: 0;
   text-align: center;
-  color: #666360;
+  color: ${colors.textSubtle};
   font-size: 13px;
 `;
 
@@ -467,14 +383,14 @@ export const AppointmentCard = styled.button<AppointmentCardProps>`
   }
 
   &:focus-visible {
-    outline: 2px solid #f4ede8;
+    outline: 2px solid ${colors.text};
     outline-offset: 1px;
   }
 
   time {
     display: block;
     font-size: 12px;
-    color: #f4ede8;
+    color: ${colors.text};
     opacity: 0.85;
   }
 
@@ -490,7 +406,7 @@ export const AppointmentCard = styled.button<AppointmentCardProps>`
   small {
     display: block;
     font-size: 12px;
-    color: #f4ede8;
+    color: ${colors.text};
     opacity: 0.75;
   }
 
@@ -579,5 +495,5 @@ export const NowLine = styled.div`
 export const EmptyState = styled.p`
   padding: 48px;
   text-align: center;
-  color: #999591;
+  color: ${colors.textMuted};
 `;

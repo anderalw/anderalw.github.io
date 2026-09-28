@@ -1,9 +1,8 @@
-import React, { useCallback, useRef, ChangeEvent } from 'react';
-import { FiMail, FiLock, FiUser, FiCamera, FiArrowLeft } from 'react-icons/fi';
+import React, { useCallback, useRef, useState, ChangeEvent } from 'react';
+import { FiCamera, FiCheck } from 'react-icons/fi';
 import { FormHandles } from '@unform/core';
 import { Form } from '@unform/web';
 import * as Yup from 'yup';
-import { useHistory, Link } from 'react-router-dom';
 import api from '../../services/api';
 
 import { useToast } from '../../hooks/Toast';
@@ -12,10 +11,19 @@ import getValidationErrors from '../../utils/getValidationErros';
 import getApiErrorMessage from '../../utils/getApiErrorMessage';
 import avatarFallback from '../../utils/avatarFallback';
 
-import Input from '../../components/Input';
-import Button from '../../components/Button';
+import AppLayout from '../../components/AppLayout';
+import FormField from '../../components/FormField';
+import {
+  Page,
+  PageHeader,
+  Card,
+  CardBody,
+  CardFooter,
+  FieldGrid,
+  UIButton,
+} from '../../components/ui';
 
-import { Container, Content, AvatarInput } from './styles';
+import { Columns, AvatarCard, SectionTitle } from './styles';
 import { useAuth } from '../../hooks/Auth';
 
 interface ProfileFormData {
@@ -29,7 +37,9 @@ interface ProfileFormData {
 const Profile: React.FC = () => {
   const formRef = useRef<FormHandles>(null);
   const { addToast } = useToast();
-  const history = useHistory();
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [saving, setSaving] = useState(false);
+  const [uploading, setUploading] = useState(false);
 
   const { user, updateUser } = useAuth();
 
@@ -77,11 +87,20 @@ const Profile: React.FC = () => {
             : {}),
         };
 
+        setSaving(true);
+
         const response = await api.put('/profile', formData);
 
         updateUser(response.data);
 
-        history.push('/dashboard');
+        // Continua na tela, com os campos de senha limpos
+        formRef.current?.setData({
+          name: response.data.name,
+          email: response.data.email,
+          old_password: '',
+          password: '',
+          password_confirmation: '',
+        });
 
         addToast({
           type: 'success',
@@ -104,9 +123,11 @@ const Profile: React.FC = () => {
             'Ocorreu um erro ao tentar atualizar o perfil, tente novamente!',
           ),
         });
+      } finally {
+        setSaving(false);
       }
     },
-    [addToast, history, updateUser],
+    [addToast, updateUser],
   );
 
   const handleAvatarChange = useCallback(
@@ -120,6 +141,8 @@ const Profile: React.FC = () => {
 
       const data = new FormData();
       data.append('avatar', file);
+
+      setUploading(true);
 
       try {
         const response = await api.patch('/users/avatar', data);
@@ -142,79 +165,106 @@ const Profile: React.FC = () => {
       } finally {
         // Permite escolher o mesmo arquivo de novo depois de um erro
         input.value = '';
+        setUploading(false);
       }
     },
     [addToast, updateUser],
   );
 
   return (
-    <Container>
-      <header>
-        <div>
-          <Link to="/dashboard">
-            <FiArrowLeft />
-          </Link>
-        </div>
-      </header>
-      <Content>
-        <Form
-          ref={formRef}
-          initialData={{
-            name: user.name,
-            email: user.email,
-          }}
-          onSubmit={handleSubmit}
-        >
-          <AvatarInput>
-            <img
-              src={user.avatar_url || avatarFallback(user.name)}
-              alt={user.name}
-              onError={e => {
-                e.currentTarget.src = avatarFallback(user.name);
-              }}
-            />
+    <AppLayout>
+      <Page>
+        <PageHeader>
+          <div>
+            <h1>Meu perfil</h1>
+            <p>Seus dados de acesso e a foto que aparece na agenda.</p>
+          </div>
+        </PageHeader>
 
-            <label htmlFor="avatar">
-              <FiCamera />
+        <Columns>
+          <Card>
+            <AvatarCard>
+              <img
+                src={user.avatar_url || avatarFallback(user.name)}
+                alt={user.name}
+                onError={e => {
+                  e.currentTarget.src = avatarFallback(user.name);
+                }}
+              />
+              <strong>{user.name}</strong>
+              <small>{user.email}</small>
 
               <input
+                ref={fileInputRef}
                 type="file"
-                id="avatar"
                 accept="image/*"
                 onChange={handleAvatarChange}
               />
-            </label>
-          </AvatarInput>
-          <h1>Meu perfil</h1>
+              <UIButton
+                type="button"
+                variant="secondary"
+                size="sm"
+                style={{ marginTop: 20 }}
+                disabled={uploading}
+                onClick={() => fileInputRef.current?.click()}
+              >
+                <FiCamera />
+                {uploading ? 'Enviando...' : 'Alterar foto'}
+              </UIButton>
+            </AvatarCard>
+          </Card>
 
-          <Input name="name" icon={FiUser} placeholder="Nome" />
-          <Input name="email" icon={FiMail} placeholder="E-mail" />
-          <Input
-            containerStyle={{ marginTop: 24 }}
-            name="old_password"
-            icon={FiLock}
-            type="password"
-            placeholder="Senha atual"
-          />
+          <Card>
+            <Form
+              ref={formRef}
+              initialData={{
+                name: user.name,
+                email: user.email,
+              }}
+              onSubmit={handleSubmit}
+            >
+              <CardBody>
+                <SectionTitle>Dados pessoais</SectionTitle>
+                <FieldGrid>
+                  <FormField name="name" label="Nome" />
+                  <FormField name="email" type="email" label="E-mail" />
+                </FieldGrid>
 
-          <Input
-            name="password"
-            icon={FiLock}
-            type="password"
-            placeholder="Nova senha"
-          />
+                <SectionTitle>Alterar senha</SectionTitle>
+                <FormField
+                  name="old_password"
+                  type="password"
+                  label="Senha atual"
+                  hint="Deixe em branco para manter a senha."
+                  autoComplete="current-password"
+                />
+                <FieldGrid>
+                  <FormField
+                    name="password"
+                    type="password"
+                    label="Nova senha"
+                    autoComplete="new-password"
+                  />
+                  <FormField
+                    name="password_confirmation"
+                    type="password"
+                    label="Confirmar nova senha"
+                    autoComplete="new-password"
+                  />
+                </FieldGrid>
+              </CardBody>
 
-          <Input
-            name="password_confirmation"
-            icon={FiLock}
-            type="password"
-            placeholder="Confirmar senha"
-          />
-
-          <Button type="submit">Confirmar mudanças</Button>
-        </Form>
-      </Content>
-    </Container>
+              <CardFooter>
+                <UIButton type="submit" disabled={saving}>
+                  <FiCheck />
+                  {saving ? 'Salvando...' : 'Salvar alterações'}
+                </UIButton>
+              </CardFooter>
+            </Form>
+          </Card>
+        </Columns>
+      </Page>
+    </AppLayout>
   );
 };
 

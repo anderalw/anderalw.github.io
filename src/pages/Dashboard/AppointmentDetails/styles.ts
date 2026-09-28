@@ -1,5 +1,7 @@
 import styled, { css, keyframes } from 'styled-components';
 
+import { colors } from '../../../styles/theme';
+
 const fadeIn = keyframes`
   from { opacity: 0; }
   to { opacity: 1; }
@@ -30,7 +32,8 @@ export const Dialog = styled.div<{ color: string }>`
   max-width: 440px;
   max-height: 100%;
   overflow: auto;
-  background: #28262e;
+  background: ${colors.surface};
+  border: 1px solid ${colors.border};
   border-radius: 12px;
   border-top: 6px solid ${props => props.color};
   box-shadow: 0 16px 48px rgba(0, 0, 0, 0.45);
@@ -47,25 +50,25 @@ export const Dialog = styled.div<{ color: string }>`
     margin: 16px 0 20px;
     font-size: 24px;
     font-weight: 500;
-    color: #f4ede8;
+    color: ${colors.text};
     word-break: break-word;
   }
 
   footer {
     margin-top: 20px;
     padding-top: 16px;
-    border-top: 1px solid #3e3b47;
+    border-top: 1px solid ${colors.borderStrong};
     font-size: 13px;
-    color: #999591;
+    color: ${colors.textMuted};
   }
 `;
 
 export type AppointmentStatus = 'past' | 'ongoing' | 'upcoming';
 
 const statusColors: Record<AppointmentStatus, string> = {
-  past: '#666360',
-  ongoing: '#51cf66',
-  upcoming: '#ff9000',
+  past: colors.textSubtle,
+  ongoing: colors.success,
+  upcoming: colors.primary,
 };
 
 export const StatusBadge = styled.span<{ status: AppointmentStatus }>`
@@ -100,13 +103,13 @@ export const CloseButton = styled.button`
   border: 0;
   border-radius: 50%;
   background: transparent;
-  color: #999591;
+  color: ${colors.textMuted};
   transition: background-color 0.2s, color 0.2s;
 
   &:hover,
   &:focus-visible {
-    background: #3e3b47;
-    color: #f4ede8;
+    background: ${colors.borderStrong};
+    color: ${colors.text};
   }
 
   svg {
@@ -121,7 +124,7 @@ export const DetailList = styled.ul`
   li {
     display: flex;
     align-items: center;
-    color: #f4ede8;
+    color: ${colors.text};
     min-height: 32px;
 
     & + li {
@@ -133,7 +136,7 @@ export const DetailList = styled.ul`
       width: 18px;
       height: 18px;
       margin-right: 14px;
-      color: #999591;
+      color: ${colors.textMuted};
     }
   }
 
@@ -145,7 +148,7 @@ export const DetailList = styled.ul`
   }
 
   a {
-    color: #ff9000;
+    color: ${colors.primary};
     text-decoration: none;
     word-break: break-all;
 
@@ -156,7 +159,7 @@ export const DetailList = styled.ul`
 
   small {
     margin-left: 6px;
-    color: #999591;
+    color: ${colors.textMuted};
   }
 `;
 
@@ -183,40 +186,40 @@ export const PanelActions = styled.div`
 `;
 
 export const SecondaryButton = styled.button`
-  border: 1px solid #666360;
+  border: 1px solid ${colors.borderStrong};
   background: transparent;
-  color: #f4ede8;
+  color: ${colors.text};
 
   &:hover:not(:disabled) {
-    background: #3e3b47;
+    background: ${colors.borderStrong};
   }
 `;
 
 export const DangerButton = styled.button`
-  border: 1px solid #c53030;
+  border: 1px solid ${colors.danger};
   background: transparent;
   color: #ff6b6b;
 
   &:hover:not(:disabled) {
-    background: #c5303022;
+    background: ${colors.dangerSoft};
   }
 `;
 
 export const ConfirmText = styled.p`
   margin-top: 4px;
-  color: #f4ede8;
+  color: ${colors.text};
   line-height: 1.5;
 
   small {
     display: block;
     margin-top: 6px;
-    color: #999591;
+    color: ${colors.textMuted};
   }
 `;
 
 export const SectionTitle = styled.h3`
   font-size: 16px;
   font-weight: 500;
-  color: #f4ede8;
+  color: ${colors.text};
   margin-bottom: 14px;
 `;

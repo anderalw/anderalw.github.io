@@ -1,6 +1,8 @@
 import styled, { css } from 'styled-components';
 import { shade } from 'polished';
 
+import { colors } from '../../styles/theme';
+
 export const Form = styled.div`
   display: flex;
   flex-direction: column;
@@ -13,7 +15,7 @@ export const Field = styled.label`
 
   span {
     font-size: 13px;
-    color: #999591;
+    color: ${colors.textMuted};
     margin-bottom: 6px;
   }
 
@@ -22,15 +24,15 @@ export const Field = styled.label`
     height: 42px;
     padding: 0 12px;
     border-radius: 8px;
-    border: 2px solid #232129;
-    background: #232129;
-    color: #f4ede8;
+    border: 2px solid ${colors.sunken};
+    background: ${colors.sunken};
+    color: ${colors.text};
     color-scheme: dark;
     font: inherit;
 
     &:focus {
       outline: none;
-      border-color: #ff9000;
+      border-color: ${colors.primary};
     }
   }
 `;
@@ -56,12 +58,12 @@ export const TimeButton = styled.button<{ selected: boolean }>`
   font: inherit;
   font-size: 14px;
   font-weight: 500;
-  background: #3e3b47;
-  color: #f4ede8;
+  background: ${colors.borderStrong};
+  color: ${colors.text};
   transition: background-color 0.2s;
 
   &:hover {
-    background: ${shade(0.2, '#3e3b47')};
+    background: ${shade(0.2, colors.borderStrong)};
   }
 
   ${props =>
@@ -69,8 +71,8 @@ export const TimeButton = styled.button<{ selected: boolean }>`
     css`
       &,
       &:hover {
-        background: #ff9000;
-        color: #232129;
+        background: ${colors.primary};
+        color: ${colors.sunken};
       }
     `}
 `;
@@ -79,7 +81,7 @@ export const Hint = styled.p`
   min-height: 20px;
   font-size: 14px;
   line-height: 20px;
-  color: #999591;
+  color: ${colors.textMuted};
 `;
 
 export const Actions = styled.div`
@@ -94,8 +96,8 @@ export const PrimaryButton = styled.button`
   padding: 0 16px;
   border: 0;
   border-radius: 8px;
-  background: #ff9000;
-  color: #312e38;
+  background: ${colors.primary};
+  color: ${colors.surface};
   font: inherit;
   font-weight: 500;
 
@@ -105,20 +107,20 @@ export const PrimaryButton = styled.button`
   }
 
   &:hover:not(:disabled) {
-    background: ${shade(0.2, '#ff9000')};
+    background: ${shade(0.2, colors.primary)};
   }
 `;
 
 export const SecondaryButton = styled.button`
   height: 40px;
   padding: 0 16px;
-  border: 1px solid #666360;
+  border: 1px solid ${colors.borderStrong};
   border-radius: 8px;
   background: transparent;
-  color: #f4ede8;
+  color: ${colors.text};
   font: inherit;
 
   &:hover {
-    background: #3e3b47;
+    background: ${colors.borderStrong};
   }
 `;

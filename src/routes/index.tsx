@@ -27,8 +27,11 @@ const Routes: React.FC = () => (
     <Route path="/barbeiro/redefinir-senha" component={ResetPassword} />
     <Route path="/dashboard" component={Dashboard} isPrivate />
     <Route path="/perfil" component={Profile} isPrivate />
-    <Route path="/admin/create-provider" component={CreateProvider} isPrivate />
-    <Route path="/admin/services" component={ManageServices} isPrivate />
+    <Route path="/admin/servicos" component={ManageServices} isPrivate />
+    <Route path="/admin/barbeiros" component={CreateProvider} isPrivate />
+    {/* Endereços antigos das telas de administração */}
+    <Redirect from="/admin/services" to="/admin/servicos" />
+    <Redirect from="/admin/create-provider" to="/admin/barbeiros" />
 
     {/* Rotas dos Clientes */}
     <Route path="/cliente/login" component={SignInClient} />

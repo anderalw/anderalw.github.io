@@ -1,14 +1,15 @@
 import styled, { css } from 'styled-components';
 
+import { colors } from '../../../styles/theme';
 import { Dialog } from '../AppointmentDetails/styles';
 
 export const StepLabel = styled.p`
   margin: -4px 0 16px;
   font-size: 13px;
-  color: #999591;
+  color: ${colors.textMuted};
 
   strong {
-    color: #ff9000;
+    color: ${colors.primary};
     font-weight: 500;
   }
 `;
@@ -22,18 +23,18 @@ export const Summary = styled.ul`
   margin-bottom: 20px;
   padding: 12px 14px;
   border-radius: 10px;
-  background: #232129;
+  background: ${colors.sunken};
 
   li {
     display: flex;
     align-items: center;
     gap: 10px;
     font-size: 15px;
-    color: #f4ede8;
+    color: ${colors.text};
 
     > svg {
       flex-shrink: 0;
-      color: #999591;
+      color: ${colors.textMuted};
     }
 
     img {
@@ -43,7 +44,7 @@ export const Summary = styled.ul`
     }
 
     small {
-      color: #999591;
+      color: ${colors.textMuted};
       font-size: 13px;
     }
   }
@@ -52,7 +53,7 @@ export const Summary = styled.ul`
     margin-left: auto;
     border: 0;
     background: transparent;
-    color: #ff9000;
+    color: ${colors.primary};
     font: inherit;
     font-size: 14px;
   }
@@ -64,7 +65,7 @@ export const SearchResults = styled.ul`
   max-height: 240px;
   overflow-y: auto;
   border-radius: 8px;
-  background: #232129;
+  background: ${colors.sunken};
 `;
 
 export const ResultButton = styled.button`
@@ -75,22 +76,22 @@ export const ResultButton = styled.button`
   padding: 10px 12px;
   border: 0;
   background: transparent;
-  color: #f4ede8;
+  color: ${colors.text};
   font: inherit;
   text-align: left;
 
   & + & {
-    border-top: 1px solid #312e38;
+    border-top: 1px solid ${colors.surface};
   }
 
   &:hover,
   &:focus-visible {
-    background: #3e3b47;
+    background: ${colors.borderStrong};
     outline: none;
   }
 
   small {
-    color: #999591;
+    color: ${colors.textMuted};
     font-size: 13px;
   }
 `;
@@ -102,13 +103,13 @@ export const NotFound = styled.div`
   gap: 10px;
   margin-top: 12px;
   font-size: 14px;
-  color: #999591;
+  color: ${colors.textMuted};
 `;
 
 export const LinkButton = styled.button`
   border: 0;
   background: transparent;
-  color: #ff9000;
+  color: ${colors.primary};
   font: inherit;
   font-size: 14px;
 
@@ -130,22 +131,22 @@ export const ServiceOption = styled.button<{ selected: boolean }>`
   gap: 12px;
   width: 100%;
   padding: 8px 12px;
-  border: 2px solid #232129;
+  border: 2px solid ${colors.sunken};
   border-radius: 10px;
-  background: #232129;
-  color: #f4ede8;
+  background: ${colors.sunken};
+  color: ${colors.text};
   font: inherit;
   text-align: left;
   transition: border-color 0.2s;
 
   &:hover {
-    border-color: #3e3b47;
+    border-color: ${colors.borderStrong};
   }
 
   small {
     display: block;
     margin-top: 1px;
-    color: #999591;
+    color: ${colors.textMuted};
     font-size: 13px;
   }
 
@@ -159,7 +160,7 @@ export const ServiceOption = styled.button<{ selected: boolean }>`
     css`
       &,
       &:hover {
-        border-color: #ff9000;
+        border-color: ${colors.primary};
       }
     `}
 `;
@@ -193,7 +194,7 @@ export const Footer = styled.div`
   gap: 12px;
   margin-top: 12px;
   padding-top: 12px;
-  border-top: 1px solid #3e3b47;
+  border-top: 1px solid ${colors.borderStrong};
 `;
 
 // Dicas, "horário livre" e conflito com sugestões usam sempre este espaço
@@ -202,7 +203,7 @@ export const StatusArea = styled.div`
   overflow-y: auto;
   font-size: 14px;
   line-height: 20px;
-  color: #999591;
+  color: ${colors.textMuted};
 `;
 
 export const SlotStatus = styled.div<{ ok: boolean }>`

@@ -1,25 +1,39 @@
-import React, { useRef, useCallback, useState } from 'react';
-import { Redirect, useHistory } from 'react-router-dom';
+import React, { useRef, useCallback, useEffect, useState } from 'react';
+import { Redirect } from 'react-router-dom';
 import { FormHandles } from '@unform/core';
 import { Form } from '@unform/web';
 import * as Yup from 'yup';
-import { FiArrowLeft, FiUser, FiMail, FiLock } from 'react-icons/fi';
+import { FiUserPlus } from 'react-icons/fi';
 
 import api from '../../services/api';
 import { useToast } from '../../hooks/Toast';
 import { useAuth } from '../../hooks/Auth';
 import getValidationErrors from '../../utils/getValidationErros';
 import getApiErrorMessage from '../../utils/getApiErrorMessage';
+import avatarFallback from '../../utils/avatarFallback';
 
-import Input from '../../components/Input';
-import Button from '../../components/Button';
+import AppLayout from '../../components/AppLayout';
+import FormField from '../../components/FormField';
+import {
+  Page,
+  PageHeader,
+  Card,
+  CardHeader,
+  CardBody,
+  CardFooter,
+  FieldGrid,
+  UIButton,
+  TextInput,
+  Badge,
+} from '../../components/ui';
 
 import {
-  Container,
-  Content,
-  BackLink,
-  ScheduleContainer,
-  ScheduleItem,
+  Columns,
+  SectionTitle,
+  ScheduleTable,
+  DayToggle,
+  TeamList,
+  TeamSkeleton,
 } from './styles';
 
 const dayNames = [
@@ -38,21 +52,41 @@ interface CreateProviderFormData {
   password: string;
 }
 
+interface TeamMember {
+  id: string;
+  name: string;
+  email: string;
+  avatar_url: string | null;
+}
+
+// Segunda a sábado, inativos até o administrador marcar
+const INITIAL_SCHEDULES = [1, 2, 3, 4, 5, 6].map(day_of_week => ({
+  day_of_week,
+  start_time: '09:00',
+  end_time: '18:00',
+  enabled: false,
+}));
+
 const CreateProvider: React.FC = () => {
   const formRef = useRef<FormHandles>(null);
   const { addToast } = useToast();
-  const history = useHistory();
   const { user } = useAuth();
 
-  // Estado para controlar os dias e horas (inicia Segunda a Sábado inativos)
-  const [schedules, setSchedules] = useState([
-    { day_of_week: 1, start_time: '09:00', end_time: '18:00', enabled: false },
-    { day_of_week: 2, start_time: '09:00', end_time: '18:00', enabled: false },
-    { day_of_week: 3, start_time: '09:00', end_time: '18:00', enabled: false },
-    { day_of_week: 4, start_time: '09:00', end_time: '18:00', enabled: false },
-    { day_of_week: 5, start_time: '09:00', end_time: '18:00', enabled: false },
-    { day_of_week: 6, start_time: '09:00', end_time: '18:00', enabled: false },
-  ]);
+  const [schedules, setSchedules] = useState(INITIAL_SCHEDULES);
+  const [saving, setSaving] = useState(false);
+  // Os outros barbeiros (a API não inclui quem está logado)
+  const [team, setTeam] = useState<TeamMember[] | null>(null);
+
+  const loadTeam = useCallback(() => {
+    api
+      .get<TeamMember[]>('/providers')
+      .then(response => setTeam(response.data))
+      .catch(() => setTeam([]));
+  }, []);
+
+  useEffect(() => {
+    if (user.is_admin) loadTeam();
+  }, [user.is_admin, loadTeam]);
 
   // Atualiza um campo de um dia na tabela de horários
   const handleScheduleChange = (
@@ -109,6 +143,8 @@ const CreateProvider: React.FC = () => {
           return;
         }
 
+        setSaving(true);
+
         // 3. Criar o usuário
         const response = await api.post('/users', {
           name: data.name,
@@ -128,11 +164,15 @@ const CreateProvider: React.FC = () => {
         addToast({
           type: 'success',
           title: 'Barbeiro cadastrado!',
-          description:
-            'O novo profissional e seus horários foram configurados.',
+          description: `${data.name} já aparece na agenda${
+            activeSchedules.length > 0 ? ' com os horários definidos' : ''
+          }.`,
         });
 
-        history.push('/dashboard');
+        // Pronto para cadastrar o próximo
+        formRef.current?.reset();
+        setSchedules(INITIAL_SCHEDULES);
+        loadTeam();
       } catch (err) {
         if (err instanceof Yup.ValidationError) {
           formRef.current?.setErrors(getValidationErrors(err));
@@ -147,9 +187,11 @@ const CreateProvider: React.FC = () => {
             'Ocorreu um erro ao cadastrar o barbeiro, confira os dados.',
           ),
         });
+      } finally {
+        setSaving(false);
       }
     },
-    [addToast, history, schedules],
+    [addToast, schedules, loadTeam],
   );
 
   // Só administradores registam barbeiros (a API também valida)
@@ -157,75 +199,150 @@ const CreateProvider: React.FC = () => {
     return <Redirect to="/dashboard" />;
   }
 
+  const members: (TeamMember & { you?: boolean })[] = [
+    { ...user, you: true },
+    ...(team || []),
+  ];
+
   return (
-    <Container>
-      <Content>
-        <BackLink to="/dashboard">
-          <FiArrowLeft />
-          Voltar ao painel
-        </BackLink>
+    <AppLayout>
+      <Page>
+        <PageHeader>
+          <div>
+            <h1>Barbeiros</h1>
+            <p>Cadastre profissionais e os dias e horários em que atendem.</p>
+          </div>
+        </PageHeader>
 
-        <h1>Cadastrar barbeiro</h1>
-
-        <Form ref={formRef} onSubmit={handleSubmit}>
-          <Input name="name" icon={FiUser} placeholder="Nome completo" />
-          <Input name="email" icon={FiMail} type="email" placeholder="E-mail" />
-          <Input
-            name="password"
-            icon={FiLock}
-            type="password"
-            placeholder="Senha provisória"
-          />
-
-          <ScheduleContainer>
-            <h2>Horários de trabalho</h2>
-
-            {schedules.map((schedule, index) => (
-              <ScheduleItem key={schedule.day_of_week}>
-                <div className="day-info">
-                  <input
-                    type="checkbox"
-                    checked={schedule.enabled}
-                    onChange={e =>
-                      handleScheduleChange(index, 'enabled', e.target.checked)
-                    }
-                  />
-                  <span>{dayNames[schedule.day_of_week]}</span>
+        <Columns>
+          <Card>
+            <Form ref={formRef} onSubmit={handleSubmit}>
+              <CardHeader>
+                <div>
+                  <h2>Novo barbeiro</h2>
+                  <p>Ele entra com o e-mail e a senha provisória abaixo.</p>
                 </div>
+              </CardHeader>
 
-                {schedule.enabled && (
-                  <div className="time-inputs">
-                    <input
-                      type="time"
-                      step={3600}
-                      value={schedule.start_time}
-                      onChange={e =>
-                        handleScheduleChange(
-                          index,
-                          'start_time',
-                          e.target.value,
-                        )
-                      }
-                    />
-                    <span>até</span>
-                    <input
-                      type="time"
-                      step={3600}
-                      value={schedule.end_time}
-                      onChange={e =>
-                        handleScheduleChange(index, 'end_time', e.target.value)
-                      }
-                    />
-                  </div>
-                )}
-              </ScheduleItem>
-            ))}
-          </ScheduleContainer>
+              <CardBody>
+                <SectionTitle>Dados de acesso</SectionTitle>
+                <FormField name="name" label="Nome completo" />
+                <FieldGrid>
+                  <FormField name="email" type="email" label="E-mail" />
+                  <FormField
+                    name="password"
+                    type="password"
+                    label="Senha provisória"
+                    hint="Ele pode trocar depois, no perfil."
+                    autoComplete="new-password"
+                  />
+                </FieldGrid>
 
-          <Button type="submit">Cadastrar e configurar horários</Button>
-        </Form>
-      </Content>
-    </Container>
+                <SectionTitle>Horários de trabalho</SectionTitle>
+                <ScheduleTable>
+                  <tbody>
+                    {schedules.map((schedule, index) => (
+                      <tr key={schedule.day_of_week}>
+                        <td>
+                          <DayToggle>
+                            <input
+                              type="checkbox"
+                              checked={schedule.enabled}
+                              onChange={e =>
+                                handleScheduleChange(
+                                  index,
+                                  'enabled',
+                                  e.target.checked,
+                                )
+                              }
+                            />
+                            <span>{dayNames[schedule.day_of_week]}</span>
+                          </DayToggle>
+                        </td>
+                        <td>
+                          <TextInput
+                            type="time"
+                            step={3600}
+                            aria-label={`Início, ${
+                              dayNames[schedule.day_of_week]
+                            }`}
+                            disabled={!schedule.enabled}
+                            value={schedule.start_time}
+                            onChange={e =>
+                              handleScheduleChange(
+                                index,
+                                'start_time',
+                                e.target.value,
+                              )
+                            }
+                          />
+                        </td>
+                        <td className="until">até</td>
+                        <td>
+                          <TextInput
+                            type="time"
+                            step={3600}
+                            aria-label={`Fim, ${
+                              dayNames[schedule.day_of_week]
+                            }`}
+                            disabled={!schedule.enabled}
+                            value={schedule.end_time}
+                            onChange={e =>
+                              handleScheduleChange(
+                                index,
+                                'end_time',
+                                e.target.value,
+                              )
+                            }
+                          />
+                        </td>
+                        <td className="status">
+                          {!schedule.enabled && <Badge>Folga</Badge>}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </ScheduleTable>
+              </CardBody>
+
+              <CardFooter>
+                <UIButton type="submit" disabled={saving}>
+                  <FiUserPlus />
+                  {saving ? 'Cadastrando...' : 'Cadastrar barbeiro'}
+                </UIButton>
+              </CardFooter>
+            </Form>
+          </Card>
+
+          <Card>
+            <CardHeader>
+              <h2>Equipe</h2>
+            </CardHeader>
+
+            <TeamList>
+              {team === null
+                ? [0, 1, 2].map(item => <TeamSkeleton key={item} />)
+                : members.map(member => (
+                    <li key={member.id}>
+                      <img
+                        src={member.avatar_url || avatarFallback(member.name)}
+                        alt=""
+                        onError={e => {
+                          e.currentTarget.src = avatarFallback(member.name);
+                        }}
+                      />
+                      <div>
+                        <strong>{member.name}</strong>
+                        <small>{member.email}</small>
+                      </div>
+                      {member.you && <Badge tone="primary">Você</Badge>}
+                    </li>
+                  ))}
+            </TeamList>
+          </Card>
+        </Columns>
+      </Page>
+    </AppLayout>
   );
 };
 

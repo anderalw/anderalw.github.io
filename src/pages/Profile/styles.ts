@@ -1,103 +1,66 @@
 import styled from 'styled-components';
 
-import { shade } from 'polished';
+import { colors } from '../../styles/theme';
 
-export const Container = styled.div`
-  > header {
-    height: 144px;
-    background: #28262e;
+// Cartão da foto à esquerda; formulário à direita
+export const Columns = styled.div`
+  display: grid;
+  grid-template-columns: 280px minmax(0, 1fr);
+  gap: 24px;
+  align-items: start;
+  max-width: 1000px;
 
-    display: flex;
-    align-items: center;
-
-    div {
-      width: 100%;
-      max-width: 1120px;
-      margin: 0 auto;
-
-      svg {
-        color: #999591;
-        width: 24px;
-        height: 24px;
-      }
-    }
+  @media (max-width: 1080px) {
+    grid-template-columns: minmax(0, 1fr);
   }
 `;
 
-export const Content = styled.div`
+export const AvatarCard = styled.div`
   display: flex;
   flex-direction: column;
   align-items: center;
-  justify-content: center;
-  margin: -176px auto 0;
-
-  place-content: center;
-
-  width: 100%;
-
-  form {
-    margin: 80px 0;
-    width: 340px;
-    text-align: center;
-    display: flex;
-    flex-direction: column;
-    h1 {
-      margin-bottom: 20px;
-      text-align: left;
-    }
-
-    a {
-      color: #f4ede8;
-      display: block;
-      margin-top: 24px;
-      text-decoration: none;
-      transition: color 0.2s;
-
-      &:hover {
-        color: ${shade(0.2, '#f4ede8')};
-      }
-    }
-  }
-`;
-
-export const AvatarInput = styled.div`
-  margin-bottom: 32px;
-  position: relative;
-  align-self: center;
+  padding: 28px 20px 24px;
+  text-align: center;
 
   img {
-    width: 186px;
-    height: 186px;
+    width: 112px;
+    height: 112px;
     border-radius: 50%;
+    object-fit: cover;
+    border: 3px solid ${colors.border};
+  }
+
+  strong {
+    margin-top: 16px;
+    font-size: 16px;
+    color: ${colors.text};
+  }
+
+  small {
+    margin-top: 2px;
+    color: ${colors.textMuted};
+  }
+
+  /* O input de arquivo fica escondido; o botão abre a janela de seleção */
+  input[type='file'] {
+    display: none;
   }
 
   label {
-    position: absolute;
-    width: 48px;
-    height: 48px;
-    background: #ff9000;
-    border-radius: 50%;
-    right: 0;
-    bottom: 0%;
-    border: 0;
+    margin-top: 20px;
     cursor: pointer;
-    transition: background-color 0.2s;
-    display: flex;
-    align-items: center;
-    justify-content: center;
+  }
+`;
 
-    input {
-      display: none;
-    }
+export const SectionTitle = styled.h3`
+  margin: 4px 0 12px;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: ${colors.textSubtle};
 
-    svg {
-      width: 20px;
-      height: 20px;
-      color: #312e28;
-    }
-
-    &:hover {
-      background: ${shade(0.2, '#ff9000')};
-    }
+  & ~ & {
+    margin-top: 20px;
   }
 `;
