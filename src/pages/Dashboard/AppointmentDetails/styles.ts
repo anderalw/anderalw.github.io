@@ -63,6 +63,47 @@ export const Dialog = styled.div<{ color: string }>`
   }
 `;
 
+// Altura fixa (a mesma do novo agendamento): trocar entre ver, remarcar e
+// cancelar não muda o tamanho do painel; o conteúdo rola por dentro
+export const FixedDialog = styled(Dialog)`
+  display: flex;
+  flex-direction: column;
+  height: min(640px, 100%);
+  overflow: hidden;
+`;
+
+// Conteúdo de cada modo, com as ações empurradas para o pé do painel
+export const DetailsBody = styled.div`
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  overflow-y: auto;
+  /* Espaço para a borda de foco dos campos não ser cortada */
+  margin: 0 -6px;
+  padding: 2px 6px;
+`;
+
+// Formulário de remarcação ocupando a altura, com os botões no pé
+export const RescheduleArea = styled.div`
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+
+  > div {
+    flex: 1;
+  }
+
+  > div > :last-child {
+    margin-top: auto;
+  }
+`;
+
+// Ações e rodapé do modo "ver", sempre no pé do painel
+export const BottomArea = styled.div`
+  margin-top: auto;
+`;
+
 export type AppointmentStatus = 'past' | 'ongoing' | 'upcoming';
 
 const statusColors: Record<AppointmentStatus, string> = {

@@ -1,7 +1,7 @@
 import styled, { css } from 'styled-components';
 
 import { colors } from '../../../styles/theme';
-import { Dialog } from '../AppointmentDetails/styles';
+import { FixedDialog as BaseFixedDialog } from '../AppointmentDetails/styles';
 
 export const StepLabel = styled.p`
   margin: -4px 0 16px;
@@ -167,12 +167,7 @@ export const ServiceOption = styled.button<{ selected: boolean }>`
 
 // Altura fixa nos dois passos: o conteúdo rola por dentro e as mensagens têm
 // espaço reservado, então o modal não muda de tamanho ao carregar nada
-export const FixedDialog = styled(Dialog)`
-  display: flex;
-  flex-direction: column;
-  height: min(640px, 100%);
-  overflow: hidden;
-
+export const FixedDialog = styled(BaseFixedDialog)`
   h2 {
     margin: 8px 0 4px;
   }
