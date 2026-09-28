@@ -7,6 +7,7 @@ import { useAuth } from '../../hooks/Auth';
 import { useToast } from '../../hooks/Toast';
 import getApiErrorMessage from '../../utils/getApiErrorMessage';
 import { formatPrice, parsePrice } from '../../utils/money';
+import { formatDuration } from '../../utils/duration';
 
 import AppLayout from '../../components/AppLayout';
 import {
@@ -52,15 +53,6 @@ interface ServiceForm {
 const EMPTY_FORM: ServiceForm = { name: '', duration_minutes: '30', price: '' };
 
 const BUFFER_OPTIONS = [0, 5, 10, 15, 20, 30, 45, 60];
-
-function formatDuration(minutes: number): string {
-  const hours = Math.floor(minutes / 60);
-  const rest = minutes % 60;
-
-  if (hours === 0) return `${rest} min`;
-
-  return rest === 0 ? `${hours} h` : `${hours} h ${rest} min`;
-}
 
 const ManageServices: React.FC = () => {
   const { user } = useAuth();

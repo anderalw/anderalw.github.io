@@ -1,24 +1,30 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import { format, parseISO } from 'date-fns';
 import ptBR from 'date-fns/locale/pt-BR';
+import { useHistory } from 'react-router-dom';
+import { FiCalendar, FiPlus, FiRepeat, FiX } from 'react-icons/fi';
 
 import api from '../../services/api';
-import { useAuth } from '../../hooks/Auth';
 import { useToast } from '../../hooks/Toast';
 import getApiErrorMessage from '../../utils/getApiErrorMessage';
 import { formatPrice } from '../../utils/money';
 import avatarFallback from '../../utils/avatarFallback';
 import RescheduleForm from '../../components/RescheduleForm';
+import AppLayout from '../../components/AppLayout';
+import { Page, PageHeader, UIButton } from '../../components/ui';
 
 import {
-  Container,
-  Content,
-  TopBar,
-  NavLink,
+  List,
   Item,
+  Row,
+  DateBadge,
+  Info,
+  Price,
   ItemActions,
-  Panel,
   Hint,
+  Panel,
+  PanelActions,
+  ItemSkeleton,
   Empty,
 } from './styles';
 
@@ -41,13 +47,9 @@ interface Provider {
 // Um agendamento por vez fica em modo de remarcar ou de confirmar cancelamento
 type ActiveAction = { id: string; type: 'reschedule' | 'cancel' } | null;
 
-function capitalize(text: string): string {
-  return text.charAt(0).toUpperCase() + text.slice(1);
-}
-
 const MyAppointments: React.FC = () => {
-  const { client, signOut } = useAuth();
   const { addToast } = useToast();
+  const history = useHistory();
 
   const [appointments, setAppointments] = useState<ClientAppointment[]>([]);
   const [providers, setProviders] = useState<Provider[]>([]);
@@ -131,140 +133,161 @@ const MyAppointments: React.FC = () => {
     [addToast, loadAppointments],
   );
 
-  return (
-    <Container>
-      <Content>
-        <TopBar>
-          <span>
-            Olá, <strong style={{ color: '#ff9000' }}>{client?.name}</strong>
-          </span>
-          <div>
-            <NavLink to="/agendar">Agendar horário</NavLink>
-            <button type="button" onClick={signOut}>
-              Sair
-            </button>
-          </div>
-        </TopBar>
+  const newAppointmentButton = (
+    <UIButton type="button" onClick={() => history.push('/agendar')}>
+      <FiPlus />
+      Novo agendamento
+    </UIButton>
+  );
 
-        <h1>Meus agendamentos</h1>
+  return (
+    <AppLayout>
+      <Page>
+        <PageHeader>
+          <div>
+            <h1>Meus agendamentos</h1>
+            <p>Seus próximos horários na barbearia.</p>
+          </div>
+          {appointments.length > 0 && <div>{newAppointmentButton}</div>}
+        </PageHeader>
+
+        {loading && (
+          <List>
+            <ItemSkeleton />
+            <ItemSkeleton />
+          </List>
+        )}
 
         {!loading && appointments.length === 0 && (
           <Empty>
+            <FiCalendar />
             Você não tem agendamentos marcados.
-            <br />
-            <NavLink to="/agendar">Agendar um horário</NavLink>
+            {newAppointmentButton}
           </Empty>
         )}
 
-        {appointments.map(appointment => {
-          const start = parseISO(appointment.date);
-          const end = parseISO(appointment.end_date);
-          const isActive = action?.id === appointment.id;
+        <List>
+          {appointments.map(appointment => {
+            const start = parseISO(appointment.date);
+            const end = parseISO(appointment.end_date);
+            const isActive = action?.id === appointment.id;
 
-          return (
-            <Item key={appointment.id}>
-              <header>
-                <div>
-                  <h2>{appointment.service?.name || 'Serviço'}</h2>
-                  <time dateTime={appointment.date}>
-                    {`${capitalize(
-                      format(start, "EEEE, d 'de' MMMM", { locale: ptBR }),
-                    )} · ${format(start, 'HH:mm')} – ${format(end, 'HH:mm')}`}
-                  </time>
-                </div>
-                {appointment.price_cents !== null && (
-                  <span className="price">
-                    {formatPrice(appointment.price_cents)}
-                  </span>
+            return (
+              <Item key={appointment.id}>
+                <Row>
+                  <DateBadge aria-hidden="true">
+                    <small>{format(start, 'EEE', { locale: ptBR })}</small>
+                    <strong>{format(start, 'dd')}</strong>
+                    <small>{format(start, 'MMM', { locale: ptBR })}</small>
+                  </DateBadge>
+
+                  <Info>
+                    <h2>{appointment.service?.name || 'Serviço'}</h2>
+                    <time dateTime={appointment.date}>
+                      {`${format(start, "EEEE, d 'de' MMMM", {
+                        locale: ptBR,
+                      })} · ${format(start, 'HH:mm')} – ${format(
+                        end,
+                        'HH:mm',
+                      )}`}
+                    </time>
+                    <div className="provider">
+                      <img
+                        src={
+                          appointment.provider.avatar_url ||
+                          avatarFallback(appointment.provider.name)
+                        }
+                        alt=""
+                        onError={e => {
+                          e.currentTarget.src = avatarFallback(
+                            appointment.provider.name,
+                          );
+                        }}
+                      />
+                      {`com ${appointment.provider.name}`}
+                    </div>
+                  </Info>
+
+                  {appointment.price_cents !== null && (
+                    <Price>{formatPrice(appointment.price_cents)}</Price>
+                  )}
+
+                  {appointment.can_change ? (
+                    <ItemActions>
+                      <UIButton
+                        type="button"
+                        variant="secondary"
+                        size="sm"
+                        disabled={isActive}
+                        onClick={() =>
+                          setAction({ id: appointment.id, type: 'reschedule' })
+                        }
+                      >
+                        <FiRepeat />
+                        Remarcar
+                      </UIButton>
+                      <UIButton
+                        type="button"
+                        variant="danger"
+                        size="sm"
+                        disabled={isActive}
+                        onClick={() =>
+                          setAction({ id: appointment.id, type: 'cancel' })
+                        }
+                      >
+                        <FiX />
+                        Cancelar
+                      </UIButton>
+                    </ItemActions>
+                  ) : (
+                    <Hint>
+                      Faltam menos de 2 horas: para cancelar ou remarcar, fale
+                      com a barbearia.
+                    </Hint>
+                  )}
+                </Row>
+
+                {isActive && action?.type === 'reschedule' && (
+                  <Panel>
+                    <RescheduleForm
+                      appointmentId={appointment.id}
+                      currentProviderId={appointment.provider.id}
+                      currentDate={start}
+                      providers={providers}
+                      onCancel={() => setAction(null)}
+                      onRescheduled={handleRescheduled}
+                    />
+                  </Panel>
                 )}
-              </header>
 
-              <div className="provider">
-                <img
-                  src={
-                    appointment.provider.avatar_url ||
-                    avatarFallback(appointment.provider.name)
-                  }
-                  alt=""
-                  onError={e => {
-                    e.currentTarget.src = avatarFallback(
-                      appointment.provider.name,
-                    );
-                  }}
-                />
-                {`com ${appointment.provider.name}`}
-              </div>
-
-              {!appointment.can_change && (
-                <Hint>
-                  Faltam menos de 2 horas: para cancelar ou remarcar, entre em
-                  contato com a barbearia.
-                </Hint>
-              )}
-
-              {appointment.can_change && !isActive && (
-                <ItemActions>
-                  <button
-                    type="button"
-                    className="secondary"
-                    onClick={() =>
-                      setAction({ id: appointment.id, type: 'reschedule' })
-                    }
-                  >
-                    Remarcar
-                  </button>
-                  <button
-                    type="button"
-                    className="danger"
-                    onClick={() =>
-                      setAction({ id: appointment.id, type: 'cancel' })
-                    }
-                  >
-                    Cancelar
-                  </button>
-                </ItemActions>
-              )}
-
-              {isActive && action?.type === 'reschedule' && (
-                <Panel>
-                  <RescheduleForm
-                    appointmentId={appointment.id}
-                    currentProviderId={appointment.provider.id}
-                    currentDate={start}
-                    providers={providers}
-                    onCancel={() => setAction(null)}
-                    onRescheduled={handleRescheduled}
-                  />
-                </Panel>
-              )}
-
-              {isActive && action?.type === 'cancel' && (
-                <Panel>
-                  <p>Tem certeza que deseja cancelar este agendamento?</p>
-                  <ItemActions>
-                    <button
-                      type="button"
-                      className="secondary"
-                      onClick={() => setAction(null)}
-                    >
-                      Voltar
-                    </button>
-                    <button
-                      type="button"
-                      className="danger"
-                      disabled={canceling}
-                      onClick={() => handleCancel(appointment)}
-                    >
-                      {canceling ? 'Cancelando...' : 'Sim, cancelar'}
-                    </button>
-                  </ItemActions>
-                </Panel>
-              )}
-            </Item>
-          );
-        })}
-      </Content>
-    </Container>
+                {isActive && action?.type === 'cancel' && (
+                  <Panel>
+                    <p>Tem certeza que deseja cancelar este agendamento?</p>
+                    <PanelActions>
+                      <UIButton
+                        type="button"
+                        variant="secondary"
+                        onClick={() => setAction(null)}
+                      >
+                        Voltar
+                      </UIButton>
+                      <UIButton
+                        type="button"
+                        variant="danger"
+                        disabled={canceling}
+                        onClick={() => handleCancel(appointment)}
+                      >
+                        {canceling ? 'Cancelando...' : 'Sim, cancelar'}
+                      </UIButton>
+                    </PanelActions>
+                  </Panel>
+                )}
+              </Item>
+            );
+          })}
+        </List>
+      </Page>
+    </AppLayout>
   );
 };
 

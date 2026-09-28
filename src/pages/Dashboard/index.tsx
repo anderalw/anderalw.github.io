@@ -23,7 +23,6 @@ import {
   MAX_HOUR_HEIGHT,
   COMPACT_HOUR_HEIGHT,
   AGENDA_PADDING,
-  MiniCalendar,
   AgendaArea,
   Toolbar,
   TodayButton,
@@ -48,6 +47,7 @@ import api from '../../services/api';
 import getApiErrorMessage from '../../utils/getApiErrorMessage';
 import avatarFallback from '../../utils/avatarFallback';
 import AppLayout from '../../components/AppLayout';
+import { Calendar } from '../../components/ui/Calendar';
 import AppointmentDetails from './AppointmentDetails';
 import NewAppointment from './NewAppointment';
 
@@ -397,7 +397,7 @@ const Dashboard: React.FC = () => {
   return (
     <AppLayout
       sidebarExtra={
-        <MiniCalendar>
+        <Calendar>
           <DayPicker
             locale="pt-BR"
             weekdaysShort={['D', 'S', 'T', 'Q', 'Q', 'S', 'S']}
@@ -406,7 +406,7 @@ const Dashboard: React.FC = () => {
             selectedDays={selectedDate}
             onDayClick={day => setSelectedDate(startOfDay(day))}
           />
-        </MiniCalendar>
+        </Calendar>
       }
     >
       <AgendaArea>

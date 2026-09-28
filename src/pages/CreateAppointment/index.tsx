@@ -1,27 +1,46 @@
 import React, { useEffect, useState, useCallback, useMemo } from 'react';
-import { format } from 'date-fns';
-import { Link } from 'react-router-dom';
+import { format, startOfDay } from 'date-fns';
 import ptBR from 'date-fns/locale/pt-BR';
+import DayPicker from 'react-day-picker';
+import 'react-day-picker/lib/style.css';
+import { FiCheck } from 'react-icons/fi';
 
 import api from '../../services/api';
 import { useToast } from '../../hooks/Toast';
-import { useAuth } from '../../hooks/Auth';
 import getApiErrorMessage from '../../utils/getApiErrorMessage';
 import { formatPrice } from '../../utils/money';
+import { formatDuration } from '../../utils/duration';
 import avatarFallback from '../../utils/avatarFallback';
 
+import AppLayout from '../../components/AppLayout';
 import {
-  Container,
-  Content,
-  Section,
-  ProviderContainer,
-  ProviderName,
+  Page,
+  PageHeader,
+  Card,
+  CardHeader,
+  CardBody,
+  UIButton,
+} from '../../components/ui';
+import { Calendar } from '../../components/ui/Calendar';
+
+import {
+  Columns,
+  Steps,
+  StepNumber,
+  OptionGrid,
   ServiceOption,
+  ProviderOption,
+  OptionSkeleton,
+  DateTime,
+  TimesArea,
+  TimesBox,
   HourList,
   Hour,
   HelpText,
-  TimesBox,
-  BookingSummary,
+  Summary,
+  SummaryList,
+  Total,
+  SummaryFooter,
 } from './styles';
 
 interface Provider {
@@ -33,6 +52,7 @@ interface Provider {
 interface Service {
   id: string;
   name: string;
+  duration_minutes: number;
   price_cents: number;
 }
 
@@ -41,20 +61,35 @@ interface AvailableTime {
   time: string;
 }
 
+const MONTHS = [
+  'Janeiro',
+  'Fevereiro',
+  'Março',
+  'Abril',
+  'Maio',
+  'Junho',
+  'Julho',
+  'Agosto',
+  'Setembro',
+  'Outubro',
+  'Novembro',
+  'Dezembro',
+];
+
 const CreateAppointment: React.FC = () => {
   const { addToast } = useToast();
-  // Cliente com sessão iniciada (a rota só abre para clientes)
-  const { client, signOut } = useAuth();
 
   const [services, setServices] = useState<Service[]>([]);
   const [servicesLoaded, setServicesLoaded] = useState(false);
   const [providers, setProviders] = useState<Provider[]>([]);
+  const [providersLoaded, setProvidersLoaded] = useState(false);
   const [selectedService, setSelectedService] = useState('');
   const [selectedProvider, setSelectedProvider] = useState('');
-  const [selectedDate, setSelectedDate] = useState('');
+  const [selectedDate, setSelectedDate] = useState<Date | null>(null);
   const [selectedTime, setSelectedTime] = useState('');
   const [availableTimes, setAvailableTimes] = useState<AvailableTime[]>([]);
   const [loadingTimes, setLoadingTimes] = useState(false);
+  const [saving, setSaving] = useState(false);
   // Muda a cada agendamento feito, para recarregar os horários livres
   const [refreshKey, setRefreshKey] = useState(0);
 
@@ -67,12 +102,15 @@ const CreateAppointment: React.FC = () => {
       })
       .finally(() => setServicesLoaded(true));
 
-    api.get<Provider[]>('/providers').then(response => {
-      setProviders(response.data);
-      if (response.data.length > 0) {
-        setSelectedProvider(response.data[0].id);
-      }
-    });
+    api
+      .get<Provider[]>('/providers')
+      .then(response => {
+        setProviders(response.data);
+        if (response.data.length > 0) {
+          setSelectedProvider(response.data[0].id);
+        }
+      })
+      .finally(() => setProvidersLoaded(true));
   }, []);
 
   // Horários livres: dependem do serviço (duração), do barbeiro e do dia
@@ -85,14 +123,17 @@ const CreateAppointment: React.FC = () => {
     }
 
     let active = true;
-    // O input nativo devolve 'YYYY-MM-DD'
-    const [year, month, day] = selectedDate.split('-');
 
     setLoadingTimes(true);
 
     api
       .get<AvailableTime[]>(`/providers/${selectedProvider}/day-availability`, {
-        params: { year, month, day, service_id: selectedService },
+        params: {
+          year: selectedDate.getFullYear(),
+          month: selectedDate.getMonth() + 1,
+          day: selectedDate.getDate(),
+          service_id: selectedService,
+        },
       })
       .then(response => {
         if (active) setAvailableTimes(response.data);
@@ -121,14 +162,17 @@ const CreateAppointment: React.FC = () => {
   const appointmentDate = useMemo(() => {
     if (!selectedDate || !selectedTime) return null;
 
-    const [year, month, day] = selectedDate.split('-').map(Number);
     const [hours, minutes] = selectedTime.split(':').map(Number);
+    const date = new Date(selectedDate);
+    date.setHours(hours, minutes, 0, 0);
 
-    return new Date(year, month - 1, day, hours, minutes);
+    return date;
   }, [selectedDate, selectedTime]);
 
   const handleCreateAppointment = useCallback(async () => {
     if (!service || !provider || !appointmentDate) return;
+
+    setSaving(true);
 
     try {
       // O backend identifica o cliente pelo token, não é preciso enviar o id
@@ -161,174 +205,220 @@ const CreateAppointment: React.FC = () => {
       });
       // O horário pode ter sido ocupado por outra pessoa
       setRefreshKey(key => key + 1);
+    } finally {
+      setSaving(false);
     }
   }, [service, provider, appointmentDate, addToast]);
 
   const canConfirm = !!(service && provider && appointmentDate);
 
+  let timesMessage = '';
+
+  if (!selectedService || !selectedDate) {
+    timesMessage = 'Escolha o serviço e o dia para ver os horários livres.';
+  } else if (loadingTimes) {
+    timesMessage = 'Carregando horários...';
+  } else if (availableTimes.length === 0) {
+    timesMessage =
+      'Nenhum horário livre neste dia. Tente outra data ou outro profissional.';
+  }
+
   return (
-    <Container>
-      <Content>
-        <div
-          style={{
-            display: 'flex',
-            justifyContent: 'space-between',
-            alignItems: 'center',
-            marginBottom: '16px',
-          }}
-        >
-          <span>
-            Olá, <strong style={{ color: '#ff9000' }}>{client?.name}</strong>
-          </span>
-          <div style={{ display: 'flex', gap: '16px', alignItems: 'center' }}>
-            <Link
-              to="/meus-agendamentos"
-              style={{ color: '#ff9000', textDecoration: 'none' }}
-            >
-              Meus agendamentos
-            </Link>
-            <button
-              type="button"
-              onClick={signOut}
-              style={{
-                marginTop: 0,
-                background: 'transparent',
-                border: 0,
-                color: '#999591',
-                cursor: 'pointer',
-              }}
-            >
-              Sair
-            </button>
+    <AppLayout>
+      <Page>
+        <PageHeader>
+          <div>
+            <h1>Agendar horário</h1>
+            <p>Escolha o serviço, o profissional e o melhor horário.</p>
           </div>
-        </div>
+        </PageHeader>
 
-        <h1>Agendar Horário</h1>
+        <Columns>
+          <Steps>
+            <Card>
+              <CardHeader>
+                <StepNumber done={!!service}>
+                  {service ? <FiCheck /> : 1}
+                </StepNumber>
+                <h2>Serviço</h2>
+              </CardHeader>
+              <CardBody>
+                {servicesLoaded && services.length === 0 ? (
+                  <HelpText>Nenhum serviço disponível no momento.</HelpText>
+                ) : (
+                  <OptionGrid min={260}>
+                    {!servicesLoaded
+                      ? [0, 1, 2, 3].map(item => <OptionSkeleton key={item} />)
+                      : services.map(item => (
+                          <ServiceOption
+                            key={item.id}
+                            type="button"
+                            selected={item.id === selectedService}
+                            aria-pressed={item.id === selectedService}
+                            onClick={() => setSelectedService(item.id)}
+                          >
+                            <div>
+                              <strong>{item.name}</strong>
+                              <small>
+                                {formatDuration(item.duration_minutes)}
+                              </small>
+                            </div>
+                            <span>{formatPrice(item.price_cents)}</span>
+                          </ServiceOption>
+                        ))}
+                  </OptionGrid>
+                )}
+              </CardBody>
+            </Card>
 
-        <Section>
-          <strong>1. Escolha o serviço</strong>
-          {!servicesLoaded && <HelpText>Carregando serviços...</HelpText>}
-          {servicesLoaded && services.length === 0 && (
-            <HelpText>Nenhum serviço disponível no momento.</HelpText>
-          )}
-          {services.length > 0 && (
-            <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap' }}>
-              {services.map(item => (
-                <ServiceOption
-                  key={item.id}
+            <Card>
+              <CardHeader>
+                <StepNumber done={!!provider}>
+                  {provider ? <FiCheck /> : 2}
+                </StepNumber>
+                <h2>Profissional</h2>
+              </CardHeader>
+              <CardBody>
+                <OptionGrid min={180}>
+                  {!providersLoaded
+                    ? [0, 1, 2].map(item => <OptionSkeleton key={item} />)
+                    : providers.map(item => (
+                        <ProviderOption
+                          key={item.id}
+                          type="button"
+                          selected={item.id === selectedProvider}
+                          aria-pressed={item.id === selectedProvider}
+                          onClick={() => setSelectedProvider(item.id)}
+                        >
+                          <img
+                            src={item.avatar_url || avatarFallback(item.name)}
+                            alt=""
+                            onError={e => {
+                              e.currentTarget.src = avatarFallback(item.name);
+                            }}
+                          />
+                          <strong>{item.name}</strong>
+                        </ProviderOption>
+                      ))}
+                </OptionGrid>
+              </CardBody>
+            </Card>
+
+            <Card>
+              <CardHeader>
+                <StepNumber done={!!appointmentDate}>
+                  {appointmentDate ? <FiCheck /> : 3}
+                </StepNumber>
+                <h2>Data e horário</h2>
+              </CardHeader>
+              <CardBody>
+                <DateTime>
+                  <Calendar>
+                    <DayPicker
+                      locale="pt-BR"
+                      weekdaysShort={['D', 'S', 'T', 'Q', 'Q', 'S', 'S']}
+                      months={MONTHS}
+                      fromMonth={new Date()}
+                      disabledDays={{ before: new Date() }}
+                      selectedDays={selectedDate || undefined}
+                      onDayClick={(day, modifiers) => {
+                        if (!modifiers.disabled) {
+                          setSelectedDate(startOfDay(day));
+                        }
+                      }}
+                    />
+                  </Calendar>
+
+                  <TimesArea>
+                    <span>
+                      {selectedDate
+                        ? format(selectedDate, "EEEE, d 'de' MMMM", {
+                            locale: ptBR,
+                          })
+                        : 'Horários livres'}
+                    </span>
+                    <TimesBox>
+                      {timesMessage ? (
+                        <HelpText>{timesMessage}</HelpText>
+                      ) : (
+                        <HourList>
+                          {availableTimes.map(({ time }) => (
+                            <Hour
+                              key={time}
+                              type="button"
+                              selected={selectedTime === time}
+                              aria-pressed={selectedTime === time}
+                              onClick={() => setSelectedTime(time)}
+                            >
+                              {time}
+                            </Hour>
+                          ))}
+                        </HourList>
+                      )}
+                    </TimesBox>
+                  </TimesArea>
+                </DateTime>
+              </CardBody>
+            </Card>
+          </Steps>
+
+          <Summary>
+            <Card>
+              <CardHeader>
+                <h2>Resumo</h2>
+              </CardHeader>
+              <CardBody>
+                <SummaryList>
+                  <dt>Serviço</dt>
+                  <dd className={service ? '' : 'empty'} title={service?.name}>
+                    {service?.name || 'A escolher'}
+                  </dd>
+                  <dt>Duração</dt>
+                  <dd className={service ? '' : 'empty'}>
+                    {service ? formatDuration(service.duration_minutes) : '–'}
+                  </dd>
+                  <dt>Profissional</dt>
+                  <dd className={provider ? '' : 'empty'}>
+                    {provider?.name || 'A escolher'}
+                  </dd>
+                  <dt>Data</dt>
+                  <dd className={selectedDate ? '' : 'empty'}>
+                    {selectedDate
+                      ? format(selectedDate, "EEE, d 'de' MMM", {
+                          locale: ptBR,
+                        })
+                      : 'A escolher'}
+                  </dd>
+                  <dt>Horário</dt>
+                  <dd className={selectedTime ? '' : 'empty'}>
+                    {selectedTime || 'A escolher'}
+                  </dd>
+                </SummaryList>
+
+                <Total>
+                  <span>Total</span>
+                  <strong>
+                    {service ? formatPrice(service.price_cents) : 'R$ –'}
+                  </strong>
+                </Total>
+              </CardBody>
+
+              <SummaryFooter>
+                <UIButton
                   type="button"
-                  selected={item.id === selectedService}
-                  aria-pressed={item.id === selectedService}
-                  onClick={() => setSelectedService(item.id)}
+                  onClick={handleCreateAppointment}
+                  disabled={!canConfirm || saving}
                 >
-                  <span>{item.name}</span>
-                  <small>{formatPrice(item.price_cents)}</small>
-                </ServiceOption>
-              ))}
-            </div>
-          )}
-        </Section>
-
-        <Section>
-          <strong>2. Escolha o profissional</strong>
-          <div style={{ display: 'flex', gap: '16px', flexWrap: 'wrap' }}>
-            {providers.map(item => (
-              <ProviderContainer
-                key={item.id}
-                selected={item.id === selectedProvider}
-                onClick={() => setSelectedProvider(item.id)}
-              >
-                <img
-                  src={item.avatar_url || avatarFallback(item.name)}
-                  alt={item.name}
-                  onError={e => {
-                    e.currentTarget.src = avatarFallback(item.name);
-                  }}
-                />
-                <ProviderName selected={item.id === selectedProvider}>
-                  {item.name}
-                </ProviderName>
-              </ProviderContainer>
-            ))}
-          </div>
-        </Section>
-
-        <Section>
-          <strong>3. Escolha a data</strong>
-          <input
-            type="date"
-            value={selectedDate}
-            min={format(new Date(), 'yyyy-MM-dd')}
-            onChange={e => setSelectedDate(e.target.value)}
-          />
-        </Section>
-
-        {/* Sempre visível, com altura fixa, para a página não crescer */}
-        <Section>
-          <strong>4. Escolha o horário</strong>
-          <TimesBox>
-            {(!selectedService || !selectedDate) && (
-              <HelpText>
-                Escolha o serviço e a data para ver os horários livres.
-              </HelpText>
-            )}
-            {selectedService && selectedDate && loadingTimes && (
-              <HelpText>Carregando horários...</HelpText>
-            )}
-            {selectedService &&
-              selectedDate &&
-              !loadingTimes &&
-              availableTimes.length === 0 && (
-                <HelpText>
-                  Nenhum horário livre neste dia. Tente outra data ou outro
-                  profissional.
-                </HelpText>
-              )}
-            <HourList>
-              {availableTimes.map(({ time }) => (
-                <Hour
-                  key={time}
-                  available
-                  selected={selectedTime === time}
-                  onClick={() => setSelectedTime(time)}
-                >
-                  {time}
-                </Hour>
-              ))}
-            </HourList>
-          </TimesBox>
-        </Section>
-
-        <BookingSummary>
-          {canConfirm && service && provider && appointmentDate
-            ? `${service.name} (${formatPrice(service.price_cents)}) com ${
-                provider.name
-              }, ${format(appointmentDate, "EEEE, d 'de' MMMM 'às' HH:mm", {
-                locale: ptBR,
-              })}.`
-            : ''}
-        </BookingSummary>
-
-        <button
-          type="button"
-          onClick={handleCreateAppointment}
-          disabled={!canConfirm}
-          style={{
-            width: '100%',
-            background: '#ff9000',
-            borderRadius: '10px',
-            border: 0,
-            padding: '16px',
-            color: '#312e38',
-            fontWeight: 500,
-            cursor: canConfirm ? 'pointer' : 'not-allowed',
-            opacity: canConfirm ? 1 : 0.5,
-          }}
-        >
-          Confirmar Agendamento
-        </button>
-      </Content>
-    </Container>
+                  <FiCheck />
+                  {saving ? 'Agendando...' : 'Confirmar agendamento'}
+                </UIButton>
+                <small>Você pode remarcar ou cancelar até 2 horas antes.</small>
+              </SummaryFooter>
+            </Card>
+          </Summary>
+        </Columns>
+      </Page>
+    </AppLayout>
   );
 };
 

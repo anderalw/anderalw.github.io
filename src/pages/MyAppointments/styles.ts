@@ -1,168 +1,160 @@
-import styled from 'styled-components';
-import { Link } from 'react-router-dom';
+import styled, { keyframes } from 'styled-components';
 
-export const Container = styled.div`
+import { colors, radius } from '../../styles/theme';
+
+export const List = styled.div`
   display: flex;
-  justify-content: center;
-  padding: 40px 20px;
-`;
-
-export const Content = styled.div`
-  max-width: 700px;
-  width: 100%;
-
-  h1 {
-    margin-bottom: 24px;
-    font-size: 36px;
-  }
-`;
-
-export const TopBar = styled.div`
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 16px;
-
-  div {
-    display: flex;
-    gap: 16px;
-    align-items: center;
-  }
-
-  button {
-    background: transparent;
-    border: 0;
-    color: #999591;
-    font: inherit;
-  }
-`;
-
-export const NavLink = styled(Link)`
-  color: #ff9000;
-  text-decoration: none;
-
-  &:hover {
-    text-decoration: underline;
-  }
+  flex-direction: column;
+  gap: 12px;
+  max-width: 880px;
 `;
 
 export const Item = styled.section`
-  background: #3e3b47;
-  border-radius: 10px;
-  padding: 20px;
+  background: ${colors.surface};
+  border: 1px solid ${colors.border};
+  border-radius: ${radius.lg};
+`;
 
-  & + & {
-    margin-top: 16px;
+// Linha principal: data, detalhes, valor e ações
+export const Row = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  padding: 16px 20px;
+`;
+
+export const DateBadge = styled.div`
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  width: 60px;
+  height: 64px;
+  flex-shrink: 0;
+  border-radius: ${radius.md};
+  background: ${colors.primarySoft};
+  color: ${colors.primary};
+  text-transform: uppercase;
+
+  small {
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.04em;
   }
 
-  header {
-    display: flex;
-    justify-content: space-between;
-    align-items: flex-start;
-    gap: 12px;
-    flex-wrap: wrap;
+  strong {
+    font-size: 22px;
+    font-weight: 700;
+    line-height: 1.1;
+    font-variant-numeric: tabular-nums;
   }
+`;
+
+export const Info = styled.div`
+  flex: 1;
+  min-width: 0;
 
   h2 {
-    font-size: 18px;
-    font-weight: 500;
-    color: #f4ede8;
+    font-size: 15px;
+    font-weight: 600;
+    color: ${colors.text};
   }
 
   time {
     display: block;
-    margin-top: 4px;
-    color: #ff9000;
-    font-weight: 500;
-  }
+    margin-top: 2px;
+    color: ${colors.textMuted};
+    font-variant-numeric: tabular-nums;
 
-  .price {
-    color: #f4ede8;
-    font-weight: 500;
+    &::first-letter {
+      text-transform: uppercase;
+    }
   }
 
   .provider {
     display: flex;
     align-items: center;
-    margin-top: 12px;
-    color: #f4ede8;
+    gap: 8px;
+    margin-top: 8px;
+    font-size: 13px;
+    color: ${colors.textMuted};
 
     img {
-      width: 32px;
-      height: 32px;
+      width: 20px;
+      height: 20px;
       border-radius: 50%;
-      margin-right: 10px;
+      object-fit: cover;
     }
   }
+`;
+
+export const Price = styled.span`
+  font-size: 15px;
+  font-weight: 600;
+  color: ${colors.text};
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
 `;
 
 export const ItemActions = styled.div`
   display: flex;
-  justify-content: flex-end;
-  flex-wrap: wrap;
-  gap: 8px;
-  margin-top: 16px;
+  gap: 6px;
+  flex-shrink: 0;
+`;
 
-  button {
-    height: 40px;
-    padding: 0 16px;
-    border-radius: 8px;
-    font: inherit;
-    font-weight: 500;
-    background: transparent;
-    transition: background-color 0.2s;
-
-    &:disabled {
-      opacity: 0.5;
-      cursor: not-allowed;
-    }
-  }
-
-  .secondary {
-    border: 1px solid #666360;
-    color: #f4ede8;
-
-    &:hover:not(:disabled) {
-      background: #28262e;
-    }
-  }
-
-  .danger {
-    border: 1px solid #c53030;
-    color: #ff6b6b;
-
-    &:hover:not(:disabled) {
-      background: #c5303022;
-    }
-  }
+// Mensagem no lugar das ações quando já não dá para mudar sozinho
+export const Hint = styled.p`
+  max-width: 220px;
+  font-size: 12px;
+  line-height: 16px;
+  color: ${colors.textSubtle};
+  text-align: right;
 `;
 
 export const Panel = styled.div`
-  margin-top: 16px;
-  padding-top: 16px;
-  border-top: 1px solid #28262e;
+  padding: 16px 20px 20px;
+  border-top: 1px solid ${colors.border};
 
   > p {
-    color: #f4ede8;
-    margin-bottom: 4px;
+    color: ${colors.text};
+    margin-bottom: 12px;
   }
 `;
 
-export const Hint = styled.p`
-  margin-top: 12px;
-  font-size: 14px;
-  color: #999591;
+export const PanelActions = styled.div`
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+`;
+
+const pulse = keyframes`
+  50% { opacity: 0.5; }
+`;
+
+// Card "fantasma" com a altura do real, enquanto a lista carrega
+export const ItemSkeleton = styled.div`
+  height: 98px;
+  border: 1px solid ${colors.border};
+  border-radius: ${radius.lg};
+  background: ${colors.surface};
+  animation: ${pulse} 1.4s ease-in-out infinite;
 `;
 
 export const Empty = styled.div`
-  padding: 32px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+  max-width: 880px;
+  padding: 56px 24px;
+  border: 1px dashed ${colors.borderStrong};
+  border-radius: ${radius.lg};
+  color: ${colors.textMuted};
   text-align: center;
-  color: #999591;
-  background: #28262e;
-  border-radius: 10px;
 
-  a {
-    display: inline-block;
-    margin-top: 12px;
+  svg {
+    width: 32px;
+    height: 32px;
+    color: ${colors.textSubtle};
   }
 `;

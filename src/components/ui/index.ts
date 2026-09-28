@@ -59,10 +59,6 @@ export const CardHeader = styled.header`
     font-size: 13px;
     color: ${colors.textMuted};
   }
-
-  > :last-child:not(:first-child) {
-    margin-left: auto;
-  }
 `;
 
 export const CardBody = styled.div`

@@ -1,181 +1,291 @@
-import styled, { css } from 'styled-components';
-import { shade } from 'polished';
+import styled, { css, keyframes } from 'styled-components';
 
-export const Container = styled.div`
+import { colors, radius } from '../../styles/theme';
+
+// Etapas à esquerda; resumo fixo à direita
+export const Columns = styled.div`
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 320px;
+  gap: 24px;
+  align-items: start;
+
+  @media (max-width: 1180px) {
+    grid-template-columns: minmax(0, 1fr);
+  }
+`;
+
+export const Steps = styled.div`
   display: flex;
+  flex-direction: column;
+  gap: 24px;
+  min-width: 0;
+`;
+
+export const StepNumber = styled.span<{ done: boolean }>`
+  display: inline-flex;
+  align-items: center;
   justify-content: center;
-  padding: 40px 20px;
-`;
+  width: 24px;
+  height: 24px;
+  flex-shrink: 0;
+  border-radius: 50%;
+  font-size: 12px;
+  font-weight: 700;
+  transition: background-color 0.15s, color 0.15s;
 
-export const Content = styled.div`
-  max-width: 700px;
-  width: 100%;
+  ${props =>
+    props.done
+      ? css`
+          background: ${colors.primary};
+          color: ${colors.onPrimary};
+        `
+      : css`
+          background: ${colors.surfaceHover};
+          color: ${colors.textMuted};
+        `}
 
-  h1 {
-    margin-bottom: 36px;
-    font-size: 36px;
-  }
-
-  button {
-    margin-top: 48px;
-  }
-`;
-
-export const Section = styled.div`
-  margin-bottom: 32px;
-
-  strong {
-    color: #999591;
-    font-size: 20px;
-    line-height: 26px;
-    border-bottom: 1px solid #3e3b47;
-    display: block;
-    padding-bottom: 16px;
-    margin-bottom: 16px;
-  }
-
-  input[type='date'] {
-    background: #232129;
-    border-radius: 10px;
-    padding: 16px;
-    width: 100%;
-    border: 2px solid #232129;
-    color: #f4ede8;
-    color-scheme: dark;
-    font-size: 16px;
+  svg {
+    width: 14px;
+    height: 14px;
   }
 `;
 
-interface ProviderProps {
-  selected: boolean;
-}
+export const OptionGrid = styled.div<{ min: number }>`
+  display: grid;
+  grid-template-columns: repeat(
+    auto-fill,
+    minmax(${props => props.min}px, 1fr)
+  );
+  gap: 10px;
+`;
 
-export const ProviderContainer = styled.div<ProviderProps>`
-  background: ${props => (props.selected ? '#ff9000' : '#3e3b47')};
+const optionBase = css<{ selected: boolean }>`
   display: flex;
   align-items: center;
-  padding: 12px 16px;
-  border-radius: 10px;
-  cursor: pointer;
-  transition: background-color 0.2s;
+  gap: 12px;
+  min-height: 64px;
+  padding: 12px 14px;
+  border: 1px solid ${colors.borderStrong};
+  border-radius: ${radius.md};
+  background: ${colors.sunken};
+  color: ${colors.text};
+  text-align: left;
+  transition: border-color 0.15s, background-color 0.15s, box-shadow 0.15s;
 
   &:hover {
-    background: ${props =>
-      props.selected ? '#ff9000' : shade(0.2, '#3e3b47')};
+    border-color: ${colors.textSubtle};
   }
-
-  img {
-    width: 40px;
-    height: 40px;
-    border-radius: 50%;
-    background: #28262e;
-  }
-`;
-
-export const ProviderName = styled.span<ProviderProps>`
-  margin-left: 12px;
-  font-weight: 500;
-  color: ${props => (props.selected ? '#232129' : '#f4ede8')};
-`;
-
-export const HourList = styled.div`
-  display: flex;
-  gap: 12px;
-  flex-wrap: wrap;
-`;
-
-interface HourProps {
-  available: boolean;
-  selected: boolean;
-}
-
-export const Hour = styled.div<HourProps>`
-  padding: 12px 24px;
-  border-radius: 10px;
-  font-weight: 500;
-  font-size: 16px;
-  cursor: pointer;
-  transition: background-color 0.2s;
-
-  ${props =>
-    !props.available &&
-    css`
-      background: #3e3b47;
-      color: #666360;
-      cursor: not-allowed;
-    `}
-
-  ${props =>
-    props.available &&
-    !props.selected &&
-    css`
-      background: #3e3b47;
-      color: #f4ede8;
-      &:hover {
-        background: ${shade(0.2, '#3e3b47')};
-      }
-    `}
 
   ${props =>
     props.selected &&
     css`
-      background: #ff9000;
-      color: #232129;
+      &,
+      &:hover {
+        border-color: ${colors.primary};
+        background: ${colors.primarySoft};
+        box-shadow: 0 0 0 1px ${colors.primary};
+      }
     `}
 `;
-// Serviço: o cliente vê nome e valor (a duração só define a agenda)
-export const ServiceOption = styled.button<ProviderProps>`
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  min-width: 160px;
-  padding: 14px 18px;
-  border: 0;
-  border-radius: 10px;
-  text-align: left;
-  font: inherit;
-  cursor: pointer;
-  transition: background-color 0.2s;
-  background: ${props => (props.selected ? '#ff9000' : '#3e3b47')};
-  color: ${props => (props.selected ? '#232129' : '#f4ede8')};
 
-  &:hover {
-    background: ${props =>
-      props.selected ? '#ff9000' : shade(0.2, '#3e3b47')};
+export const ServiceOption = styled.button<{ selected: boolean }>`
+  ${optionBase}
+  justify-content: space-between;
+
+  div {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
   }
 
-  span {
+  strong {
     font-weight: 500;
+    overflow-wrap: anywhere;
   }
 
   small {
-    margin-top: 4px;
-    font-size: 14px;
-    color: ${props => (props.selected ? '#312e38' : '#ff9000')};
+    margin-top: 2px;
+    font-size: 12px;
+    color: ${colors.textMuted};
   }
 
-  /* Content aplica margin-top: 48px a todo <button> da página */
-  && {
-    margin-top: 0;
+  > span {
+    font-weight: 600;
+    white-space: nowrap;
+    font-variant-numeric: tabular-nums;
+    color: ${props => (props.selected ? colors.primary : colors.text)};
   }
 `;
 
-export const HelpText = styled.p`
-  color: #999591;
+export const ProviderOption = styled.button<{ selected: boolean }>`
+  ${optionBase}
+
+  img {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    object-fit: cover;
+    flex-shrink: 0;
+  }
+
+  strong {
+    font-weight: 500;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
 `;
 
-// Altura fixa (três linhas de horários): escolher data ou serviço e carregar
-// os horários não muda o tamanho da página; se houver mais, rola por dentro
+const pulse = keyframes`
+  50% { opacity: 0.5; }
+`;
+
+// Opção "fantasma" enquanto carrega, com a mesma altura da real
+export const OptionSkeleton = styled.div`
+  height: 64px;
+  border-radius: ${radius.md};
+  background: ${colors.surfaceHover};
+  animation: ${pulse} 1.4s ease-in-out infinite;
+`;
+
+// Calendário à esquerda, horários à direita
+export const DateTime = styled.div`
+  display: grid;
+  grid-template-columns: 260px minmax(0, 1fr);
+  gap: 28px;
+
+  @media (max-width: 720px) {
+    grid-template-columns: minmax(0, 1fr);
+  }
+`;
+
+export const TimesArea = styled.div`
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+
+  > span {
+    margin-bottom: 10px;
+    font-size: 13px;
+    font-weight: 500;
+    color: ${colors.textMuted};
+  }
+`;
+
+// Altura fixa (a do calendário): a página não muda de tamanho ao carregar
 export const TimesBox = styled.div`
-  height: 164px;
+  height: 248px;
   overflow-y: auto;
   padding-right: 4px;
 `;
 
-// Resumo antes de confirmar, com duas linhas reservadas
-export const BookingSummary = styled.p`
-  min-height: 48px;
-  margin-bottom: 16px;
-  line-height: 24px;
-  color: #999591;
+export const HourList = styled.div`
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(76px, 1fr));
+  gap: 8px;
+`;
+
+export const Hour = styled.button<{ selected: boolean }>`
+  height: 36px;
+  border: 1px solid ${colors.borderStrong};
+  border-radius: ${radius.md};
+  background: ${colors.sunken};
+  color: ${colors.text};
+  font-size: 14px;
+  font-weight: 500;
+  font-variant-numeric: tabular-nums;
+  transition: border-color 0.15s, background-color 0.15s;
+
+  &:hover {
+    border-color: ${colors.primary};
+  }
+
+  ${props =>
+    props.selected &&
+    css`
+      &,
+      &:hover {
+        border-color: ${colors.primary};
+        background: ${colors.primary};
+        color: ${colors.onPrimary};
+      }
+    `}
+`;
+
+export const HelpText = styled.p`
+  color: ${colors.textMuted};
+  font-size: 13px;
+  line-height: 20px;
+`;
+
+export const Summary = styled.div`
+  position: sticky;
+  top: 28px;
+`;
+
+export const SummaryList = styled.dl`
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: 12px 16px;
+
+  dt {
+    color: ${colors.textMuted};
+  }
+
+  dd {
+    text-align: right;
+    font-weight: 500;
+    color: ${colors.text};
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+
+    &:first-letter {
+      text-transform: uppercase;
+    }
+
+    &.empty {
+      color: ${colors.textSubtle};
+      font-weight: 400;
+    }
+  }
+`;
+
+export const Total = styled.div`
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  margin-top: 16px;
+  padding-top: 16px;
+  border-top: 1px solid ${colors.border};
+
+  span {
+    color: ${colors.textMuted};
+  }
+
+  strong {
+    font-size: 22px;
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+    color: ${colors.text};
+  }
+`;
+
+export const SummaryFooter = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 0 20px 20px;
+
+  > button {
+    width: 100%;
+    height: 42px;
+  }
+
+  small {
+    text-align: center;
+    font-size: 12px;
+    color: ${colors.textSubtle};
+  }
 `;

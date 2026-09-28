@@ -98,6 +98,7 @@ export const InlineRow = styled.div`
 `;
 
 export const Counter = styled.span`
+  margin-left: auto;
   padding: 2px 8px;
   border-radius: ${radius.sm};
   background: ${colors.surfaceHover};

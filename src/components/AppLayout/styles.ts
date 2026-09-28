@@ -1,4 +1,4 @@
-import styled from 'styled-components';
+import styled, { css } from 'styled-components';
 import { Link, NavLink } from 'react-router-dom';
 
 import {
@@ -169,7 +169,7 @@ export const UserArea = styled.div`
   }
 `;
 
-export const UserInfo = styled(NavLink)`
+const userInfoBase = css`
   flex: 1;
   min-width: 0;
   display: flex;
@@ -179,18 +179,6 @@ export const UserInfo = styled(NavLink)`
   border-radius: ${radius.md};
   text-decoration: none;
   transition: background-color 0.15s;
-
-  &:hover {
-    background: ${colors.surfaceHover};
-  }
-
-  &.active {
-    background: ${colors.primarySoft};
-
-    small {
-      color: ${colors.primary};
-    }
-  }
 
   img {
     width: 32px;
@@ -234,6 +222,34 @@ export const UserInfo = styled(NavLink)`
     div {
       display: none;
     }
+  }
+`;
+
+export const UserInfo = styled(NavLink)`
+  ${userInfoBase}
+
+  &:hover {
+    background: ${colors.surfaceHover};
+  }
+
+  &.active {
+    background: ${colors.primarySoft};
+
+    small {
+      color: ${colors.primary};
+    }
+  }
+`;
+
+// Cliente não tem tela de perfil: só mostra quem está logado
+export const ClientInfo = styled.div`
+  ${userInfoBase}
+
+  small {
+    display: block;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
   }
 `;
 
