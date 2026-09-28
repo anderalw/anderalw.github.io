@@ -20,6 +20,8 @@ import {
   HourList,
   Hour,
   HelpText,
+  TimesBox,
+  BookingSummary,
 } from './styles';
 
 interface Provider {
@@ -45,6 +47,7 @@ const CreateAppointment: React.FC = () => {
   const { client, signOut } = useAuth();
 
   const [services, setServices] = useState<Service[]>([]);
+  const [servicesLoaded, setServicesLoaded] = useState(false);
   const [providers, setProviders] = useState<Provider[]>([]);
   const [selectedService, setSelectedService] = useState('');
   const [selectedProvider, setSelectedProvider] = useState('');
@@ -57,9 +60,12 @@ const CreateAppointment: React.FC = () => {
 
   // Serviços ativos e barbeiros, ao abrir a página
   useEffect(() => {
-    api.get<Service[]>('/services').then(response => {
-      setServices(response.data);
-    });
+    api
+      .get<Service[]>('/services')
+      .then(response => {
+        setServices(response.data);
+      })
+      .finally(() => setServicesLoaded(true));
 
     api.get<Provider[]>('/providers').then(response => {
       setProviders(response.data);
@@ -201,9 +207,11 @@ const CreateAppointment: React.FC = () => {
 
         <Section>
           <strong>1. Escolha o serviço</strong>
-          {services.length === 0 ? (
+          {!servicesLoaded && <HelpText>Carregando serviços...</HelpText>}
+          {servicesLoaded && services.length === 0 && (
             <HelpText>Nenhum serviço disponível no momento.</HelpText>
-          ) : (
+          )}
+          {services.length > 0 && (
             <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap' }}>
               {services.map(item => (
                 <ServiceOption
@@ -255,18 +263,20 @@ const CreateAppointment: React.FC = () => {
           />
         </Section>
 
-        {selectedDate && (
-          <Section>
-            <strong>4. Escolha o horário</strong>
-            {!selectedService && (
+        {/* Sempre visível, com altura fixa, para a página não crescer */}
+        <Section>
+          <strong>4. Escolha o horário</strong>
+          <TimesBox>
+            {(!selectedService || !selectedDate) && (
               <HelpText>
-                Escolha um serviço para ver os horários livres.
+                Escolha o serviço e a data para ver os horários livres.
               </HelpText>
             )}
-            {selectedService && loadingTimes && (
+            {selectedService && selectedDate && loadingTimes && (
               <HelpText>Carregando horários...</HelpText>
             )}
             {selectedService &&
+              selectedDate &&
               !loadingTimes &&
               availableTimes.length === 0 && (
                 <HelpText>
@@ -286,18 +296,18 @@ const CreateAppointment: React.FC = () => {
                 </Hour>
               ))}
             </HourList>
-          </Section>
-        )}
+          </TimesBox>
+        </Section>
 
-        {canConfirm && service && provider && appointmentDate && (
-          <HelpText>
-            {`${service.name} (${formatPrice(service.price_cents)}) com ${
-              provider.name
-            }, ${format(appointmentDate, "EEEE, d 'de' MMMM 'às' HH:mm", {
-              locale: ptBR,
-            })}.`}
-          </HelpText>
-        )}
+        <BookingSummary>
+          {canConfirm && service && provider && appointmentDate
+            ? `${service.name} (${formatPrice(service.price_cents)}) com ${
+                provider.name
+              }, ${format(appointmentDate, "EEEE, d 'de' MMMM 'às' HH:mm", {
+                locale: ptBR,
+              })}.`
+            : ''}
+        </BookingSummary>
 
         <button
           type="button"

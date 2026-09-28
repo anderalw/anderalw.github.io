@@ -163,3 +163,19 @@ export const ServiceOption = styled.button<ProviderProps>`
 export const HelpText = styled.p`
   color: #999591;
 `;
+
+// Altura fixa (três linhas de horários): escolher data ou serviço e carregar
+// os horários não muda o tamanho da página; se houver mais, rola por dentro
+export const TimesBox = styled.div`
+  height: 164px;
+  overflow-y: auto;
+  padding-right: 4px;
+`;
+
+// Resumo antes de confirmar, com duas linhas reservadas
+export const BookingSummary = styled.p`
+  min-height: 48px;
+  margin-bottom: 16px;
+  line-height: 24px;
+  color: #999591;
+`;

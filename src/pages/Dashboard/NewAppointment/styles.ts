@@ -1,5 +1,7 @@
 import styled, { css } from 'styled-components';
 
+import { Dialog } from '../AppointmentDetails/styles';
+
 export const StepLabel = styled.p`
   margin: -4px 0 16px;
   font-size: 13px;
@@ -162,16 +164,54 @@ export const ServiceOption = styled.button<{ selected: boolean }>`
     `}
 `;
 
-export const SlotStatus = styled.div<{ ok: boolean }>`
-  margin-top: 4px;
-  padding: 10px 12px;
-  border-radius: 8px;
+// Altura fixa nos dois passos: o conteúdo rola por dentro e as mensagens têm
+// espaço reservado, então o modal não muda de tamanho ao carregar nada
+export const FixedDialog = styled(Dialog)`
+  display: flex;
+  flex-direction: column;
+  height: min(640px, 100%);
+  overflow: hidden;
+
+  h2 {
+    margin: 8px 0 4px;
+  }
+`;
+
+export const Body = styled.div`
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  /* Espaço para a borda de foco dos campos não ser cortada */
+  margin: 0 -6px;
+  padding: 2px 6px;
+`;
+
+export const Footer = styled.div`
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px solid #3e3b47;
+`;
+
+// Dicas, "horário livre" e conflito com sugestões usam sempre este espaço
+export const StatusArea = styled.div`
+  height: 104px;
+  overflow-y: auto;
   font-size: 14px;
   line-height: 20px;
+  color: #999591;
+`;
+
+export const SlotStatus = styled.div<{ ok: boolean }>`
+  padding: 8px 12px;
+  border-radius: 8px;
   background: ${props => (props.ok ? '#51cf6618' : '#fcc41918')};
   color: ${props => (props.ok ? '#8ce99a' : '#ffe066')};
 
   p + div {
-    margin-top: 10px;
+    margin-top: 8px;
   }
 `;

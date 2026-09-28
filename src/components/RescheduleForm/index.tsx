@@ -10,6 +10,7 @@ import {
   Field,
   Times,
   TimeButton,
+  TimesBox,
   Hint,
   Actions,
   PrimaryButton,
@@ -149,29 +150,35 @@ const RescheduleForm: React.FC<RescheduleFormProps> = ({
       </Field>
 
       <div>
-        <Hint style={{ marginBottom: 8 }}>
-          {loading && 'Carregando horários...'}
-          {!loading &&
-            times.length === 0 &&
-            'Nenhum horário livre neste dia. Tente outra data ou outro barbeiro.'}
-          {!loading && times.length > 0 && 'Novo horário'}
-        </Hint>
-        <Times>
-          {times.map(time => (
-            <TimeButton
-              key={time}
-              type="button"
-              selected={time === selectedTime}
-              aria-pressed={time === selectedTime}
-              onClick={() => setSelectedTime(time)}
-            >
-              {time}
-            </TimeButton>
-          ))}
-        </Times>
+        <Hint style={{ marginBottom: 8 }}>Novo horário</Hint>
+        <TimesBox>
+          {loading && <Hint>Carregando horários...</Hint>}
+          {!loading && times.length === 0 && (
+            <Hint>
+              Nenhum horário livre neste dia. Tente outra data ou outro
+              barbeiro.
+            </Hint>
+          )}
+          {!loading && times.length > 0 && (
+            <Times>
+              {times.map(time => (
+                <TimeButton
+                  key={time}
+                  type="button"
+                  selected={time === selectedTime}
+                  aria-pressed={time === selectedTime}
+                  onClick={() => setSelectedTime(time)}
+                >
+                  {time}
+                </TimeButton>
+              ))}
+            </Times>
+          )}
+        </TimesBox>
       </div>
 
-      {unchanged && <Hint>Este é o horário atual do agendamento.</Hint>}
+      {/* Linha sempre presente, para o aviso não empurrar os botões */}
+      <Hint>{unchanged ? 'Este é o horário atual do agendamento.' : ''}</Hint>
 
       <Actions>
         <SecondaryButton type="button" onClick={onCancel}>

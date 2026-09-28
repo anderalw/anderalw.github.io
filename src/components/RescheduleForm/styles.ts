@@ -41,6 +41,14 @@ export const Times = styled.div`
   gap: 8px;
 `;
 
+// Altura fixa (três linhas de horários): carregar ou trocar de dia não muda o
+// tamanho do formulário; se houver mais horários, rola por dentro
+export const TimesBox = styled.div`
+  height: 128px;
+  overflow-y: auto;
+  padding-right: 4px;
+`;
+
 export const TimeButton = styled.button<{ selected: boolean }>`
   padding: 8px 14px;
   border: 0;
@@ -68,7 +76,9 @@ export const TimeButton = styled.button<{ selected: boolean }>`
 `;
 
 export const Hint = styled.p`
+  min-height: 20px;
   font-size: 14px;
+  line-height: 20px;
   color: #999591;
 `;
 
