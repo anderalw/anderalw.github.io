@@ -13,7 +13,7 @@ import CreateAppointment from '../pages/CreateAppointment';
 import MyAppointments from '../pages/MyAppointments';
 import SignInClient from '../pages/SignInClient';
 import SignUpClient from '../pages/SignUpClient';
-import CreateProvider from '../pages/CreateProvider';
+import ManageProviders from '../pages/ManageProviders';
 import ManageServices from '../pages/ManageServices';
 
 const Routes: React.FC = () => (
@@ -28,7 +28,7 @@ const Routes: React.FC = () => (
     <Route path="/dashboard" component={Dashboard} isPrivate />
     <Route path="/perfil" component={Profile} isPrivate />
     <Route path="/admin/servicos" component={ManageServices} isPrivate />
-    <Route path="/admin/barbeiros" component={CreateProvider} isPrivate />
+    <Route path="/admin/barbeiros" component={ManageProviders} isPrivate />
     {/* Endereços antigos das telas de administração */}
     <Redirect from="/admin/services" to="/admin/servicos" />
     <Redirect from="/admin/create-provider" to="/admin/barbeiros" />

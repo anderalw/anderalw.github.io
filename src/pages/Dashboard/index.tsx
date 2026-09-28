@@ -55,6 +55,8 @@ interface AgendaProvider {
   id: string;
   name: string;
   avatar_url: string | null;
+  // false: desativado, aparece só nos dias em que já tinha atendimentos
+  active: boolean;
   // null = folga neste dia da semana
   schedule: { start_time: string; end_time: string } | null;
 }
@@ -464,9 +466,11 @@ const Dashboard: React.FC = () => {
                       {provider.id === user.id && <YouBadge>Você</YouBadge>}
                     </strong>
                     <small>
-                      {provider.schedule
-                        ? `${provider.schedule.start_time} – ${provider.schedule.end_time}`
-                        : 'Folga'}
+                      {!provider.active && 'Desativado'}
+                      {provider.active &&
+                        (provider.schedule
+                          ? `${provider.schedule.start_time} – ${provider.schedule.end_time}`
+                          : 'Folga')}
                     </small>
                   </div>
                 </ProviderHeader>
@@ -503,7 +507,9 @@ const Dashboard: React.FC = () => {
                       const hourEnd = new Date(selectedDate);
                       hourEnd.setHours(hour + 1, 0, 0, 0);
                       // Dentro do expediente e ainda não passou
-                      const bookable = !off && isBefore(now, hourEnd);
+                      // Barbeiro desativado não recebe novos agendamentos
+                      const bookable =
+                        !off && provider.active && isBefore(now, hourEnd);
 
                       if (!bookable) {
                         return <HourCell key={hour} off={off} />;
@@ -642,7 +648,7 @@ const Dashboard: React.FC = () => {
           color={selectedDetails.color}
           now={now}
           onClose={closeDetails}
-          providers={agenda.providers}
+          providers={agenda.providers.filter(item => item.active)}
           onChanged={handleAppointmentChanged}
         />
       )}
