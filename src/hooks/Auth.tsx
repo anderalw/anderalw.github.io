@@ -3,7 +3,7 @@ import React, {
   useCallback,
   useState,
   useContext,
-  useEffect,
+  useLayoutEffect,
 } from 'react';
 import api from '../services/api';
 
@@ -125,8 +125,10 @@ export const AuthProvider: React.FC = ({ children }) => {
   }, []);
 
   // Token expirado ou emitido antes da separação barbeiro/cliente:
-  // a API responde 401 e a sessão local é descartada
-  useEffect(() => {
+  // a API responde 401 e a sessão local é descartada.
+  // useLayoutEffect roda antes dos useEffect das páginas, então o
+  // interceptor já existe quando elas fazem a primeira requisição
+  useLayoutEffect(() => {
     const interceptor = api.interceptors.response.use(
       response => response,
       error => {
