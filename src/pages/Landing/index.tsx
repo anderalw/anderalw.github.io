@@ -14,12 +14,15 @@ const Landing: React.FC = () => {
   return (
     <Container>
       <Background />
-      
+
       <Content>
         <img src={logoImg} alt="GoBarber" />
-        
+
         <h1>O seu estilo nas mãos dos melhores especialistas.</h1>
-        <p>Agende o seu horário de forma simples, rápida e à distância de um clique.</p>
+        <p>
+          Agende o seu horário de forma simples, rápida e à distância de um
+          clique.
+        </p>
 
         <ActionBox>
           <Button onClick={() => history.push('/cliente/login')}>
@@ -27,8 +30,8 @@ const Landing: React.FC = () => {
             Sou Cliente / Agendar Horário
           </Button>
 
-          <Button 
-            className="transparent-btn" 
+          <Button
+            className="transparent-btn"
             onClick={() => history.push('/barbeiro')}
           >
             <FiUser size={20} />

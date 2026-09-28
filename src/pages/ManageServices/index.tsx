@@ -90,7 +90,10 @@ const ManageServices: React.FC = () => {
       }),
     ])
       .catch(err =>
-        showError(err, 'Não foi possível carregar os serviços, tente novamente.'),
+        showError(
+          err,
+          'Não foi possível carregar os serviços, tente novamente.',
+        ),
       )
       .finally(() => setLoading(false));
   }, [user.is_admin, loadServices, showError]);
@@ -132,7 +135,10 @@ const ManageServices: React.FC = () => {
         duration > 480 ||
         duration % 5 !== 0
       ) {
-        showError(null, 'A duração deve ser de 5 a 480 minutos, em múltiplos de 5.');
+        showError(
+          null,
+          'A duração deve ser de 5 a 480 minutos, em múltiplos de 5.',
+        );
         return;
       }
 
@@ -258,8 +264,8 @@ const ManageServices: React.FC = () => {
         <Card>
           <h2>{editingId ? 'Editar serviço' : 'Novo serviço'}</h2>
           <p>
-            A duração define o tempo que o agendamento ocupa na agenda. Mudar
-            o valor ou a duração não altera agendamentos já feitos.
+            A duração define o tempo que o agendamento ocupa na agenda. Mudar o
+            valor ou a duração não altera agendamentos já feitos.
           </p>
 
           <form onSubmit={handleSubmit}>
@@ -323,8 +329,8 @@ const ManageServices: React.FC = () => {
 
           {!loading && services.length === 0 && (
             <EmptyText>
-              Nenhum serviço cadastrado. Os clientes só conseguem agendar
-              depois que houver pelo menos um serviço ativo.
+              Nenhum serviço cadastrado. Os clientes só conseguem agendar depois
+              que houver pelo menos um serviço ativo.
             </EmptyText>
           )}
 
@@ -341,7 +347,9 @@ const ManageServices: React.FC = () => {
                   <small>{formatDuration(service.duration_minutes)}</small>
                 </div>
 
-                <span className="price">{formatPrice(service.price_cents)}</span>
+                <span className="price">
+                  {formatPrice(service.price_cents)}
+                </span>
 
                 <div className="actions">
                   <SecondaryButton

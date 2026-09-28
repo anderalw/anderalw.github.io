@@ -173,11 +173,7 @@ export const AuthProvider: React.FC = ({ children }) => {
     [data, signIn, signInClient, signOut, updateUser],
   );
 
-  return (
-    <AuthContext.Provider value={value}>
-      {children}
-    </AuthContext.Provider>
-  );
+  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 };
 
 export function useAuth(): AuthContextData {

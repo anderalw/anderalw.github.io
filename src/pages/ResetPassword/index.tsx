@@ -73,7 +73,10 @@ const ResetPassword: React.FC = () => {
         addToast({
           type: 'error',
           title: 'Erro ao resetar senha',
-          description: getApiErrorMessage(err, 'Ocorreu um erro ao resetar senha, tente novamente.'),
+          description: getApiErrorMessage(
+            err,
+            'Ocorreu um erro ao resetar senha, tente novamente.',
+          ),
         });
       }
     },

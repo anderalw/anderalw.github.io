@@ -33,7 +33,9 @@ const SignInClient: React.FC = () => {
         formRef.current?.setErrors({});
 
         const schema = Yup.object().shape({
-          email: Yup.string().required('E-mail obrigatório').email('Digite um e-mail válido'),
+          email: Yup.string()
+            .required('E-mail obrigatório')
+            .email('Digite um e-mail válido'),
           password: Yup.string().required('Password obrigatória'),
         });
 
@@ -54,7 +56,10 @@ const SignInClient: React.FC = () => {
         addToast({
           type: 'error',
           title: 'Erro na autenticação',
-          description: getApiErrorMessage(err, 'Ocorreu um erro ao fazer login, verifique as suas credenciais.'),
+          description: getApiErrorMessage(
+            err,
+            'Ocorreu um erro ao fazer login, verifique as suas credenciais.',
+          ),
         });
       }
     },
@@ -71,7 +76,12 @@ const SignInClient: React.FC = () => {
             <h1>Login de Cliente</h1>
 
             <Input name="email" icon={FiMail} placeholder="E-mail" />
-            <Input name="password" icon={FiLock} type="password" placeholder="Password" />
+            <Input
+              name="password"
+              icon={FiLock}
+              type="password"
+              placeholder="Password"
+            />
 
             <Button type="submit">Entrar</Button>
           </Form>

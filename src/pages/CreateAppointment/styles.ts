@@ -10,12 +10,12 @@ export const Container = styled.div`
 export const Content = styled.div`
   max-width: 700px;
   width: 100%;
-  
+
   h1 {
     margin-bottom: 36px;
     font-size: 36px;
   }
-  
+
   button {
     margin-top: 48px;
   }
@@ -34,7 +34,7 @@ export const Section = styled.div`
     margin-bottom: 16px;
   }
 
-  input[type="date"] {
+  input[type='date'] {
     background: #232129;
     border-radius: 10px;
     padding: 16px;
@@ -60,7 +60,8 @@ export const ProviderContainer = styled.div<ProviderProps>`
   transition: background-color 0.2s;
 
   &:hover {
-    background: ${props => (props.selected ? '#ff9000' : shade(0.2, '#3e3b47'))};
+    background: ${props =>
+      props.selected ? '#ff9000' : shade(0.2, '#3e3b47')};
   }
 
   img {
@@ -105,7 +106,8 @@ export const Hour = styled.div<HourProps>`
     `}
 
   ${props =>
-    props.available && !props.selected &&
+    props.available &&
+    !props.selected &&
     css`
       background: #3e3b47;
       color: #f4ede8;

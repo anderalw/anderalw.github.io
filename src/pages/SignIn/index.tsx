@@ -64,7 +64,10 @@ const SignIn: React.FC = () => {
         addToast({
           type: 'error',
           title: 'Erro na autenticação',
-          description: getApiErrorMessage(err, 'Ocorreu um erro ao fazer login, cheque as credenciais'),
+          description: getApiErrorMessage(
+            err,
+            'Ocorreu um erro ao fazer login, cheque as credenciais',
+          ),
         });
       }
     },

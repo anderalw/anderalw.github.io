@@ -515,11 +515,8 @@ const Dashboard: React.FC = () => {
                       {appointments
                         .filter(item => item.provider_id === provider.id)
                         .map(appointment => {
-                          const {
-                            parsedDate,
-                            parsedEnd,
-                            parsedBlockedUntil,
-                          } = appointment;
+                          const { parsedDate, parsedEnd, parsedBlockedUntil } =
+                            appointment;
                           const top =
                             (parsedDate.getHours() +
                               parsedDate.getMinutes() / 60 -

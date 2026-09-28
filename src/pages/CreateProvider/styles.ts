@@ -75,8 +75,8 @@ export const ScheduleItem = styled.div`
   .day-info {
     display: flex;
     align-items: center;
-    
-    input[type="checkbox"] {
+
+    input[type='checkbox'] {
       margin-right: 12px;
       width: 18px;
       height: 18px;
@@ -99,7 +99,7 @@ export const ScheduleItem = styled.div`
       margin: 0 8px;
     }
 
-    input[type="time"] {
+    input[type='time'] {
       background: #28262e;
       border: 1px solid #232129;
       color: #f4ede8;

@@ -44,13 +44,13 @@ const Profile: React.FC = () => {
             .email('Digite um e-mail válido'),
           old_password: Yup.string(),
           password: Yup.string().when('old_password', {
-            is: (val) => !!val.length,
+            is: val => !!val.length,
             then: Yup.string().required('Campo Obrigatório'),
             otherwise: Yup.string(),
           }),
           password_confirmation: Yup.string()
             .when('old_password', {
-              is: (val) => !!val.length,
+              is: val => !!val.length,
               then: Yup.string().required('Campo Obrigatório'),
               otherwise: Yup.string(),
             })
@@ -61,13 +61,8 @@ const Profile: React.FC = () => {
           abortEarly: false,
         });
 
-        const {
-          name,
-          email,
-          old_password,
-          password,
-          password_confirmation,
-        } = data;
+        const { name, email, old_password, password, password_confirmation } =
+          data;
 
         const formData = {
           name,
@@ -103,7 +98,10 @@ const Profile: React.FC = () => {
         addToast({
           type: 'error',
           title: 'Erro na atualização',
-          description: getApiErrorMessage(err, 'Ocorreu um erro ao tentar atualizar o perfil, tente novamente!'),
+          description: getApiErrorMessage(
+            err,
+            'Ocorreu um erro ao tentar atualizar o perfil, tente novamente!',
+          ),
         });
       }
     },
@@ -117,7 +115,7 @@ const Profile: React.FC = () => {
 
         data.append('avatar', e.target.files[0]);
 
-        api.patch('/users/avatar', data).then((response) => {
+        api.patch('/users/avatar', data).then(response => {
           updateUser(response.data);
 
           addToast({

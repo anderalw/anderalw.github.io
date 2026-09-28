@@ -182,7 +182,9 @@ export const Sidebar = styled.aside`
   }
 
   .DayPicker:not(.DayPicker--interactionDisabled)
-    .DayPicker-Day:not(.DayPicker-Day--selected):not(.DayPicker-Day--outside):hover {
+    .DayPicker-Day:not(.DayPicker-Day--selected):not(
+      .DayPicker-Day--outside
+    ):hover {
     background: #3e3b47;
   }
 

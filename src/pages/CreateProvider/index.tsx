@@ -22,7 +22,15 @@ import {
   ScheduleItem,
 } from './styles';
 
-const dayNames = ['Domingo', 'Segunda-feira', 'Terça-feira', 'Quarta-feira', 'Quinta-feira', 'Sexta-feira', 'Sábado'];
+const dayNames = [
+  'Domingo',
+  'Segunda-feira',
+  'Terça-feira',
+  'Quarta-feira',
+  'Quinta-feira',
+  'Sexta-feira',
+  'Sábado',
+];
 
 interface CreateProviderFormData {
   name: string;
@@ -57,81 +65,92 @@ const CreateProvider: React.FC = () => {
     setSchedules(updatedSchedules);
   };
 
-  const handleSubmit = useCallback(async (data: CreateProviderFormData) => {
-    try {
-      formRef.current?.setErrors({});
+  const handleSubmit = useCallback(
+    async (data: CreateProviderFormData) => {
+      try {
+        formRef.current?.setErrors({});
 
-      const schema = Yup.object().shape({
-        name: Yup.string().required('Nome obrigatório'),
-        email: Yup.string().required('E-mail obrigatório').email('Digite um e-mail válido'),
-        password: Yup.string().required('Senha obrigatória'),
-      });
+        const schema = Yup.object().shape({
+          name: Yup.string().required('Nome obrigatório'),
+          email: Yup.string()
+            .required('E-mail obrigatório')
+            .email('Digite um e-mail válido'),
+          password: Yup.string().required('Senha obrigatória'),
+        });
 
-      await schema.validate(data, { abortEarly: false });
+        await schema.validate(data, { abortEarly: false });
 
-      // 1. Filtrar apenas os dias ativados pelo Administrador
-      const activeSchedules = schedules
-        .filter(schedule => schedule.enabled)
-        .map(({ day_of_week, start_time, end_time }) => ({
-          day_of_week,
-          start_time,
-          end_time,
-        }));
+        // 1. Filtrar apenas os dias ativados pelo Administrador
+        const activeSchedules = schedules
+          .filter(schedule => schedule.enabled)
+          .map(({ day_of_week, start_time, end_time }) => ({
+            day_of_week,
+            start_time,
+            end_time,
+          }));
 
-      // 2. Validar os horários antes de criar o barbeiro, para não deixar
-      // um barbeiro registado sem horários se estes forem recusados
-      const invalidSchedule = activeSchedules.find(
-        ({ start_time, end_time }) =>
-          !start_time.endsWith(':00') ||
-          !end_time.endsWith(':00') ||
-          start_time >= end_time,
-      );
+        // 2. Validar os horários antes de criar o barbeiro, para não deixar
+        // um barbeiro registado sem horários se estes forem recusados
+        const invalidSchedule = activeSchedules.find(
+          ({ start_time, end_time }) =>
+            !start_time.endsWith(':00') ||
+            !end_time.endsWith(':00') ||
+            start_time >= end_time,
+        );
 
-      if (invalidSchedule) {
+        if (invalidSchedule) {
+          addToast({
+            type: 'error',
+            title: 'Horário inválido',
+            description: `${
+              dayNames[invalidSchedule.day_of_week]
+            }: use horas cheias (ex: 09:00) e um início antes do fim.`,
+          });
+          return;
+        }
+
+        // 3. Criar o utilizador
+        const response = await api.post('/users', {
+          name: data.name,
+          email: data.email,
+          password: data.password,
+        });
+
+        const newProviderId = response.data.id;
+
+        // 4. Enviar os horários se houver algum dia selecionado
+        if (activeSchedules.length > 0) {
+          await api.post(`/schedules/${newProviderId}`, {
+            schedules: activeSchedules,
+          });
+        }
+
+        addToast({
+          type: 'success',
+          title: 'Barbeiro registado!',
+          description:
+            'O novo profissional e os seus horários foram configurados.',
+        });
+
+        history.push('/dashboard');
+      } catch (err) {
+        if (err instanceof Yup.ValidationError) {
+          formRef.current?.setErrors(getValidationErrors(err));
+          return;
+        }
+
         addToast({
           type: 'error',
-          title: 'Horário inválido',
-          description: `${dayNames[invalidSchedule.day_of_week]}: use horas cheias (ex: 09:00) e um início antes do fim.`,
-        });
-        return;
-      }
-
-      // 3. Criar o utilizador
-      const response = await api.post('/users', {
-        name: data.name,
-        email: data.email,
-        password: data.password,
-      });
-
-      const newProviderId = response.data.id;
-
-      // 4. Enviar os horários se houver algum dia selecionado
-      if (activeSchedules.length > 0) {
-        await api.post(`/schedules/${newProviderId}`, {
-          schedules: activeSchedules,
+          title: 'Erro no registo',
+          description: getApiErrorMessage(
+            err,
+            'Ocorreu um erro ao registar o barbeiro, valide os dados.',
+          ),
         });
       }
-
-      addToast({
-        type: 'success',
-        title: 'Barbeiro registado!',
-        description: 'O novo profissional e os seus horários foram configurados.',
-      });
-
-      history.push('/dashboard');
-    } catch (err) {
-      if (err instanceof Yup.ValidationError) {
-        formRef.current?.setErrors(getValidationErrors(err));
-        return;
-      }
-
-      addToast({
-        type: 'error',
-        title: 'Erro no registo',
-        description: getApiErrorMessage(err, 'Ocorreu um erro ao registar o barbeiro, valide os dados.'),
-      });
-    }
-  }, [addToast, history, schedules]);
+    },
+    [addToast, history, schedules],
+  );
 
   // Só administradores registam barbeiros (a API também valida)
   if (!user.is_admin) {
@@ -151,18 +170,25 @@ const CreateProvider: React.FC = () => {
         <Form ref={formRef} onSubmit={handleSubmit}>
           <Input name="name" icon={FiUser} placeholder="Nome Completo" />
           <Input name="email" icon={FiMail} type="email" placeholder="E-mail" />
-          <Input name="password" icon={FiLock} type="password" placeholder="Palavra-passe provisória" />
+          <Input
+            name="password"
+            icon={FiLock}
+            type="password"
+            placeholder="Palavra-passe provisória"
+          />
 
           <ScheduleContainer>
             <h2>Horários de Trabalho</h2>
-            
+
             {schedules.map((schedule, index) => (
               <ScheduleItem key={schedule.day_of_week}>
                 <div className="day-info">
                   <input
                     type="checkbox"
                     checked={schedule.enabled}
-                    onChange={(e) => handleScheduleChange(index, 'enabled', e.target.checked)}
+                    onChange={e =>
+                      handleScheduleChange(index, 'enabled', e.target.checked)
+                    }
                   />
                   <span>{dayNames[schedule.day_of_week]}</span>
                 </div>
@@ -173,14 +199,22 @@ const CreateProvider: React.FC = () => {
                       type="time"
                       step={3600}
                       value={schedule.start_time}
-                      onChange={(e) => handleScheduleChange(index, 'start_time', e.target.value)}
+                      onChange={e =>
+                        handleScheduleChange(
+                          index,
+                          'start_time',
+                          e.target.value,
+                        )
+                      }
                     />
                     <span>até</span>
                     <input
                       type="time"
                       step={3600}
                       value={schedule.end_time}
-                      onChange={(e) => handleScheduleChange(index, 'end_time', e.target.value)}
+                      onChange={e =>
+                        handleScheduleChange(index, 'end_time', e.target.value)
+                      }
                     />
                   </div>
                 )}

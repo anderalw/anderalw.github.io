@@ -13,7 +13,7 @@ interface ToastContainerProps {
 const ToastContainer: React.FC<ToastContainerProps> = ({ messages }) => {
   const messagesWithTransitions = useTransition(
     messages,
-    (message) => message.id,
+    message => message.id,
     {
       from: { right: '-120%' },
       enter: { right: '0%' },
