@@ -1,34 +1,33 @@
 import styled, { css } from 'styled-components';
 import { animated } from 'react-spring';
 
+import { colors, radius, shadow } from '../../../styles/theme';
+
 interface ContainerProps {
   type?: 'success' | 'error' | 'info';
   // Prefixo $: prop só de estilo, o styled-components não a repassa ao DOM
   $hasDescription: boolean;
 }
 
-const toastTypeVariations = {
-  info: css`
-    background: #ebf8ff;
-    color: #3172b7;
-  `,
-  success: css`
-    background: #e6fffa;
-    color: #2e656a;
-  `,
-  error: css`
-    background: #fddede;
-    color: #c53030;
-  `,
+// Cor de destaque de cada tipo (faixa à esquerda e ícone)
+const toastColors = {
+  info: '#4dabf7',
+  success: colors.success,
+  error: colors.danger,
 };
 
 export const Container = styled(animated.div)<ContainerProps>`
   width: 360px;
 
   position: relative;
-  padding: 16px 30px 16px 16px;
-  border-radius: 10px;
-  box-shadow: 2px 2px 8px rgba(0, 0, 0, 0.2);
+  padding: 14px 36px 14px 16px;
+  border: 1px solid ${colors.borderStrong};
+  border-left: 3px solid ${props => toastColors[props.type || 'info']};
+  border-radius: ${radius.md};
+  background: ${colors.surface};
+  color: ${colors.text};
+  font-size: 14px;
+  box-shadow: ${shadow.popover};
 
   display: flex;
 
@@ -36,10 +35,10 @@ export const Container = styled(animated.div)<ContainerProps>`
     margin-top: 8px;
   }
 
-  ${props => toastTypeVariations[props.type || 'info']}
-
   > svg {
-    margin: 4px 12px 0 0;
+    margin: 2px 12px 0 0;
+    flex-shrink: 0;
+    color: ${props => toastColors[props.type || 'info']};
   }
 
   div {
@@ -47,20 +46,23 @@ export const Container = styled(animated.div)<ContainerProps>`
 
     p {
       margin-top: 4px;
-      font-size: 14px;
-      opacity: 0.8;
+      font-size: 13px;
       line-height: 20px;
+      color: ${colors.textMuted};
     }
   }
 
   button {
     position: absolute;
-    right: 16px;
-    top: 19px;
-    opacity: 0.6;
+    right: 12px;
+    top: 14px;
     border: 0;
     background: transparent;
-    color: inherit;
+    color: ${colors.textSubtle};
+
+    &:hover {
+      color: ${colors.text};
+    }
   }
 
   ${props =>
@@ -68,7 +70,7 @@ export const Container = styled(animated.div)<ContainerProps>`
     css`
       align-items: center;
 
-      svg {
+      > svg {
         margin-top: 0;
       }
     `}

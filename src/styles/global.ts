@@ -16,8 +16,8 @@ html {
 }
 
 body {
-  background: #312E38;
-  color: #FFF;
+  background: ${colors.background};
+  color: ${colors.text};
   -webkit-font-smoothing: antialiased;
   font-family: 'Inter', system-ui, -apple-system, 'Segoe UI', sans-serif;
   font-size: 16px;

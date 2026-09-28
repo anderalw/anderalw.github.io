@@ -1,5 +1,4 @@
 import React, { useCallback, useRef } from 'react';
-import { FiArrowLeft, FiMail, FiUser, FiLock, FiPhone } from 'react-icons/fi';
 import { FormHandles } from '@unform/core';
 import { Form } from '@unform/web';
 import * as Yup from 'yup';
@@ -10,11 +9,9 @@ import { useToast } from '../../hooks/Toast';
 import getValidationErrors from '../../utils/getValidationErros';
 import getApiErrorMessage from '../../utils/getApiErrorMessage';
 
-import logoImg from '../../assets/logo.svg';
-import Input from '../../components/Input';
-import Button from '../../components/Button';
-
-import { Container, Content, Background, AnimationContainer } from './styles';
+import AuthLayout from '../../components/AuthLayout';
+import FormField from '../../components/FormField';
+import { UIButton } from '../../components/ui';
 
 interface SignUpClientFormData {
   name: string;
@@ -75,35 +72,51 @@ const SignUpClient: React.FC = () => {
   );
 
   return (
-    <Container>
-      <Background />
-      <Content>
-        <AnimationContainer>
-          <img src={logoImg} alt="GoBarber" />
+    <AuthLayout
+      title="Criar conta"
+      subtitle="Se a barbearia já marcou um horário para você, use o mesmo e-mail para ver seus agendamentos."
+      image="signup"
+      footer={
+        <>
+          <p>
+            Já tem conta? <Link to="/cliente/login">Entrar</Link>
+          </p>
+          <p>
+            <Link to="/">Voltar ao início</Link>
+          </p>
+        </>
+      }
+    >
+      <Form ref={formRef} onSubmit={handleSubmit}>
+        <FormField
+          name="name"
+          label="Nome completo"
+          autoComplete="name"
+          autoFocus
+        />
+        <FormField
+          name="email"
+          type="email"
+          label="E-mail"
+          autoComplete="email"
+        />
+        <FormField
+          name="phone"
+          type="tel"
+          label="Celular"
+          autoComplete="tel"
+          placeholder="(11) 99999-0000"
+        />
+        <FormField
+          name="password"
+          type="password"
+          label="Senha"
+          autoComplete="new-password"
+        />
 
-          <Form ref={formRef} onSubmit={handleSubmit}>
-            <h1>Crie sua conta de cliente</h1>
-
-            <Input name="name" icon={FiUser} placeholder="Nome completo" />
-            <Input name="email" icon={FiMail} placeholder="E-mail" />
-            <Input name="phone" icon={FiPhone} placeholder="Celular" />
-            <Input
-              name="password"
-              icon={FiLock}
-              type="password"
-              placeholder="Senha"
-            />
-
-            <Button type="submit">Cadastrar</Button>
-          </Form>
-
-          <Link to="/cliente/login">
-            <FiArrowLeft />
-            Já tenho conta
-          </Link>
-        </AnimationContainer>
-      </Content>
-    </Container>
+        <UIButton type="submit">Criar conta</UIButton>
+      </Form>
+    </AuthLayout>
   );
 };
 

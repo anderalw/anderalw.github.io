@@ -1,6 +1,5 @@
 import React, { useCallback, useRef, useState } from 'react';
 
-import { FiLogIn, FiMail } from 'react-icons/fi';
 import { Form } from '@unform/web';
 import { FormHandles } from '@unform/core';
 
@@ -11,13 +10,11 @@ import { useToast } from '../../hooks/Toast';
 import getValidationErrors from '../../utils/getValidationErros';
 import getApiErrorMessage from '../../utils/getApiErrorMessage';
 
-import logoImg from '../../assets/logo.svg';
-
-import Input from '../../components/Input';
-import Button from '../../components/Button';
-
-import { Container, Content, AnimationContainer, Background } from './styles';
 import api from '../../services/api';
+
+import AuthLayout from '../../components/AuthLayout';
+import FormField from '../../components/FormField';
+import { UIButton } from '../../components/ui';
 
 interface ForgotPasswordFormData {
   email: string;
@@ -80,29 +77,29 @@ const ForgotPassword: React.FC = () => {
   );
 
   return (
-    <Container>
-      <Content>
-        <AnimationContainer>
-          <img src={logoImg} alt="GoBarber" />
+    <AuthLayout
+      title="Recuperar senha"
+      subtitle="Informe o e-mail da sua conta de barbeiro. Enviaremos um link para você criar uma nova senha."
+      footer={
+        <p>
+          Lembrou a senha? <Link to="/barbeiro">Voltar ao login</Link>
+        </p>
+      }
+    >
+      <Form ref={formRef} onSubmit={handleSubmit}>
+        <FormField
+          name="email"
+          type="email"
+          label="E-mail"
+          autoComplete="email"
+          autoFocus
+        />
 
-          <Form ref={formRef} onSubmit={handleSubmit}>
-            <h1>Recuperação de senha</h1>
-
-            <Input name="email" icon={FiMail} placeholder="E-mail" />
-
-            <Button loading={loading} type="submit">
-              Recuperar
-            </Button>
-          </Form>
-
-          <Link to="/barbeiro">
-            <FiLogIn />
-            Voltar ao login
-          </Link>
-        </AnimationContainer>
-      </Content>
-      <Background />
-    </Container>
+        <UIButton type="submit" disabled={loading}>
+          {loading ? 'Enviando...' : 'Enviar link'}
+        </UIButton>
+      </Form>
+    </AuthLayout>
   );
 };
 export default ForgotPassword;

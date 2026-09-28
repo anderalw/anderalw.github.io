@@ -1,5 +1,4 @@
 import React, { useRef, useCallback } from 'react';
-import { FiLogIn, FiMail, FiLock } from 'react-icons/fi';
 import { FormHandles } from '@unform/core';
 import { Form } from '@unform/web';
 import * as Yup from 'yup';
@@ -10,11 +9,9 @@ import { useAuth } from '../../hooks/Auth';
 import getValidationErrors from '../../utils/getValidationErros';
 import getApiErrorMessage from '../../utils/getApiErrorMessage';
 
-import logoImg from '../../assets/logo.svg';
-import Input from '../../components/Input';
-import Button from '../../components/Button';
-
-import { Container, Content, Background, AnimationContainer } from './styles';
+import AuthLayout from '../../components/AuthLayout';
+import FormField from '../../components/FormField';
+import { UIButton } from '../../components/ui';
 
 interface SignInClientFormData {
   email: string;
@@ -67,33 +64,38 @@ const SignInClient: React.FC = () => {
   );
 
   return (
-    <Container>
-      <Content>
-        <AnimationContainer>
-          <img src={logoImg} alt="GoBarber" />
+    <AuthLayout
+      title="Entrar"
+      subtitle="Acesse sua conta para agendar e acompanhar seus horários."
+      footer={
+        <>
+          <p>
+            Ainda não tem conta? <Link to="/cliente/cadastro">Criar conta</Link>
+          </p>
+          <p>
+            <Link to="/">Voltar ao início</Link>
+          </p>
+        </>
+      }
+    >
+      <Form ref={formRef} onSubmit={handleSubmit}>
+        <FormField
+          name="email"
+          type="email"
+          label="E-mail"
+          autoComplete="email"
+          autoFocus
+        />
+        <FormField
+          name="password"
+          type="password"
+          label="Senha"
+          autoComplete="current-password"
+        />
 
-          <Form ref={formRef} onSubmit={handleSubmit}>
-            <h1>Login de Cliente</h1>
-
-            <Input name="email" icon={FiMail} placeholder="E-mail" />
-            <Input
-              name="password"
-              icon={FiLock}
-              type="password"
-              placeholder="Senha"
-            />
-
-            <Button type="submit">Entrar</Button>
-          </Form>
-
-          <Link to="/cliente/cadastro">
-            <FiLogIn />
-            Criar conta de cliente
-          </Link>
-        </AnimationContainer>
-      </Content>
-      <Background />
-    </Container>
+        <UIButton type="submit">Entrar</UIButton>
+      </Form>
+    </AuthLayout>
   );
 };
 

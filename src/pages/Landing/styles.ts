@@ -1,73 +1,89 @@
-import styled from 'styled-components';
-import signInBackgroundImg from '../../assets/sign-in-background.png';
+import styled, { css } from 'styled-components';
+import { Link } from 'react-router-dom';
 
-export const Container = styled.div`
-  height: 100vh;
-  display: flex;
-  align-items: stretch;
-`;
+import { colors, radius } from '../../styles/theme';
 
-export const Background = styled.div`
-  flex: 1;
-  background: url(${signInBackgroundImg}) no-repeat center;
-  background-size: cover;
-`;
-
-export const Content = styled.div`
+export const Choices = styled.nav`
   display: flex;
   flex-direction: column;
+  gap: 12px;
+`;
+
+// Cartão clicável com as duas entradas do sistema
+export const Choice = styled(Link)<{ $primary?: boolean }>`
+  display: flex;
   align-items: center;
-  justify-content: center;
-
-  width: 100%;
-  max-width: 700px;
-  padding: 0 32px;
-
-  img {
-    margin-bottom: 64px;
-    width: 250px;
-  }
-
-  h1 {
-    font-size: 42px;
-    text-align: center;
-    margin-bottom: 24px;
-    line-height: 52px;
-  }
-
-  p {
-    font-size: 18px;
-    color: #999591;
-    text-align: center;
-    margin-bottom: 48px;
-    max-width: 400px;
-    line-height: 28px;
-  }
-`;
-
-export const ActionBox = styled.div`
-  display: flex;
-  flex-direction: column;
   gap: 16px;
-  width: 100%;
-  max-width: 350px;
+  padding: 18px 20px;
+  border: 1px solid ${colors.borderStrong};
+  border-radius: ${radius.lg};
+  background: ${colors.sunken};
+  color: ${colors.text};
+  text-decoration: none;
+  transition: border-color 0.15s, background-color 0.15s;
 
-  button {
+  .icon {
     display: flex;
     align-items: center;
     justify-content: center;
-    gap: 12px;
-  }
+    width: 44px;
+    height: 44px;
+    flex-shrink: 0;
+    border-radius: ${radius.md};
+    background: ${colors.surfaceHover};
+    color: ${colors.textMuted};
 
-  /* Estilo para o botão secundário (Barbeiros) */
-  .transparent-btn {
-    background: transparent;
-    color: #ff9000;
-    border: 2px solid #ff9000;
-
-    &:hover {
-      background: #ff9000;
-      color: #312e38;
+    svg {
+      width: 20px;
+      height: 20px;
     }
   }
+
+  div {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+  }
+
+  strong {
+    font-size: 16px;
+  }
+
+  small {
+    font-size: 13px;
+    color: ${colors.textMuted};
+  }
+
+  .arrow {
+    width: 18px;
+    height: 18px;
+    color: ${colors.textSubtle};
+    transition: transform 0.15s, color 0.15s;
+  }
+
+  &:hover {
+    border-color: ${colors.primary};
+
+    .arrow {
+      color: ${colors.primary};
+      transform: translateX(3px);
+    }
+  }
+
+  ${props =>
+    props.$primary &&
+    css`
+      border-color: ${colors.primary};
+      background: ${colors.primarySoft};
+
+      .icon {
+        background: ${colors.primary};
+        color: ${colors.onPrimary};
+      }
+
+      .arrow {
+        color: ${colors.primary};
+      }
+    `}
 `;

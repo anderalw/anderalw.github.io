@@ -1,6 +1,5 @@
 import React, { useCallback, useRef } from 'react';
 
-import { FiArrowLeft, FiMail, FiLock } from 'react-icons/fi';
 import { Form } from '@unform/web';
 import { FormHandles } from '@unform/core';
 
@@ -12,12 +11,9 @@ import { useToast } from '../../hooks/Toast';
 import getValidationErrors from '../../utils/getValidationErros';
 import getApiErrorMessage from '../../utils/getApiErrorMessage';
 
-import logoImg from '../../assets/logo.svg';
-
-import Input from '../../components/Input';
-import Button from '../../components/Button';
-
-import { Container, Content, AnimationContainer, Background } from './styles';
+import AuthLayout, { InlineLink } from '../../components/AuthLayout';
+import FormField from '../../components/FormField';
+import { UIButton } from '../../components/ui';
 
 interface SignInFormData {
   email: string;
@@ -75,36 +71,36 @@ const SignIn: React.FC = () => {
   );
 
   return (
-    <Container>
-      <Content>
-        <AnimationContainer>
-          <img src={logoImg} alt="GoBarber" />
+    <AuthLayout
+      title="Acesso do barbeiro"
+      subtitle="Entre para ver a agenda da barbearia."
+      footer={
+        <p>
+          <Link to="/">Voltar ao início</Link>
+        </p>
+      }
+    >
+      <Form ref={formRef} onSubmit={handleSubmit}>
+        <FormField
+          name="email"
+          type="email"
+          label="E-mail"
+          autoComplete="email"
+          autoFocus
+        />
+        <FormField
+          name="password"
+          type="password"
+          label="Senha"
+          autoComplete="current-password"
+        />
+        <InlineLink to="/barbeiro/esqueci-senha">
+          Esqueci minha senha
+        </InlineLink>
 
-          <Form ref={formRef} onSubmit={handleSubmit}>
-            <h1>Faça seu logon</h1>
-
-            <Input name="email" icon={FiMail} placeholder="E-mail" />
-            <Input
-              name="password"
-              icon={FiLock}
-              type="password"
-              placeholder="Senha"
-            />
-
-            <Button type="submit">Entrar</Button>
-
-            <Link to="/barbeiro/esqueci-senha">Esqueci minha senha.</Link>
-          </Form>
-
-          {/* Contas de barbeiro são criadas pelo administrador no painel */}
-          <Link to="/">
-            <FiArrowLeft />
-            Voltar ao início
-          </Link>
-        </AnimationContainer>
-      </Content>
-      <Background />
-    </Container>
+        <UIButton type="submit">Entrar</UIButton>
+      </Form>
+    </AuthLayout>
   );
 };
 export default SignIn;
