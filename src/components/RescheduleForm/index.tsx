@@ -107,8 +107,10 @@ const RescheduleForm: React.FC<RescheduleFormProps> = ({
         date: newDate,
       });
 
+      // Quem usa o formulário o fecha ao remarcar, então não mexe mais no estado
       onRescheduled(newDate);
     } catch (err) {
+      setSaving(false);
       addToast({
         type: 'error',
         title: 'Não foi possível remarcar',
@@ -117,8 +119,6 @@ const RescheduleForm: React.FC<RescheduleFormProps> = ({
           'Ocorreu um erro ao remarcar, tente novamente.',
         ),
       });
-    } finally {
-      setSaving(false);
     }
   }, [newDate, unchanged, appointmentId, providerId, onRescheduled, addToast]);
 
