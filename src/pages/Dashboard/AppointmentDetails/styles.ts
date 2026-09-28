@@ -72,18 +72,6 @@ export const FixedDialog = styled(Dialog)`
   overflow: hidden;
 `;
 
-// Conteúdo de cada modo, com as ações empurradas para o pé do painel
-export const DetailsBody = styled.div`
-  flex: 1;
-  min-height: 0;
-  display: flex;
-  flex-direction: column;
-  overflow-y: auto;
-  /* Espaço para a borda de foco dos campos não ser cortada */
-  margin: 0 -6px;
-  padding: 2px 6px;
-`;
-
 // Formulário de remarcação ocupando a altura, com os botões no pé
 export const RescheduleArea = styled.div`
   flex: 1;
@@ -97,11 +85,6 @@ export const RescheduleArea = styled.div`
   > div > :last-child {
     margin-top: auto;
   }
-`;
-
-// Ações e rodapé do modo "ver", sempre no pé do painel
-export const BottomArea = styled.div`
-  margin-top: auto;
 `;
 
 export type AppointmentStatus = 'past' | 'ongoing' | 'upcoming';
@@ -263,4 +246,71 @@ export const SectionTitle = styled.h3`
   font-weight: 500;
   color: ${colors.text};
   margin-bottom: 14px;
+`;
+
+// Opções do modo "ver": cartões grandes para remarcar ou cancelar
+export const ActionCard = styled.button<{ danger?: boolean }>`
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  width: 100%;
+  padding: 16px;
+  border: 1px solid ${colors.borderStrong};
+  border-radius: 10px;
+  background: ${colors.sunken};
+  color: ${colors.text};
+  font: inherit;
+  text-align: left;
+  transition: border-color 0.15s, background-color 0.15s;
+
+  & + & {
+    margin-top: 10px;
+  }
+
+  > svg {
+    flex-shrink: 0;
+    width: 36px;
+    height: 36px;
+    padding: 9px;
+    border-radius: 50%;
+    background: ${props =>
+      props.danger ? colors.dangerSoft : colors.primarySoft};
+    color: ${props => (props.danger ? colors.danger : colors.primary)};
+  }
+
+  strong {
+    display: block;
+    font-size: 15px;
+    font-weight: 600;
+    color: ${props => (props.danger ? colors.danger : colors.text)};
+  }
+
+  small {
+    display: block;
+    margin-top: 2px;
+    font-size: 13px;
+    color: ${colors.textMuted};
+  }
+
+  &:hover {
+    border-color: ${props => (props.danger ? colors.danger : colors.primary)};
+  }
+`;
+
+// Aviso quando o atendimento já começou ou terminou
+export const Notice = styled.p`
+  padding: 14px 16px;
+  border-radius: 10px;
+  background: ${colors.sunken};
+  color: ${colors.textMuted};
+  line-height: 1.5;
+`;
+
+// "Agendado em ...", no pé da coluna de dados
+export const CreatedAt = styled.p`
+  margin-top: auto;
+  padding-top: 14px;
+  border-top: 1px solid ${colors.border};
+  font-size: 12px;
+  color: ${colors.textSubtle};
 `;

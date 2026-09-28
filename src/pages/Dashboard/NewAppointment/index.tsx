@@ -18,11 +18,13 @@ import {
 import {
   WideDialog,
   DialogHeader,
-  StepLabel,
   Columns,
   Aside,
   Main,
   Footer,
+} from '../modalLayout';
+import {
+  StepLabel,
   Summary,
   StatusArea,
   SlotStatus,
