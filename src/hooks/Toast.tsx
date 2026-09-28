@@ -1,5 +1,4 @@
 import React, { createContext, useContext, useCallback, useState } from 'react';
-import { uuid } from 'uuidv4';
 
 import ToastContainer from '../components/ToastContainer';
 
@@ -15,6 +14,9 @@ interface ToastContextData {
   removeToast(id: string): void;
 }
 
+// Basta ser único entre os toasts da sessão, então um contador resolve
+let lastToastId = 0;
+
 const ToastContext = createContext<ToastContextData>({} as ToastContextData);
 
 const ToastProvider: React.FC = ({ children }) => {
@@ -22,7 +24,8 @@ const ToastProvider: React.FC = ({ children }) => {
 
   const addToast = useCallback(
     ({ type, title, description }: Omit<ToastMessage, 'id'>) => {
-      const id = uuid();
+      lastToastId += 1;
+      const id = String(lastToastId);
 
       const toast = {
         id,
