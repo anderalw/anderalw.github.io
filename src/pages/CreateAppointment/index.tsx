@@ -3,7 +3,7 @@ import { format, startOfDay } from 'date-fns';
 import ptBR from 'date-fns/locale/pt-BR';
 import DayPicker from 'react-day-picker';
 import 'react-day-picker/lib/style.css';
-import { FiCheck } from 'react-icons/fi';
+import { FiCheck, FiUsers } from 'react-icons/fi';
 
 import api from '../../services/api';
 import { useToast } from '../../hooks/Toast';
@@ -61,6 +61,9 @@ interface AvailableTime {
   time: string;
 }
 
+// Valor de selectedProvider para "Qualquer barbeiro"
+const ANY_PROVIDER = 'any';
+
 const MONTHS = [
   'Janeiro',
   'Fevereiro',
@@ -84,7 +87,8 @@ const CreateAppointment: React.FC = () => {
   const [providers, setProviders] = useState<Provider[]>([]);
   const [providersLoaded, setProvidersLoaded] = useState(false);
   const [selectedService, setSelectedService] = useState('');
-  const [selectedProvider, setSelectedProvider] = useState('');
+  // Começa em "Qualquer barbeiro": mostra todos os horários da barbearia
+  const [selectedProvider, setSelectedProvider] = useState(ANY_PROVIDER);
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
   const [selectedTime, setSelectedTime] = useState('');
   const [availableTimes, setAvailableTimes] = useState<AvailableTime[]>([]);
@@ -106,9 +110,6 @@ const CreateAppointment: React.FC = () => {
       .get<Provider[]>('/providers')
       .then(response => {
         setProviders(response.data);
-        if (response.data.length > 0) {
-          setSelectedProvider(response.data[0].id);
-        }
       })
       .finally(() => setProvidersLoaded(true));
   }, []);
@@ -154,10 +155,12 @@ const CreateAppointment: React.FC = () => {
     () => services.find(item => item.id === selectedService),
     [services, selectedService],
   );
+  const isAnyProvider = selectedProvider === ANY_PROVIDER;
   const provider = useMemo(
     () => providers.find(item => item.id === selectedProvider),
     [providers, selectedProvider],
   );
+  const providerChosen = isAnyProvider || !!provider;
 
   const appointmentDate = useMemo(() => {
     if (!selectedDate || !selectedTime) return null;
@@ -170,25 +173,34 @@ const CreateAppointment: React.FC = () => {
   }, [selectedDate, selectedTime]);
 
   const handleCreateAppointment = useCallback(async () => {
-    if (!service || !provider || !appointmentDate) return;
+    if (!service || !providerChosen || !appointmentDate) return;
 
     setSaving(true);
 
     try {
-      // O backend identifica o cliente pelo token, não é preciso enviar o id
-      await api.post('/appointments', {
-        provider_id: provider.id,
-        service_id: service.id,
-        date: appointmentDate,
-      });
+      // O backend identifica o cliente pelo token, não é preciso enviar o id.
+      // Sem preferência, ele escolhe um barbeiro livre no horário
+      const response = isAnyProvider
+        ? await api.post<{ provider_id: string }>('/appointments/any', {
+            service_id: service.id,
+            date: appointmentDate,
+          })
+        : await api.post<{ provider_id: string }>('/appointments', {
+            provider_id: provider?.id,
+            service_id: service.id,
+            date: appointmentDate,
+          });
+
+      const assigned = providers.find(
+        item => item.id === response.data.provider_id,
+      );
 
       addToast({
         type: 'success',
         title: 'Agendamento concluído!',
-        description: `${service.name} com ${provider.name} em ${format(
-          appointmentDate,
-          "dd/MM/yyyy 'às' HH:mm",
-        )}.`,
+        description: `${service.name} com ${
+          assigned?.name || 'um dos nossos barbeiros'
+        } em ${format(appointmentDate, "dd/MM/yyyy 'às' HH:mm")}.`,
       });
 
       // Limpa o horário e recarrega a lista para permitir um novo agendamento
@@ -208,9 +220,17 @@ const CreateAppointment: React.FC = () => {
     } finally {
       setSaving(false);
     }
-  }, [service, provider, appointmentDate, addToast]);
+  }, [
+    service,
+    provider,
+    providers,
+    providerChosen,
+    isAnyProvider,
+    appointmentDate,
+    addToast,
+  ]);
 
-  const canConfirm = !!(service && provider && appointmentDate);
+  const canConfirm = !!(service && providerChosen && appointmentDate);
 
   let timesMessage = '';
 
@@ -219,8 +239,9 @@ const CreateAppointment: React.FC = () => {
   } else if (loadingTimes) {
     timesMessage = 'Carregando horários...';
   } else if (availableTimes.length === 0) {
-    timesMessage =
-      'Nenhum horário livre neste dia. Tente outra data ou outro profissional.';
+    timesMessage = isAnyProvider
+      ? 'Nenhum barbeiro tem horário livre neste dia. Tente outra data.'
+      : 'Nenhum horário livre neste dia. Tente outra data ou outro profissional.';
   }
 
   return (
@@ -273,8 +294,8 @@ const CreateAppointment: React.FC = () => {
 
             <Card>
               <CardHeader>
-                <StepNumber done={!!provider}>
-                  {provider ? <FiCheck /> : 2}
+                <StepNumber done={providerChosen}>
+                  {providerChosen ? <FiCheck /> : 2}
                 </StepNumber>
                 <h2>Profissional</h2>
               </CardHeader>
@@ -282,24 +303,41 @@ const CreateAppointment: React.FC = () => {
                 <OptionGrid min={180}>
                   {!providersLoaded
                     ? [0, 1, 2].map(item => <OptionSkeleton key={item} />)
-                    : providers.map(item => (
+                    : [
                         <ProviderOption
-                          key={item.id}
+                          key={ANY_PROVIDER}
                           type="button"
-                          selected={item.id === selectedProvider}
-                          aria-pressed={item.id === selectedProvider}
-                          onClick={() => setSelectedProvider(item.id)}
+                          selected={isAnyProvider}
+                          aria-pressed={isAnyProvider}
+                          onClick={() => setSelectedProvider(ANY_PROVIDER)}
                         >
-                          <img
-                            src={item.avatar_url || avatarFallback(item.name)}
-                            alt=""
-                            onError={e => {
-                              e.currentTarget.src = avatarFallback(item.name);
-                            }}
-                          />
-                          <strong>{item.name}</strong>
-                        </ProviderOption>
-                      ))}
+                          <span className="any-icon">
+                            <FiUsers />
+                          </span>
+                          <div>
+                            <strong>Qualquer barbeiro</strong>
+                            <small>Mais horários disponíveis</small>
+                          </div>
+                        </ProviderOption>,
+                        ...providers.map(item => (
+                          <ProviderOption
+                            key={item.id}
+                            type="button"
+                            selected={item.id === selectedProvider}
+                            aria-pressed={item.id === selectedProvider}
+                            onClick={() => setSelectedProvider(item.id)}
+                          >
+                            <img
+                              src={item.avatar_url || avatarFallback(item.name)}
+                              alt=""
+                              onError={e => {
+                                e.currentTarget.src = avatarFallback(item.name);
+                              }}
+                            />
+                            <strong>{item.name}</strong>
+                          </ProviderOption>
+                        )),
+                      ]}
                 </OptionGrid>
               </CardBody>
             </Card>
@@ -378,8 +416,10 @@ const CreateAppointment: React.FC = () => {
                     {service ? formatDuration(service.duration_minutes) : '–'}
                   </dd>
                   <dt>Profissional</dt>
-                  <dd className={provider ? '' : 'empty'}>
-                    {provider?.name || 'A escolher'}
+                  <dd className={providerChosen ? '' : 'empty'}>
+                    {isAnyProvider
+                      ? 'Qualquer barbeiro'
+                      : provider?.name || 'A escolher'}
                   </dd>
                   <dt>Data</dt>
                   <dd className={selectedDate ? '' : 'empty'}>

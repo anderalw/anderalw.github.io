@@ -135,6 +135,36 @@ export const ProviderOption = styled.button<{ selected: boolean }>`
     overflow: hidden;
     text-overflow: ellipsis;
   }
+
+  /* "Qualquer barbeiro": ícone no lugar da foto e uma linha de apoio */
+  .any-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 36px;
+    height: 36px;
+    flex-shrink: 0;
+    border-radius: 50%;
+    background: ${props =>
+      props.selected ? colors.primary : colors.surfaceHover};
+    color: ${props => (props.selected ? colors.onPrimary : colors.textMuted)};
+
+    svg {
+      width: 18px;
+      height: 18px;
+    }
+  }
+
+  div {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+  }
+
+  small {
+    font-size: 12px;
+    color: ${colors.textMuted};
+  }
 `;
 
 const pulse = keyframes`
