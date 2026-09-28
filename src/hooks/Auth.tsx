@@ -4,6 +4,7 @@ import React, {
   useState,
   useContext,
   useLayoutEffect,
+  useMemo,
 } from 'react';
 import api from '../services/api';
 
@@ -158,18 +159,22 @@ export const AuthProvider: React.FC = ({ children }) => {
     [setData, data.token],
   );
 
+  // Mesmo objeto enquanto nada muda, para não re-renderizar quem usa o contexto
+  const value = useMemo(
+    () => ({
+      user: data.user as User,
+      client: data.client as Client,
+      role: data.role,
+      signIn,
+      signInClient,
+      signOut,
+      updateUser,
+    }),
+    [data, signIn, signInClient, signOut, updateUser],
+  );
+
   return (
-    <AuthContext.Provider
-      value={{
-        user: data.user as User,
-        client: data.client as Client,
-        role: data.role,
-        signIn,
-        signInClient,
-        signOut,
-        updateUser,
-      }}
-    >
+    <AuthContext.Provider value={value}>
       {children}
     </AuthContext.Provider>
   );

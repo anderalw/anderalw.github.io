@@ -59,7 +59,19 @@
         "tsx": "never"
       }
     ],
-    "camelcase": "off"
+    "camelcase": "off",
+    "react/function-component-definition": "off",
+    "react/require-default-props": "off",
+    "import/no-extraneous-dependencies": [
+      "error",
+      {
+        "devDependencies": [
+          "**/*.test.ts",
+          "**/*.test.tsx",
+          "vite.config.ts"
+        ]
+      }
+    ]
   },
   "settings": {
     "import/resolver": {

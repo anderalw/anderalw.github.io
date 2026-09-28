@@ -24,6 +24,12 @@ import {
 
 const dayNames = ['Domingo', 'Segunda-feira', 'Terça-feira', 'Quarta-feira', 'Quinta-feira', 'Sexta-feira', 'Sábado'];
 
+interface CreateProviderFormData {
+  name: string;
+  email: string;
+  password: string;
+}
+
 const CreateProvider: React.FC = () => {
   const formRef = useRef<FormHandles>(null);
   const { addToast } = useToast();
@@ -41,13 +47,17 @@ const CreateProvider: React.FC = () => {
   ]);
 
   // Função para atualizar um campo específico de um dia na grelha
-  const handleScheduleChange = (index: number, field: string, value: string | boolean) => {
+  const handleScheduleChange = (
+    index: number,
+    field: string,
+    value: string | boolean,
+  ): void => {
     const updatedSchedules = [...schedules];
     updatedSchedules[index] = { ...updatedSchedules[index], [field]: value };
     setSchedules(updatedSchedules);
   };
 
-  const handleSubmit = useCallback(async (data: any) => {
+  const handleSubmit = useCallback(async (data: CreateProviderFormData) => {
     try {
       formRef.current?.setErrors({});
 

@@ -16,6 +16,11 @@ import Button from '../../components/Button';
 
 import { Container, Content, Background, AnimationContainer } from './styles';
 
+interface SignInClientFormData {
+  email: string;
+  password: string;
+}
+
 const SignInClient: React.FC = () => {
   const formRef = useRef<FormHandles>(null);
   const { addToast } = useToast();
@@ -23,7 +28,7 @@ const SignInClient: React.FC = () => {
   const history = useHistory();
 
   const handleSubmit = useCallback(
-    async (data: any) => {
+    async (data: SignInClientFormData) => {
       try {
         formRef.current?.setErrors({});
 
