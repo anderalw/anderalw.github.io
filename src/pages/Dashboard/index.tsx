@@ -1,28 +1,27 @@
 import React, {
   useState,
   useEffect,
-  useLayoutEffect,
   useCallback,
   useMemo,
   useRef,
 } from 'react';
 import {
   addDays,
+  endOfWeek,
   format,
   isBefore,
+  isSameMonth,
+  isSameYear,
   isToday,
-  parseISO,
   startOfDay,
+  startOfWeek,
 } from 'date-fns';
 import ptBR from 'date-fns/locale/pt-BR';
 import DayPicker from 'react-day-picker';
 import 'react-day-picker/lib/style.css';
 import { FiChevronLeft, FiChevronRight } from 'react-icons/fi';
 import {
-  MIN_HOUR_HEIGHT,
-  MAX_HOUR_HEIGHT,
   COMPACT_HOUR_HEIGHT,
-  AGENDA_PADDING,
   AgendaArea,
   Toolbar,
   TodayButton,
@@ -40,6 +39,8 @@ import {
   BufferStrip,
   NowLine,
   EmptyState,
+  ViewSwitch,
+  ProviderFilter,
 } from './styles';
 import { useAuth } from '../../hooks/Auth';
 import { useToast } from '../../hooks/Toast';
@@ -50,81 +51,54 @@ import AppLayout from '../../components/AppLayout';
 import { Calendar } from '../../components/ui/Calendar';
 import AppointmentDetails from './AppointmentDetails';
 import NewAppointment from './NewAppointment';
+import WeekView, { DetailsTarget, NewSlot } from './WeekView';
+import useHourHeight from './useHourHeight';
+import {
+  Agenda,
+  MONTHS,
+  parseAppointments,
+  providerColor,
+  hourRange,
+  toHour,
+} from './agenda';
 
-interface AgendaProvider {
-  id: string;
-  name: string;
-  avatar_url: string | null;
-  // false: desativado, aparece só nos dias em que já tinha atendimentos
-  active: boolean;
-  // null = folga neste dia da semana
-  schedule: { start_time: string; end_time: string } | null;
+type ViewMode = 'day' | 'week';
+
+const VIEW_STORAGE_KEY = '@GoBarber:agendaView';
+
+// Última visão escolhida neste navegador (pode não haver storage)
+function savedView(): ViewMode {
+  try {
+    return localStorage.getItem(VIEW_STORAGE_KEY) === 'week' ? 'week' : 'day';
+  } catch {
+    return 'day';
+  }
 }
-
-interface AgendaAppointment {
-  id: string;
-  date: string;
-  // Fim do atendimento: início + duração do serviço
-  end_date: string;
-  // Fim do intervalo depois do atendimento (igual a end_date sem intervalo)
-  blocked_until: string;
-  provider_id: string;
-  // null em agendamentos anteriores ao cadastro de serviços
-  service: { id: string; name: string } | null;
-  price_cents: number | null;
-  created_at: string;
-  // email null: cliente cadastrado pelo barbeiro sem e-mail
-  client: {
-    id: string;
-    name: string;
-    email: string | null;
-    phone: string;
-  } | null;
-}
-
-interface Agenda {
-  providers: AgendaProvider[];
-  appointments: AgendaAppointment[];
-}
-
-// Uma cor por barbeiro, como os calendários do Google Agenda
-const PROVIDER_COLORS = [
-  '#ff9000',
-  '#4dabf7',
-  '#51cf66',
-  '#cc5de8',
-  '#ff6b6b',
-  '#20c997',
-  '#fcc419',
-  '#748ffc',
-];
-
-// Intervalo mostrado quando ninguém trabalha no dia
-const DEFAULT_START_HOUR = 8;
-const DEFAULT_END_HOUR = 18;
 
 // Serviços curtos (ex: 15 min) ainda precisam de um card clicável
 const MIN_CARD_HEIGHT = 18;
 // Abaixo desta altura o card mostra só horário e cliente, numa linha
 const COMPACT_CARD_HEIGHT = 44;
 
-const MONTHS = [
-  'Janeiro',
-  'Fevereiro',
-  'Março',
-  'Abril',
-  'Maio',
-  'Junho',
-  'Julho',
-  'Agosto',
-  'Setembro',
-  'Outubro',
-  'Novembro',
-  'Dezembro',
-];
+// "27 set – 3 out de 2026", "6 – 12 de outubro de 2026"
+function weekTitle(start: Date): string {
+  const end = endOfWeek(start);
 
-function toHour(time: string): number {
-  return Number(time.split(':')[0]);
+  if (isSameMonth(start, end)) {
+    return `${format(start, 'd')} – ${format(end, "d 'de' MMMM 'de' yyyy", {
+      locale: ptBR,
+    })}`;
+  }
+
+  const startPattern = isSameYear(start, end)
+    ? "d 'de' MMM"
+    : "d 'de' MMM 'de' yyyy";
+
+  return `${format(start, startPattern, { locale: ptBR })} – ${format(
+    end,
+    "d 'de' MMM 'de' yyyy",
+    { locale: ptBR },
+  )}`;
 }
 
 const Dashboard: React.FC = () => {
@@ -139,28 +113,39 @@ const Dashboard: React.FC = () => {
   });
   const [loading, setLoading] = useState(true);
   const [now, setNow] = useState(new Date());
-  const [selectedAppointmentId, setSelectedAppointmentId] = useState<
-    string | null
-  >(null);
+  const [view, setView] = useState<ViewMode>(savedView);
+  // Visão semanal: 'all' ou o id de um barbeiro
+  const [providerFilter, setProviderFilter] = useState('all');
+  const [weekCount, setWeekCount] = useState<number | null>(null);
+  // Agendamento aberto no painel de detalhes
+  const [details, setDetails] = useState<DetailsTarget | null>(null);
   // Card que abriu os detalhes, para devolver o foco a ele ao fechar
   const openerRef = useRef<HTMLElement | null>(null);
   // Hora livre clicada: abre o formulário de novo agendamento
-  const [newSlot, setNewSlot] = useState<{
-    provider: AgendaProvider;
-    start: Date;
-    color: string;
-  } | null>(null);
+  const [newSlot, setNewSlot] = useState<NewSlot | null>(null);
+
+  const changeView = useCallback((next: ViewMode) => {
+    setView(next);
+
+    try {
+      localStorage.setItem(VIEW_STORAGE_KEY, next);
+    } catch {
+      // Sem storage a escolha só vale até recarregar a página
+    }
+  }, []);
+
+  const weekStart = useMemo(() => startOfWeek(selectedDate), [selectedDate]);
 
   const openDetails = useCallback(
-    (appointmentId: string, opener: HTMLElement) => {
+    (target: DetailsTarget, opener: HTMLElement) => {
       openerRef.current = opener;
-      setSelectedAppointmentId(appointmentId);
+      setDetails(target);
     },
     [],
   );
 
   const closeDetails = useCallback(() => {
-    setSelectedAppointmentId(null);
+    setDetails(null);
     openerRef.current?.focus();
   }, []);
 
@@ -169,7 +154,7 @@ const Dashboard: React.FC = () => {
 
   const handleAppointmentChanged = useCallback(
     (message: { title: string; description: string }) => {
-      setSelectedAppointmentId(null);
+      setDetails(null);
       setNewSlot(null);
       setRefreshKey(key => key + 1);
       addToast({ type: 'success', ...message });
@@ -184,9 +169,11 @@ const Dashboard: React.FC = () => {
     return () => clearInterval(interval);
   }, []);
 
-  // Atalhos de teclado, como no Google Agenda: T volta para hoje e as
-  // setas trocam de dia. Ficam desligados com um painel aberto ou digitando
-  const panelOpen = !!selectedAppointmentId || !!newSlot;
+  // Atalhos de teclado, como no Google Agenda: T volta para hoje, as setas
+  // andam um dia (ou uma semana) e D/S trocam a visão. Ficam desligados com
+  // um painel aberto ou digitando
+  const panelOpen = !!details || !!newSlot;
+  const step = view === 'week' ? 7 : 1;
 
   useEffect(() => {
     if (panelOpen) return undefined;
@@ -208,9 +195,13 @@ const Dashboard: React.FC = () => {
       if (event.key === 't' || event.key === 'T') {
         setSelectedDate(startOfDay(new Date()));
       } else if (event.key === 'ArrowLeft') {
-        setSelectedDate(date => addDays(date, -1));
+        setSelectedDate(date => addDays(date, -step));
       } else if (event.key === 'ArrowRight') {
-        setSelectedDate(date => addDays(date, 1));
+        setSelectedDate(date => addDays(date, step));
+      } else if (event.key === 'd' || event.key === 'D') {
+        changeView('day');
+      } else if (event.key === 's' || event.key === 'S') {
+        changeView('week');
       } else {
         return;
       }
@@ -221,7 +212,7 @@ const Dashboard: React.FC = () => {
     window.addEventListener('keydown', handleKeyDown);
 
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [panelOpen]);
+  }, [panelOpen, step, changeView]);
 
   useEffect(() => {
     let active = true;
@@ -266,43 +257,22 @@ const Dashboard: React.FC = () => {
   }, [selectedDate, addToast, refreshKey]);
 
   const appointments = useMemo(
-    () =>
-      agenda.appointments.map(appointment => ({
-        ...appointment,
-        parsedDate: parseISO(appointment.date),
-        parsedEnd: parseISO(appointment.end_date),
-        parsedBlockedUntil: parseISO(appointment.blocked_until),
-      })),
+    () => parseAppointments(agenda.appointments),
     [agenda.appointments],
   );
 
   // Do início do expediente mais cedo ao fim do mais tarde, incluindo
   // agendamentos que por algum motivo estejam fora desse intervalo
-  const [startHour, endHour] = useMemo(() => {
-    const starts: number[] = [];
-    const ends: number[] = [];
-
-    agenda.providers.forEach(provider => {
-      if (provider.schedule) {
-        starts.push(toHour(provider.schedule.start_time));
-        ends.push(toHour(provider.schedule.end_time));
-      }
-    });
-
-    appointments.forEach(appointment => {
-      const end = appointment.parsedEnd;
-
-      starts.push(appointment.parsedDate.getHours());
-      // Um atendimento que termina às 10:15 precisa da linha das 10h
-      ends.push(Math.ceil(end.getHours() + end.getMinutes() / 60));
-    });
-
-    if (starts.length === 0) {
-      return [DEFAULT_START_HOUR, DEFAULT_END_HOUR];
-    }
-
-    return [Math.min(...starts), Math.max(...ends)];
-  }, [agenda.providers, appointments]);
+  const [startHour, endHour] = useMemo(
+    () =>
+      hourRange(
+        agenda.providers.flatMap(provider =>
+          provider.schedule ? [provider.schedule] : [],
+        ),
+        appointments,
+      ),
+    [agenda.providers, appointments],
+  );
 
   const hours = useMemo(
     () =>
@@ -314,33 +284,11 @@ const Dashboard: React.FC = () => {
   );
 
   const gridHeaderRef = useRef<HTMLDivElement>(null);
-  const [hourHeight, setHourHeight] = useState(64);
-
-  // Divide o espaço livre abaixo do cabeçalho dos barbeiros pelas horas do
-  // dia, para a agenda caber na tela sem barra de rolagem
-  useLayoutEffect(() => {
-    function fitToScreen(): void {
-      const gridHeader = gridHeaderRef.current;
-
-      if (!gridHeader || hours.length === 0) {
-        return;
-      }
-
-      const bodyTop = gridHeader.getBoundingClientRect().bottom;
-      // Espaço entre a grade e o pé da tela
-      const available = window.innerHeight - bodyTop - AGENDA_PADDING;
-      const fitted = Math.floor(available / hours.length);
-
-      setHourHeight(
-        Math.min(MAX_HOUR_HEIGHT, Math.max(MIN_HOUR_HEIGHT, fitted)),
-      );
-    }
-
-    fitToScreen();
-    window.addEventListener('resize', fitToScreen);
-
-    return () => window.removeEventListener('resize', fitToScreen);
-  }, [hours.length, agenda.providers.length, loading]);
+  const hourHeight = useHourHeight(
+    gridHeaderRef,
+    hours.length,
+    `${agenda.providers.length}-${loading}-${view}`,
+  );
 
   const compact = hourHeight < COMPACT_HOUR_HEIGHT;
 
@@ -363,38 +311,30 @@ const Dashboard: React.FC = () => {
     return (currentHour - startHour) * hourHeight;
   }, [selectedDate, now, startHour, endHour, hourHeight]);
 
-  // Agendamento aberto no painel de detalhes, com o barbeiro e a cor dele
-  const selectedDetails = useMemo(() => {
-    const appointment = appointments.find(
-      item => item.id === selectedAppointmentId,
-    );
+  const activeProviders = useMemo(
+    () => agenda.providers.filter(provider => provider.active),
+    [agenda.providers],
+  );
 
-    if (!appointment) {
-      return null;
-    }
+  const countText = useMemo(() => {
+    const count = view === 'week' ? weekCount : appointments.length;
+    const suffix = view === 'week' ? ' na semana' : '';
 
-    const providerIndex = agenda.providers.findIndex(
-      provider => provider.id === appointment.provider_id,
-    );
+    if (count === null || (view === 'day' && loading)) return 'Carregando...';
+    if (count === 0) return `Nenhum agendamento${suffix}`;
 
-    if (providerIndex === -1) {
-      return null;
-    }
+    return count === 1
+      ? `1 agendamento${suffix}`
+      : `${count} agendamentos${suffix}`;
+  }, [view, weekCount, appointments.length, loading]);
 
-    return {
-      appointment,
-      provider: agenda.providers[providerIndex],
-      color: PROVIDER_COLORS[providerIndex % PROVIDER_COLORS.length],
-    };
-  }, [appointments, agenda.providers, selectedAppointmentId]);
-
-  const appointmentsCountText = useMemo(() => {
-    const count = appointments.length;
-
-    if (count === 0) return 'Nenhum agendamento';
-
-    return count === 1 ? '1 agendamento' : `${count} agendamentos`;
-  }, [appointments.length]);
+  const openDay = useCallback(
+    (date: Date) => {
+      setSelectedDate(startOfDay(date));
+      changeView('day');
+    },
+    [changeView],
+  );
 
   return (
     <AppLayout
@@ -405,7 +345,11 @@ const Dashboard: React.FC = () => {
             weekdaysShort={['D', 'S', 'T', 'Q', 'Q', 'S', 'S']}
             months={MONTHS}
             month={selectedDate}
-            selectedDays={selectedDate}
+            selectedDays={
+              view === 'week'
+                ? { from: weekStart, to: endOfWeek(weekStart) }
+                : selectedDate
+            }
             onDayClick={day => setSelectedDate(startOfDay(day))}
           />
         </Calendar>
@@ -422,25 +366,74 @@ const Dashboard: React.FC = () => {
           </TodayButton>
           <NavButton
             type="button"
-            title="Dia anterior (←)"
-            onClick={() => setSelectedDate(addDays(selectedDate, -1))}
+            title={view === 'week' ? 'Semana anterior (←)' : 'Dia anterior (←)'}
+            onClick={() => setSelectedDate(addDays(selectedDate, -step))}
           >
             <FiChevronLeft />
           </NavButton>
           <NavButton
             type="button"
-            title="Próximo dia (→)"
-            onClick={() => setSelectedDate(addDays(selectedDate, 1))}
+            title={view === 'week' ? 'Próxima semana (→)' : 'Próximo dia (→)'}
+            onClick={() => setSelectedDate(addDays(selectedDate, step))}
           >
             <FiChevronRight />
           </NavButton>
-          <h1>{selectedDateAsText}</h1>
-          <span>{loading ? 'Carregando...' : appointmentsCountText}</span>{' '}
+          <h1>{view === 'week' ? weekTitle(weekStart) : selectedDateAsText}</h1>
+          <span>{countText}</span>
+
+          {view === 'week' && (
+            <ProviderFilter
+              aria-label="Barbeiro"
+              value={providerFilter}
+              onChange={event => setProviderFilter(event.target.value)}
+            >
+              <option value="all">Todos os barbeiros</option>
+              {activeProviders.map(provider => (
+                <option key={provider.id} value={provider.id}>
+                  {provider.name}
+                </option>
+              ))}
+            </ProviderFilter>
+          )}
+
+          <ViewSwitch role="group" aria-label="Visão da agenda">
+            <button
+              type="button"
+              aria-pressed={view === 'day'}
+              title="Dia (D)"
+              onClick={() => changeView('day')}
+            >
+              Dia
+            </button>
+            <button
+              type="button"
+              aria-pressed={view === 'week'}
+              title="Semana (S)"
+              onClick={() => changeView('week')}
+            >
+              Semana
+            </button>
+          </ViewSwitch>
         </Toolbar>
 
-        {!loading && agenda.providers.length === 0 ? (
+        {view === 'week' && (
+          <WeekView
+            weekStart={weekStart}
+            now={now}
+            refreshKey={refreshKey}
+            providerFilter={providerFilter}
+            onCountChange={setWeekCount}
+            onOpenDetails={openDetails}
+            onNewSlot={setNewSlot}
+            onOpenDay={openDay}
+          />
+        )}
+
+        {view === 'day' && !loading && agenda.providers.length === 0 && (
           <EmptyState>Nenhum barbeiro cadastrado.</EmptyState>
-        ) : (
+        )}
+
+        {view === 'day' && (loading || agenda.providers.length > 0) && (
           <Grid
             style={
               { '--hour-height': `${hourHeight}px` } as React.CSSProperties
@@ -448,10 +441,10 @@ const Dashboard: React.FC = () => {
           >
             <GridHeader ref={gridHeaderRef} columns={agenda.providers.length}>
               <div />
-              {agenda.providers.map((provider, index) => (
+              {agenda.providers.map(provider => (
                 <ProviderHeader
                   key={provider.id}
-                  color={PROVIDER_COLORS[index % PROVIDER_COLORS.length]}
+                  color={providerColor(provider.id, agenda.providers)}
                 >
                   <img
                     src={provider.avatar_url || avatarFallback(provider.name)}
@@ -487,8 +480,8 @@ const Dashboard: React.FC = () => {
                 ))}
               </TimeColumn>
 
-              {agenda.providers.map((provider, index) => {
-                const color = PROVIDER_COLORS[index % PROVIDER_COLORS.length];
+              {agenda.providers.map(provider => {
+                const color = providerColor(provider.id, agenda.providers);
                 const workStart = provider.schedule
                   ? toHour(provider.schedule.start_time)
                   : null;
@@ -612,7 +605,15 @@ const Dashboard: React.FC = () => {
                             <AppointmentCard
                               type="button"
                               onClick={event =>
-                                openDetails(appointment.id, event.currentTarget)
+                                openDetails(
+                                  {
+                                    appointment,
+                                    provider,
+                                    color,
+                                    providers: activeProviders,
+                                  },
+                                  event.currentTarget,
+                                )
                               }
                               aria-haspopup="dialog"
                               color={color}
@@ -641,14 +642,14 @@ const Dashboard: React.FC = () => {
         )}
       </AgendaArea>
 
-      {selectedDetails && (
+      {details && (
         <AppointmentDetails
-          appointment={selectedDetails.appointment}
-          provider={selectedDetails.provider}
-          color={selectedDetails.color}
+          appointment={details.appointment}
+          provider={details.provider}
+          color={details.color}
           now={now}
           onClose={closeDetails}
-          providers={agenda.providers.filter(item => item.active)}
+          providers={details.providers}
           onChanged={handleAppointmentChanged}
         />
       )}

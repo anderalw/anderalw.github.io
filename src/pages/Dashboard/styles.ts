@@ -11,7 +11,7 @@ export const MAX_HOUR_HEIGHT = 120;
 // Abaixo desta altura, o card mostra só horário e cliente
 export const COMPACT_HOUR_HEIGHT = 60;
 // Largura da coluna com as horas (px)
-const TIME_COLUMN_WIDTH = 64;
+export const TIME_COLUMN_WIDTH = 64;
 // Espaço entre a grade e as bordas da tela (px); o de baixo entra no
 // cálculo da altura das horas
 export const AGENDA_PADDING = 24;
@@ -406,4 +406,93 @@ export const EmptyState = styled.p`
   padding: 48px;
   text-align: center;
   color: ${colors.textMuted};
+`;
+
+// Alternância entre as visões de dia e de semana
+export const ViewSwitch = styled.div`
+  display: inline-flex;
+  margin-left: 16px;
+  padding: 2px;
+  border: 1px solid ${colors.borderStrong};
+  border-radius: ${radius.md};
+  background: ${colors.sunken};
+
+  button {
+    height: 26px;
+    padding: 0 12px;
+    border: 0;
+    border-radius: 6px;
+    background: transparent;
+    color: ${colors.textMuted};
+    font-size: 13px;
+    font-weight: 500;
+    transition: background-color 0.15s, color 0.15s;
+
+    &:hover {
+      color: ${colors.text};
+    }
+
+    &[aria-pressed='true'] {
+      background: ${colors.surfaceHover};
+      color: ${colors.text};
+    }
+  }
+`;
+
+// Filtro de barbeiro da visão semanal
+export const ProviderFilter = styled.select`
+  height: 32px;
+  margin-left: 8px;
+  padding: 0 8px;
+  border: 1px solid ${colors.borderStrong};
+  border-radius: ${radius.md};
+  background: ${colors.surface};
+  color: ${colors.text};
+  font-size: 13px;
+  cursor: pointer;
+
+  &:focus {
+    outline: none;
+    border-color: ${colors.primary};
+  }
+`;
+
+// Cabeçalho de cada dia na visão semanal: clicar abre o dia
+export const DayHeader = styled.button<{ today: boolean }>`
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  padding: 8px 4px;
+  border: 0;
+  border-left: 1px solid ${colors.border};
+  background: transparent;
+  color: ${colors.textMuted};
+  transition: background-color 0.15s;
+
+  &:hover {
+    background: ${colors.surfaceHover};
+  }
+
+  small {
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    color: ${props => (props.today ? colors.primary : colors.textSubtle)};
+  }
+
+  strong {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    font-size: 16px;
+    font-weight: 600;
+    font-variant-numeric: tabular-nums;
+    color: ${props => (props.today ? colors.onPrimary : colors.text)};
+    background: ${props => (props.today ? colors.primary : 'transparent')};
+  }
 `;
