@@ -1,8 +1,9 @@
 import styled, { css, keyframes } from 'styled-components';
 
 import { colors, radius } from '../../styles/theme';
+import { WideDialog } from '../Dashboard/modalLayout';
 
-// Tabela à esquerda; formulário e intervalo numa coluna fixa à direita
+// Tabela à esquerda; intervalo numa coluna fixa à direita
 export const Columns = styled.div`
   display: grid;
   grid-template-columns: minmax(0, 1fr) 340px;
@@ -20,12 +21,6 @@ export const SideColumn = styled.div`
   gap: 24px;
   position: sticky;
   top: 28px;
-`;
-
-export const Form = styled.form`
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
 `;
 
 export const ServiceRow = styled.tr<{ inactive: boolean; editing: boolean }>`
@@ -105,4 +100,64 @@ export const Counter = styled.span`
   color: ${colors.textMuted};
   font-size: 12px;
   font-weight: 500;
+`;
+
+// Modal compacto (o formulário tem só três campos), com tamanho fixo
+export const CompactDialog = styled(WideDialog)`
+  max-width: 560px;
+  height: min(420px, 100%);
+`;
+
+export const ModalSubtitle = styled.p`
+  margin-top: 2px;
+  font-size: 13px;
+  color: ${colors.textMuted};
+`;
+
+// O formulário ocupa o modal: campos em cima, botões no rodapé
+export const ModalForm = styled.form`
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+
+  > :first-child {
+    flex: 1;
+  }
+`;
+
+export const FieldRow = styled.div`
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+`;
+
+export const ModalField = styled.label<{ hasError: boolean }>`
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-bottom: 6px;
+
+  > span {
+    font-size: 13px;
+    font-weight: 500;
+    color: ${colors.textMuted};
+  }
+
+  ${props =>
+    props.hasError &&
+    css`
+      input,
+      input:hover:not(:disabled) {
+        border-color: ${colors.danger};
+      }
+    `}
+`;
+
+// Espaço sempre reservado: o erro aparece sem empurrar os outros campos
+export const FieldError = styled.small`
+  min-height: 16px;
+  font-size: 12px;
+  line-height: 16px;
+  color: ${colors.danger};
 `;

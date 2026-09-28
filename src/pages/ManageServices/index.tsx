@@ -1,12 +1,12 @@
-import React, { useCallback, useEffect, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { Redirect } from 'react-router-dom';
-import { FiCheck, FiEdit2, FiEye, FiEyeOff, FiPlus } from 'react-icons/fi';
+import { FiEdit2, FiEye, FiEyeOff, FiPlus } from 'react-icons/fi';
 
 import api from '../../services/api';
 import { useAuth } from '../../hooks/Auth';
 import { useToast } from '../../hooks/Toast';
 import getApiErrorMessage from '../../utils/getApiErrorMessage';
-import { formatPrice, parsePrice } from '../../utils/money';
+import { formatPrice } from '../../utils/money';
 import { formatDuration } from '../../utils/duration';
 
 import AppLayout from '../../components/AppLayout';
@@ -16,19 +16,17 @@ import {
   Card,
   CardHeader,
   CardBody,
-  FieldGrid,
   Label,
-  TextInput,
   Select,
   UIButton,
   Table,
   Badge,
 } from '../../components/ui';
 
+import ServiceModal, { Service } from './ServiceModal';
 import {
   Columns,
   SideColumn,
-  Form,
   ServiceRow,
   SkeletonBar,
   EmptyText,
@@ -36,21 +34,8 @@ import {
   Counter,
 } from './styles';
 
-interface Service {
-  id: string;
-  name: string;
-  duration_minutes: number;
-  price_cents: number;
-  active: boolean;
-}
-
-interface ServiceForm {
-  name: string;
-  duration_minutes: string;
-  price: string;
-}
-
-const EMPTY_FORM: ServiceForm = { name: '', duration_minutes: '30', price: '' };
+// Modal aberto: novo serviço (null) ou edição de um existente
+type ModalState = { service: Service | null } | null;
 
 const BUFFER_OPTIONS = [0, 5, 10, 15, 20, 30, 45, 60];
 
@@ -60,13 +45,9 @@ const ManageServices: React.FC = () => {
 
   const [services, setServices] = useState<Service[]>([]);
   const [loading, setLoading] = useState(true);
-  const [form, setForm] = useState<ServiceForm>(EMPTY_FORM);
-  // Serviço em edição; null = formulário de novo serviço
-  const [editingId, setEditingId] = useState<string | null>(null);
-  const [saving, setSaving] = useState(false);
+  const [modal, setModal] = useState<ModalState>(null);
   const [bufferMinutes, setBufferMinutes] = useState(0);
   const [savedBufferMinutes, setSavedBufferMinutes] = useState(0);
-  const nameInputRef = useRef<HTMLInputElement>(null);
 
   const showError = useCallback(
     (err: unknown, fallback: string) => {
@@ -121,86 +102,10 @@ const ManageServices: React.FC = () => {
     }
   }, [bufferMinutes, addToast, showError]);
 
-  const handleSubmit = useCallback(
-    async (event: React.FormEvent) => {
-      event.preventDefault();
-
-      const name = form.name.trim();
-      const duration = Number(form.duration_minutes);
-      const priceCents = parsePrice(form.price);
-
-      if (!name) {
-        showError(null, 'Informe o nome do serviço.');
-        return;
-      }
-
-      if (
-        !Number.isInteger(duration) ||
-        duration < 5 ||
-        duration > 480 ||
-        duration % 5 !== 0
-      ) {
-        showError(
-          null,
-          'A duração deve ser de 5 a 480 minutos, em múltiplos de 5.',
-        );
-        return;
-      }
-
-      if (priceCents === null) {
-        showError(null, 'Informe o valor no formato 45,00.');
-        return;
-      }
-
-      const data = {
-        name,
-        duration_minutes: duration,
-        price_cents: priceCents,
-      };
-
-      setSaving(true);
-
-      try {
-        if (editingId) {
-          const current = services.find(service => service.id === editingId);
-
-          await api.put(`/services/${editingId}`, {
-            ...data,
-            active: current ? current.active : true,
-          });
-        } else {
-          await api.post('/services', data);
-        }
-
-        addToast({
-          type: 'success',
-          title: editingId ? 'Serviço atualizado' : 'Serviço adicionado',
-          description: `${name} · ${formatDuration(duration)} · ${formatPrice(
-            priceCents,
-          )}`,
-        });
-
-        setForm(EMPTY_FORM);
-        setEditingId(null);
-        await loadServices();
-      } catch (err) {
-        showError(err, 'Verifique os dados do serviço e tente novamente.');
-      } finally {
-        setSaving(false);
-      }
-    },
-    [form, editingId, services, addToast, showError, loadServices],
-  );
-
-  const handleEdit = useCallback((service: Service) => {
-    setEditingId(service.id);
-    setForm({
-      name: service.name,
-      duration_minutes: String(service.duration_minutes),
-      price: (service.price_cents / 100).toFixed(2).replace('.', ','),
-    });
-    nameInputRef.current?.focus();
-  }, []);
+  const handleSaved = useCallback(() => {
+    setModal(null);
+    loadServices();
+  }, [loadServices]);
 
   const handleToggleActive = useCallback(
     async (service: Service) => {
@@ -237,6 +142,12 @@ const ManageServices: React.FC = () => {
               O que os clientes podem agendar, com a duração que ocupa na agenda
               e o valor.
             </p>
+          </div>
+          <div>
+            <UIButton type="button" onClick={() => setModal({ service: null })}>
+              <FiPlus />
+              Novo serviço
+            </UIButton>
           </div>
         </PageHeader>
 
@@ -290,7 +201,7 @@ const ManageServices: React.FC = () => {
                         <ServiceRow
                           key={service.id}
                           inactive={!service.active}
-                          editing={service.id === editingId}
+                          editing={!!modal && modal.service?.id === service.id}
                         >
                           <td className="name">
                             <strong>{service.name}</strong>
@@ -314,7 +225,7 @@ const ManageServices: React.FC = () => {
                               variant="ghost"
                               size="sm"
                               title={`Editar ${service.name}`}
-                              onClick={() => handleEdit(service)}
+                              onClick={() => setModal({ service })}
                             >
                               <FiEdit2 />
                               Editar
@@ -337,86 +248,6 @@ const ManageServices: React.FC = () => {
           </Card>
 
           <SideColumn>
-            <Card>
-              <CardHeader>
-                <div>
-                  <h2>{editingId ? 'Editar serviço' : 'Novo serviço'}</h2>
-                  <p>Mudanças não alteram agendamentos já feitos.</p>
-                </div>
-              </CardHeader>
-
-              <CardBody>
-                <Form onSubmit={handleSubmit}>
-                  <Label>
-                    Nome
-                    <TextInput
-                      ref={nameInputRef}
-                      value={form.name}
-                      onChange={event =>
-                        setForm({ ...form, name: event.target.value })
-                      }
-                      placeholder="Ex: Cabelo e barba"
-                      maxLength={60}
-                    />
-                  </Label>
-
-                  <FieldGrid>
-                    <Label>
-                      Duração (min)
-                      <TextInput
-                        type="number"
-                        min={5}
-                        max={480}
-                        step={5}
-                        value={form.duration_minutes}
-                        onChange={event =>
-                          setForm({
-                            ...form,
-                            duration_minutes: event.target.value,
-                          })
-                        }
-                      />
-                    </Label>
-
-                    <Label>
-                      Valor (R$)
-                      <TextInput
-                        value={form.price}
-                        onChange={event =>
-                          setForm({ ...form, price: event.target.value })
-                        }
-                        placeholder="45,00"
-                        inputMode="decimal"
-                      />
-                    </Label>
-                  </FieldGrid>
-
-                  <InlineRow>
-                    {editingId && (
-                      <UIButton
-                        type="button"
-                        variant="secondary"
-                        onClick={() => {
-                          setEditingId(null);
-                          setForm(EMPTY_FORM);
-                        }}
-                      >
-                        Cancelar
-                      </UIButton>
-                    )}
-                    <UIButton
-                      type="submit"
-                      disabled={saving}
-                      style={{ flex: 1 }}
-                    >
-                      {editingId ? <FiCheck /> : <FiPlus />}
-                      {editingId ? 'Salvar alterações' : 'Adicionar serviço'}
-                    </UIButton>
-                  </InlineRow>
-                </Form>
-              </CardBody>
-            </Card>
-
             <Card>
               <CardHeader>
                 <div>
@@ -457,6 +288,14 @@ const ManageServices: React.FC = () => {
           </SideColumn>
         </Columns>
       </Page>
+
+      {modal && (
+        <ServiceModal
+          service={modal.service}
+          onClose={() => setModal(null)}
+          onSaved={handleSaved}
+        />
+      )}
     </AppLayout>
   );
 };
