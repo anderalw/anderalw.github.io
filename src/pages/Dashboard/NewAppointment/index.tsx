@@ -11,29 +11,32 @@ import { formatPrice } from '../../../utils/money';
 
 import { Overlay, CloseButton } from '../AppointmentDetails/styles';
 import {
-  Form,
   Field,
-  Times,
-  TimeButton,
-  Actions,
   PrimaryButton,
   SecondaryButton,
 } from '../../../components/RescheduleForm/styles';
 import {
-  FixedDialog,
-  Body,
-  Footer,
-  StatusArea,
+  WideDialog,
+  DialogHeader,
   StepLabel,
+  Columns,
+  Aside,
+  Main,
+  Footer,
   Summary,
+  StatusArea,
+  SlotStatus,
+  SuggestionRow,
+  SuggestionButtons,
+  Suggestion,
+  SectionLabel,
   SearchResults,
   ResultButton,
   NotFound,
   LinkButton,
+  RegisterGrid,
   ServiceList,
   ServiceOption,
-  SlotStatus,
-  SuggestionRow,
 } from './styles';
 
 interface ClientOption {
@@ -354,14 +357,27 @@ const NewAppointment: React.FC<NewAppointmentProps> = ({
         }
       }}
     >
-      <FixedDialog
+      <WideDialog
         color={color}
         role="dialog"
         aria-modal="true"
         aria-labelledby="new-appointment-title"
       >
-        <header>
-          <span />
+        <DialogHeader>
+          <div>
+            <h2 id="new-appointment-title">Novo agendamento</h2>
+            <StepLabel>
+              {step === 'service' ? (
+                <>
+                  Passo <strong>2 de 2</strong> · Serviço
+                </>
+              ) : (
+                <>
+                  Passo <strong>1 de 2</strong> · Cliente
+                </>
+              )}
+            </StepLabel>
+          </div>
           <CloseButton
             type="button"
             aria-label="Fechar"
@@ -370,183 +386,185 @@ const NewAppointment: React.FC<NewAppointmentProps> = ({
           >
             <FiX />
           </CloseButton>
-        </header>
+        </DialogHeader>
 
-        <h2 id="new-appointment-title">Novo agendamento</h2>
-        <StepLabel>
-          {step === 'service' ? (
-            <>
-              Passo <strong>2 de 2</strong> · Serviço
-            </>
-          ) : (
-            <>
-              Passo <strong>1 de 2</strong> · Cliente
-            </>
-          )}
-        </StepLabel>
-
-        <Summary>
-          <li>
-            <FiUser />
-            {step === 'service' && client ? (
-              <>
-                <span>
-                  {client.name}
-                  {client.phone && <small>{` · ${client.phone}`}</small>}
-                </span>
-                <button type="button" onClick={() => setStep('client')}>
-                  Trocar
-                </button>
-              </>
-            ) : (
-              <small>Cliente a definir</small>
-            )}
-          </li>
-          <li>
-            <FiScissors />
-            <img
-              src={
-                chosenProvider.avatar_url || avatarFallback(chosenProvider.name)
-              }
-              alt=""
-              onError={e => {
-                e.currentTarget.src = avatarFallback(chosenProvider.name);
-              }}
-            />
-            {chosenProvider.name}
-          </li>
-          <li>
-            <FiCalendar />
-            <span>
-              {`${dayText} · ${format(shownStart, 'HH:mm')}`}
-              {shownEnd && <small>{` até ${format(shownEnd, 'HH:mm')}`}</small>}
-            </span>
-          </li>
-        </Summary>
-
-        <Body>
-          {step === 'client' && (
-            <Form>
-              <Field>
-                <span>Buscar cliente</span>
-                <input
-                  ref={searchInputRef}
-                  value={search}
-                  onChange={event => setSearch(event.target.value)}
-                  onKeyDown={event => {
-                    // Enter com um único resultado já escolhe o cliente
-                    if (event.key === 'Enter' && results.length === 1) {
-                      selectClient(results[0]);
-                    }
+        <Columns>
+          <Aside>
+            <Summary>
+              <li>
+                <FiUser />
+                {step === 'service' && client ? (
+                  <>
+                    <span>
+                      {client.name}
+                      {client.phone && <small>{client.phone}</small>}
+                    </span>
+                    <button type="button" onClick={() => setStep('client')}>
+                      Trocar
+                    </button>
+                  </>
+                ) : (
+                  <small>Cliente a definir</small>
+                )}
+              </li>
+              <li>
+                <FiScissors />
+                <img
+                  src={
+                    chosenProvider.avatar_url ||
+                    avatarFallback(chosenProvider.name)
+                  }
+                  alt=""
+                  onError={e => {
+                    e.currentTarget.src = avatarFallback(chosenProvider.name);
                   }}
-                  placeholder="Nome, telefone ou e-mail"
-                  autoComplete="off"
                 />
-              </Field>
+                {chosenProvider.name}
+              </li>
+              <li>
+                <FiCalendar />
+                <span>
+                  {dayText}
+                  <small>
+                    {format(shownStart, 'HH:mm')}
+                    {shownEnd && ` até ${format(shownEnd, 'HH:mm')}`}
+                  </small>
+                </span>
+              </li>
+            </Summary>
 
-              {results.length > 0 && (
-                <SearchResults>
-                  {results.map(option => (
-                    <li key={option.id}>
-                      <ResultButton
-                        type="button"
-                        onClick={() => selectClient(option)}
-                      >
-                        {option.name}
-                        <small>
-                          {[option.phone, option.email]
-                            .filter(Boolean)
-                            .join(' · ') || 'Sem contato'}
-                        </small>
-                      </ResultButton>
-                    </li>
-                  ))}
-                </SearchResults>
+            <StatusArea aria-live="polite">
+              {step === 'client' && (
+                <>
+                  {search.trim().length < 2 &&
+                    'Busque o cliente pelo nome, telefone ou e-mail. Se ele ainda não tiver cadastro, você cadastra aqui mesmo.'}
+                  {searching && 'Buscando...'}
+                  {!searching && results.length > 0 && (
+                    <LinkButton type="button" onClick={openRegister}>
+                      Não é nenhum desses? Cadastrar novo cliente
+                    </LinkButton>
+                  )}
+                </>
               )}
-            </Form>
-          )}
 
-          {step === 'register' && (
-            <Form
-              as="form"
-              id="new-client-form"
-              onSubmit={(event: React.FormEvent) => {
-                event.preventDefault();
-                handleRegister();
-              }}
-            >
-              <Field>
-                <span>Nome</span>
-                <input
-                  value={newClient.name}
-                  maxLength={100}
-                  required
-                  ref={nameInputRef}
-                  onChange={event =>
-                    setNewClient({ ...newClient, name: event.target.value })
-                  }
-                />
-              </Field>
-              <Field>
-                <span>Telefone</span>
-                <input
-                  type="tel"
-                  value={newClient.phone}
-                  maxLength={30}
-                  required
-                  onChange={event =>
-                    setNewClient({ ...newClient, phone: event.target.value })
-                  }
-                />
-              </Field>
-              <Field>
-                <span>E-mail (opcional)</span>
-                <input
-                  type="email"
-                  value={newClient.email}
-                  maxLength={100}
-                  onChange={event =>
-                    setNewClient({ ...newClient, email: event.target.value })
-                  }
-                />
-              </Field>
-            </Form>
-          )}
+              {step === 'register' &&
+                'Com o e-mail, o cliente pode depois criar a conta no site e ver seus agendamentos.'}
 
-          {step === 'service' && (
-            <ServiceList role="radiogroup" aria-label="Serviço">
-              {services.map(option => (
-                <ServiceOption
-                  key={option.id}
-                  type="button"
-                  role="radio"
-                  aria-checked={service?.id === option.id}
-                  selected={service?.id === option.id}
-                  onClick={() => chooseService(option)}
-                >
-                  <span>
-                    {option.name}
-                    <small>{`${option.duration_minutes} min`}</small>
-                  </span>
-                  <span>{formatPrice(option.price_cents)}</span>
-                </ServiceOption>
-              ))}
-            </ServiceList>
-          )}
-        </Body>
+              {step === 'service' && (
+                <>
+                  {!slot && 'Escolha o serviço para conferir o horário.'}
+                  {slot?.status === 'checking' && 'Verificando o horário...'}
+                  {slot?.status === 'fits' && (
+                    <SlotStatus ok>
+                      {`Horário livre: ${slotTime} às ${format(
+                        slot.end,
+                        'HH:mm',
+                      )}.`}
+                    </SlotStatus>
+                  )}
+                  {slot?.status === 'conflict' && (
+                    <SlotStatus ok={false}>
+                      <p>{`Não cabe às ${slotTime}: ${slot.reason}`}</p>
 
-        <Footer>
-          <StatusArea aria-live="polite">
+                      <SuggestionRow>
+                        {slot.before.length + slot.after.length > 0 ? (
+                          <>
+                            <span>{`Horários livres com ${provider.name}:`}</span>
+                            <SuggestionButtons>
+                              {[...slot.before, ...slot.after].map(date => {
+                                const selected =
+                                  chosenProvider.id === provider.id &&
+                                  chosenStart?.getTime() === date.getTime();
+
+                                return (
+                                  <Suggestion
+                                    key={date.getTime()}
+                                    type="button"
+                                    selected={selected}
+                                    aria-pressed={selected}
+                                    onClick={() => chooseTime(date)}
+                                  >
+                                    {format(date, 'HH:mm')}
+                                  </Suggestion>
+                                );
+                              })}
+                            </SuggestionButtons>
+                          </>
+                        ) : (
+                          <span>{`Sem outro horário livre com ${provider.name} neste dia.`}</span>
+                        )}
+                      </SuggestionRow>
+
+                      {slot.others.length > 0 && (
+                        <SuggestionRow>
+                          <span>{`Livres às ${slotTime}:`}</span>
+                          <SuggestionButtons>
+                            {slot.others.map(other => {
+                              const selected = chosenProvider.id === other.id;
+
+                              return (
+                                <Suggestion
+                                  key={other.id}
+                                  type="button"
+                                  selected={selected}
+                                  aria-pressed={selected}
+                                  onClick={() => chooseOtherProvider(other)}
+                                >
+                                  {other.name}
+                                </Suggestion>
+                              );
+                            })}
+                          </SuggestionButtons>
+                        </SuggestionRow>
+                      )}
+                    </SlotStatus>
+                  )}
+                </>
+              )}
+            </StatusArea>
+          </Aside>
+
+          <Main>
             {step === 'client' && (
               <>
-                {search.trim().length < 2 &&
-                  'Digite pelo menos 2 letras ou números.'}
-                {searching && 'Buscando...'}
-                {!searching && results.length > 0 && (
-                  <LinkButton type="button" onClick={openRegister}>
-                    Não é nenhum desses? Cadastrar novo cliente
-                  </LinkButton>
+                <Field>
+                  <span>Buscar cliente</span>
+                  <input
+                    ref={searchInputRef}
+                    value={search}
+                    onChange={event => setSearch(event.target.value)}
+                    onKeyDown={event => {
+                      // Enter com um único resultado já escolhe o cliente
+                      if (event.key === 'Enter' && results.length === 1) {
+                        selectClient(results[0]);
+                      }
+                    }}
+                    placeholder="Nome, telefone ou e-mail"
+                    autoComplete="off"
+                  />
+                </Field>
+
+                {results.length > 0 && (
+                  <SearchResults>
+                    {results.map(option => (
+                      <li key={option.id}>
+                        <ResultButton
+                          type="button"
+                          onClick={() => selectClient(option)}
+                          title={option.name}
+                        >
+                          <span>{option.name}</span>
+                          <small>
+                            {[option.phone, option.email]
+                              .filter(Boolean)
+                              .join(' · ') || 'Sem contato'}
+                          </small>
+                        </ResultButton>
+                      </li>
+                    ))}
+                  </SearchResults>
                 )}
+
                 {noResults && (
                   <NotFound>
                     {`Nenhum cliente encontrado para “${searchedTerm}”.`}
@@ -558,131 +576,129 @@ const NewAppointment: React.FC<NewAppointmentProps> = ({
               </>
             )}
 
-            {step === 'register' &&
-              'Com o e-mail, o cliente pode depois criar a conta no site e ver seus agendamentos.'}
-
-            {step === 'service' && (
-              <>
-                {!slot && 'Escolha o serviço para conferir o horário.'}
-                {slot?.status === 'checking' && 'Verificando o horário...'}
-                {slot?.status === 'fits' && (
-                  <SlotStatus ok>
-                    {`Horário livre: ${slotTime} às ${format(
-                      slot.end,
-                      'HH:mm',
-                    )}.`}
-                  </SlotStatus>
-                )}
-                {slot?.status === 'conflict' && (
-                  <SlotStatus ok={false}>
-                    <p>{`Não cabe às ${slotTime}: ${slot.reason}`}</p>
-
-                    {slot.before.length + slot.after.length > 0 ? (
-                      <SuggestionRow>
-                        <span>{`Com ${provider.name}:`}</span>
-                        <Times>
-                          {[...slot.before, ...slot.after].map(date => {
-                            const selected =
-                              chosenProvider.id === provider.id &&
-                              chosenStart?.getTime() === date.getTime();
-
-                            return (
-                              <TimeButton
-                                key={date.getTime()}
-                                type="button"
-                                selected={selected}
-                                aria-pressed={selected}
-                                onClick={() => chooseTime(date)}
-                              >
-                                {format(date, 'HH:mm')}
-                              </TimeButton>
-                            );
-                          })}
-                        </Times>
-                      </SuggestionRow>
-                    ) : (
-                      <SuggestionRow>
-                        <span>{`Sem outro horário livre com ${provider.name} neste dia.`}</span>
-                      </SuggestionRow>
-                    )}
-
-                    {slot.others.length > 0 && (
-                      <SuggestionRow>
-                        <span>{`Às ${slotTime} com:`}</span>
-                        <Times>
-                          {slot.others.map(other => {
-                            const selected = chosenProvider.id === other.id;
-
-                            return (
-                              <TimeButton
-                                key={other.id}
-                                type="button"
-                                selected={selected}
-                                aria-pressed={selected}
-                                onClick={() => chooseOtherProvider(other)}
-                              >
-                                {other.name}
-                              </TimeButton>
-                            );
-                          })}
-                        </Times>
-                      </SuggestionRow>
-                    )}
-                  </SlotStatus>
-                )}
-              </>
-            )}
-          </StatusArea>
-
-          <Actions>
-            {step === 'client' && (
-              <SecondaryButton type="button" onClick={onClose}>
-                Cancelar
-              </SecondaryButton>
-            )}
-
             {step === 'register' && (
-              <>
-                <SecondaryButton
-                  type="button"
-                  onClick={() => setStep('client')}
-                >
-                  Voltar
-                </SecondaryButton>
-                <PrimaryButton
-                  type="submit"
-                  form="new-client-form"
-                  disabled={
-                    registering ||
-                    !newClient.name.trim() ||
-                    !newClient.phone.trim()
-                  }
-                >
-                  {registering ? 'Cadastrando...' : 'Cadastrar e continuar'}
-                </PrimaryButton>
-              </>
+              <form
+                id="new-client-form"
+                onSubmit={event => {
+                  event.preventDefault();
+                  handleRegister();
+                }}
+              >
+                <SectionLabel>Novo cliente</SectionLabel>
+                <RegisterGrid>
+                  <Field>
+                    <span>Nome</span>
+                    <input
+                      value={newClient.name}
+                      maxLength={100}
+                      required
+                      ref={nameInputRef}
+                      onChange={event =>
+                        setNewClient({ ...newClient, name: event.target.value })
+                      }
+                    />
+                  </Field>
+                  <Field>
+                    <span>Telefone</span>
+                    <input
+                      type="tel"
+                      value={newClient.phone}
+                      maxLength={30}
+                      required
+                      onChange={event =>
+                        setNewClient({
+                          ...newClient,
+                          phone: event.target.value,
+                        })
+                      }
+                    />
+                  </Field>
+                  <Field>
+                    <span>E-mail (opcional)</span>
+                    <input
+                      type="email"
+                      value={newClient.email}
+                      maxLength={100}
+                      onChange={event =>
+                        setNewClient({
+                          ...newClient,
+                          email: event.target.value,
+                        })
+                      }
+                    />
+                  </Field>
+                </RegisterGrid>
+              </form>
             )}
 
             {step === 'service' && (
               <>
-                <SecondaryButton
-                  type="button"
-                  onClick={() => setStep('client')}
-                >
-                  Voltar
-                </SecondaryButton>
-                <PrimaryButton
-                  type="button"
-                  onClick={handleConfirm}
-                  disabled={!service || !chosenStart || saving}
-                >
-                  {saving ? 'Agendando...' : 'Confirmar agendamento'}
-                </PrimaryButton>
+                <SectionLabel>Serviço</SectionLabel>
+                <ServiceList role="radiogroup" aria-label="Serviço">
+                  {services.map(option => (
+                    <ServiceOption
+                      key={option.id}
+                      type="button"
+                      role="radio"
+                      aria-checked={service?.id === option.id}
+                      selected={service?.id === option.id}
+                      onClick={() => chooseService(option)}
+                    >
+                      <span>
+                        {option.name}
+                        <small>{`${option.duration_minutes} min`}</small>
+                      </span>
+                      <span>{formatPrice(option.price_cents)}</span>
+                    </ServiceOption>
+                  ))}
+                </ServiceList>
               </>
             )}
-          </Actions>
+          </Main>
+        </Columns>
+
+        <Footer>
+          {step === 'client' && (
+            <SecondaryButton type="button" onClick={onClose}>
+              Cancelar
+            </SecondaryButton>
+          )}
+
+          {step === 'register' && (
+            <>
+              <SecondaryButton type="button" onClick={() => setStep('client')}>
+                Voltar
+              </SecondaryButton>
+              <PrimaryButton
+                type="submit"
+                form="new-client-form"
+                disabled={
+                  registering ||
+                  !newClient.name.trim() ||
+                  !newClient.phone.trim()
+                }
+              >
+                {registering ? 'Cadastrando...' : 'Cadastrar e continuar'}
+              </PrimaryButton>
+            </>
+          )}
+
+          {step === 'service' && (
+            <>
+              <SecondaryButton type="button" onClick={() => setStep('client')}>
+                Voltar
+              </SecondaryButton>
+              <PrimaryButton
+                type="button"
+                onClick={handleConfirm}
+                disabled={!service || !chosenStart || saving}
+              >
+                {saving ? 'Agendando...' : 'Confirmar agendamento'}
+              </PrimaryButton>
+            </>
+          )}
         </Footer>
-      </FixedDialog>
+      </WideDialog>
     </Overlay>
   );
 };
