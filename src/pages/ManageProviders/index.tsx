@@ -26,7 +26,7 @@ import {
   Badge,
 } from '../../components/ui';
 
-import ProviderDrawer, { TeamMember } from './ProviderDrawer';
+import ProviderModal, { TeamMember } from './ProviderModal';
 import {
   MemberRow,
   MemberCell,
@@ -36,15 +36,15 @@ import {
   ConfirmBox,
 } from './styles';
 
-// Painel aberto: novo barbeiro (null) ou edição de um existente
-type DrawerState = { member: TeamMember | null } | null;
+// Modal aberto: novo barbeiro (null) ou edição de um existente
+type ModalState = { member: TeamMember | null } | null;
 
 const ManageProviders: React.FC = () => {
   const { user } = useAuth();
   const { addToast } = useToast();
 
   const [team, setTeam] = useState<TeamMember[] | null>(null);
-  const [drawer, setDrawer] = useState<DrawerState>(null);
+  const [modal, setModal] = useState<ModalState>(null);
   const [confirming, setConfirming] = useState<TeamMember | null>(null);
   const [changingId, setChangingId] = useState<string | null>(null);
 
@@ -70,7 +70,7 @@ const ManageProviders: React.FC = () => {
   }, [user.is_admin, loadTeam]);
 
   const handleSaved = useCallback(() => {
-    setDrawer(null);
+    setModal(null);
     loadTeam();
   }, [loadTeam]);
 
@@ -136,7 +136,7 @@ const ManageProviders: React.FC = () => {
             <p>A equipe da barbearia e os dias e horários de atendimento.</p>
           </div>
           <div>
-            <UIButton type="button" onClick={() => setDrawer({ member: null })}>
+            <UIButton type="button" onClick={() => setModal({ member: null })}>
               <FiPlus />
               Novo barbeiro
             </UIButton>
@@ -225,7 +225,7 @@ const ManageProviders: React.FC = () => {
                             variant="ghost"
                             size="sm"
                             title={`Editar ${member.name}`}
-                            onClick={() => setDrawer({ member })}
+                            onClick={() => setModal({ member })}
                           >
                             <FiEdit2 />
                             Editar
@@ -267,10 +267,10 @@ const ManageProviders: React.FC = () => {
         </Card>
       </Page>
 
-      {drawer && (
-        <ProviderDrawer
-          member={drawer.member}
-          onClose={() => setDrawer(null)}
+      {modal && (
+        <ProviderModal
+          member={modal.member}
+          onClose={() => setModal(null)}
           onSaved={handleSaved}
         />
       )}

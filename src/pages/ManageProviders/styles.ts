@@ -1,4 +1,5 @@
 import styled, { css, keyframes } from 'styled-components';
+import { Form } from '@unform/web';
 
 import { colors, radius, shadow } from '../../styles/theme';
 
@@ -104,11 +105,6 @@ const fadeIn = keyframes`
   to { opacity: 1; }
 `;
 
-const slideIn = keyframes`
-  from { transform: translateX(24px); opacity: 0; }
-  to { transform: none; opacity: 1; }
-`;
-
 const overlay = css`
   position: fixed;
   inset: 0;
@@ -117,90 +113,30 @@ const overlay = css`
   animation: ${fadeIn} 0.15s ease-out;
 `;
 
-export const DrawerOverlay = styled.div`
-  ${overlay}
-  display: flex;
-  justify-content: flex-end;
+export const ModalSubtitle = styled.p`
+  margin-top: 2px;
+  font-size: 13px;
+  color: ${colors.textMuted};
 `;
 
-// Altura da tela inteira e largura fixa: não muda de tamanho ao editar
-export const Drawer = styled.aside`
+// O formulário ocupa o modal: colunas em cima, botões no rodapé
+export const ModalForm = styled(Form)`
+  flex: 1;
+  min-height: 0;
   display: flex;
   flex-direction: column;
-  width: 520px;
-  max-width: 100%;
-  height: 100%;
-  background: ${colors.surface};
-  border-left: 1px solid ${colors.border};
-  box-shadow: ${shadow.popover};
-  animation: ${slideIn} 0.2s ease-out;
-
-  form {
-    flex: 1;
-    min-height: 0;
-    display: flex;
-    flex-direction: column;
-  }
 `;
 
-export const DrawerHeader = styled.header`
-  display: flex;
-  align-items: flex-start;
-  gap: 12px;
-  padding: 20px 24px;
-  border-bottom: 1px solid ${colors.border};
-
-  h2 {
-    font-size: 17px;
-    font-weight: 600;
-  }
-
-  p {
-    margin-top: 2px;
-    font-size: 13px;
-    color: ${colors.textMuted};
-  }
-
-  > button {
-    margin-left: auto;
-  }
-`;
-
-export const CloseButton = styled.button`
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 32px;
-  height: 32px;
-  flex-shrink: 0;
-  border: 0;
-  border-radius: ${radius.md};
-  background: transparent;
-  color: ${colors.textMuted};
-
-  &:hover {
-    background: ${colors.surfaceHover};
-    color: ${colors.text};
-  }
-
-  svg {
-    width: 18px;
-    height: 18px;
-  }
-`;
-
-export const DrawerBody = styled.div`
+export const FormColumns = styled.div`
   flex: 1;
-  overflow-y: auto;
-  padding: 20px 24px;
+  min-height: 0;
+  display: grid;
+  grid-template-columns: 340px minmax(0, 1fr);
 `;
 
-export const DrawerFooter = styled.footer`
-  display: flex;
-  justify-content: flex-end;
-  gap: 8px;
-  padding: 16px 24px;
-  border-top: 1px solid ${colors.border};
+export const FormAside = styled.div`
+  padding: 20px 24px;
+  border-right: 1px solid ${colors.border};
 `;
 
 export const SectionTitle = styled.h3`

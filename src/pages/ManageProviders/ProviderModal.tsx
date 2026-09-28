@@ -1,6 +1,5 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { FormHandles } from '@unform/core';
-import { Form } from '@unform/web';
 import * as Yup from 'yup';
 import { FiCheck, FiX } from 'react-icons/fi';
 
@@ -12,14 +11,20 @@ import { WeekSchedule } from '../../utils/scheduleSummary';
 
 import FormField from '../../components/FormField';
 import { UIButton, TextInput, Badge } from '../../components/ui';
+import { colors } from '../../styles/theme';
+import { Overlay, CloseButton } from '../Dashboard/AppointmentDetails/styles';
+import {
+  WideDialog,
+  DialogHeader,
+  Main,
+  Footer,
+} from '../Dashboard/modalLayout';
 
 import {
-  DrawerOverlay,
-  Drawer,
-  DrawerHeader,
-  DrawerBody,
-  DrawerFooter,
-  CloseButton,
+  ModalSubtitle,
+  ModalForm,
+  FormColumns,
+  FormAside,
   SectionTitle,
   ScheduleTable,
   DayToggle,
@@ -41,7 +46,7 @@ interface ProviderFormData {
   password?: string;
 }
 
-interface ProviderDrawerProps {
+interface ProviderModalProps {
   // null = novo barbeiro
   member: TeamMember | null;
   onClose(): void;
@@ -81,8 +86,9 @@ function toRows(schedules: WeekSchedule[]): DayRow[] {
   });
 }
 
-// Painel lateral para cadastrar ou editar um barbeiro: dados e horários
-const ProviderDrawer: React.FC<ProviderDrawerProps> = ({
+// Modal para cadastrar ou editar um barbeiro: dados de acesso à esquerda e
+// os horários da semana à direita, com tamanho fixo e sem rolagem
+const ProviderModal: React.FC<ProviderModalProps> = ({
   member,
   onClose,
   onSaved,
@@ -96,7 +102,7 @@ const ProviderDrawer: React.FC<ProviderDrawerProps> = ({
   );
   const [saving, setSaving] = useState(false);
 
-  // Esc fecha o painel (a não ser no meio do salvamento)
+  // Esc fecha o modal (a não ser no meio do salvamento)
   useEffect(() => {
     function handleKeyDown(event: KeyboardEvent): void {
       if (event.key === 'Escape' && !saving) onClose();
@@ -215,106 +221,118 @@ const ProviderDrawer: React.FC<ProviderDrawerProps> = ({
   );
 
   return (
-    <DrawerOverlay
+    <Overlay
       onMouseDown={event => {
         if (event.target === event.currentTarget && !saving) onClose();
       }}
     >
-      <Drawer
+      <WideDialog
+        color={colors.primary}
         role="dialog"
         aria-modal="true"
-        aria-labelledby="provider-drawer-title"
+        aria-labelledby="provider-modal-title"
       >
-        <DrawerHeader>
+        <DialogHeader>
           <div>
-            <h2 id="provider-drawer-title">
+            <h2 id="provider-modal-title">
               {isNew ? 'Novo barbeiro' : `Editar ${member?.name}`}
             </h2>
-            <p>
+            <ModalSubtitle>
               {isNew
                 ? 'Ele entra com o e-mail e a senha provisória.'
                 : 'A senha continua sendo a do barbeiro.'}
-            </p>
+            </ModalSubtitle>
           </div>
-          <CloseButton type="button" onClick={onClose} title="Fechar (Esc)">
+          <CloseButton
+            type="button"
+            aria-label="Fechar"
+            title="Fechar (Esc)"
+            onClick={onClose}
+          >
             <FiX />
           </CloseButton>
-        </DrawerHeader>
+        </DialogHeader>
 
-        <Form
+        <ModalForm
           ref={formRef}
           onSubmit={handleSubmit}
           initialData={{ name: member?.name, email: member?.email }}
         >
-          <DrawerBody>
-            <SectionTitle>Dados de acesso</SectionTitle>
-            <FormField name="name" label="Nome completo" autoFocus />
-            <FormField name="email" type="email" label="E-mail" />
-            {isNew && (
-              <FormField
-                name="password"
-                type="password"
-                label="Senha provisória"
-                hint="Ele pode trocar depois, no perfil."
-                autoComplete="new-password"
-              />
-            )}
+          <FormColumns>
+            <FormAside>
+              <SectionTitle>Dados de acesso</SectionTitle>
+              <FormField name="name" label="Nome completo" autoFocus />
+              <FormField name="email" type="email" label="E-mail" />
+              {isNew && (
+                <FormField
+                  name="password"
+                  type="password"
+                  label="Senha provisória"
+                  hint="Ele pode trocar depois, no perfil."
+                  autoComplete="new-password"
+                />
+              )}
+            </FormAside>
 
-            <SectionTitle>Horários de atendimento</SectionTitle>
-            <ScheduleTable>
-              <tbody>
-                {rows.map((row, index) => (
-                  <tr key={row.day_of_week}>
-                    <td>
-                      <DayToggle>
-                        <input
-                          type="checkbox"
-                          checked={row.enabled}
-                          onChange={e =>
-                            updateRow(index, 'enabled', e.target.checked)
-                          }
-                        />
-                        <span>{dayNames[row.day_of_week]}</span>
-                      </DayToggle>
-                    </td>
-                    {row.enabled ? (
-                      <>
-                        <td>
-                          <TextInput
-                            type="time"
-                            step={3600}
-                            aria-label={`Início, ${dayNames[row.day_of_week]}`}
-                            value={row.start_time}
+            <Main>
+              <SectionTitle>Horários de atendimento</SectionTitle>
+              <ScheduleTable>
+                <tbody>
+                  {rows.map((row, index) => (
+                    <tr key={row.day_of_week}>
+                      <td>
+                        <DayToggle>
+                          <input
+                            type="checkbox"
+                            checked={row.enabled}
                             onChange={e =>
-                              updateRow(index, 'start_time', e.target.value)
+                              updateRow(index, 'enabled', e.target.checked)
                             }
                           />
-                        </td>
-                        <td className="until">até</td>
-                        <td>
-                          <TextInput
-                            type="time"
-                            step={3600}
-                            aria-label={`Fim, ${dayNames[row.day_of_week]}`}
-                            value={row.end_time}
-                            onChange={e =>
-                              updateRow(index, 'end_time', e.target.value)
-                            }
-                          />
-                        </td>
-                      </>
-                    ) : (
-                      <td colSpan={3} className="off">
-                        <Badge>Folga</Badge>
+                          <span>{dayNames[row.day_of_week]}</span>
+                        </DayToggle>
                       </td>
-                    )}
-                  </tr>
-                ))}
-              </tbody>
-            </ScheduleTable>
-          </DrawerBody>
+                      {row.enabled ? (
+                        <>
+                          <td>
+                            <TextInput
+                              type="time"
+                              step={3600}
+                              aria-label={`Início, ${
+                                dayNames[row.day_of_week]
+                              }`}
+                              value={row.start_time}
+                              onChange={e =>
+                                updateRow(index, 'start_time', e.target.value)
+                              }
+                            />
+                          </td>
+                          <td className="until">até</td>
+                          <td>
+                            <TextInput
+                              type="time"
+                              step={3600}
+                              aria-label={`Fim, ${dayNames[row.day_of_week]}`}
+                              value={row.end_time}
+                              onChange={e =>
+                                updateRow(index, 'end_time', e.target.value)
+                              }
+                            />
+                          </td>
+                        </>
+                      ) : (
+                        <td colSpan={3} className="off">
+                          <Badge>Folga</Badge>
+                        </td>
+                      )}
+                    </tr>
+                  ))}
+                </tbody>
+              </ScheduleTable>
+            </Main>
+          </FormColumns>
 
-          <DrawerFooter>
+          <Footer>
             <UIButton
               type="button"
               variant="secondary"
@@ -328,11 +346,11 @@ const ProviderDrawer: React.FC<ProviderDrawerProps> = ({
               {saving && 'Salvando...'}
               {!saving && (isNew ? 'Cadastrar barbeiro' : 'Salvar alterações')}
             </UIButton>
-          </DrawerFooter>
-        </Form>
-      </Drawer>
-    </DrawerOverlay>
+          </Footer>
+        </ModalForm>
+      </WideDialog>
+    </Overlay>
   );
 };
 
-export default ProviderDrawer;
+export default ProviderModal;
