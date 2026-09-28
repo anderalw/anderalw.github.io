@@ -194,7 +194,7 @@ export const Footer = styled.div`
 
 // Dicas, "horário livre" e conflito com sugestões usam sempre este espaço
 export const StatusArea = styled.div`
-  height: 104px;
+  height: 128px;
   overflow-y: auto;
   font-size: 14px;
   line-height: 20px;
@@ -209,5 +209,21 @@ export const SlotStatus = styled.div<{ ok: boolean }>`
 
   p + div {
     margin-top: 8px;
+  }
+`;
+
+// Linha de sugestões: rótulo e os botões ao lado
+export const SuggestionRow = styled.div`
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 6px 10px;
+
+  & + & {
+    margin-top: 6px;
+  }
+
+  > span {
+    font-size: 13px;
   }
 `;

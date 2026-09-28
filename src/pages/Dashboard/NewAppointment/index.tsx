@@ -33,6 +33,7 @@ import {
   ServiceList,
   ServiceOption,
   SlotStatus,
+  SuggestionRow,
 } from './styles';
 
 interface ClientOption {
@@ -49,14 +50,28 @@ interface Service {
   price_cents: number;
 }
 
+interface ProviderOption {
+  id: string;
+  name: string;
+  avatar_url: string | null;
+}
+
 type SlotCheck =
   | { status: 'checking' }
   | { status: 'fits'; end: Date }
-  | { status: 'conflict'; reason: string; suggestions: Date[] };
+  | {
+      status: 'conflict';
+      reason: string;
+      // Horários livres mais próximos com o mesmo barbeiro
+      before: Date[];
+      after: Date[];
+      // Outros barbeiros livres exatamente no horário clicado
+      others: ProviderOption[];
+    };
 
 interface NewAppointmentProps {
   // Barbeiro e início definidos pelo clique na agenda
-  provider: { id: string; name: string; avatar_url: string | null };
+  provider: ProviderOption;
   start: Date;
   color: string;
   onClose(): void;
@@ -64,9 +79,6 @@ interface NewAppointmentProps {
 }
 
 type Step = 'client' | 'register' | 'service';
-
-// Quantos horários livres sugerir quando o serviço não cabe no clicado
-const SUGGESTIONS = 4;
 
 function capitalize(text: string): string {
   return text.charAt(0).toUpperCase() + text.slice(1);
@@ -117,6 +129,8 @@ const NewAppointment: React.FC<NewAppointmentProps> = ({
   const [service, setService] = useState<Service | null>(null);
   const [slot, setSlot] = useState<SlotCheck | null>(null);
   const [chosenStart, setChosenStart] = useState<Date | null>(null);
+  // Muda quando o horário clicado só está livre com outro barbeiro
+  const [chosenProvider, setChosenProvider] = useState(provider);
   const [saving, setSaving] = useState(false);
 
   // Esc fecha o painel
@@ -217,12 +231,14 @@ const NewAppointment: React.FC<NewAppointmentProps> = ({
   }, [newClient, selectClient, addToast]);
 
   // Ao escolher o serviço, confere se ele cabe no horário clicado; se não
-  // couber, sugere os horários livres mais próximos
+  // couber, sugere os horários livres mais próximos (antes e depois) e os
+  // outros barbeiros livres no mesmo horário
   const chooseService = useCallback(
     async (option: Service) => {
       setService(option);
       setSlot({ status: 'checking' });
       setChosenStart(null);
+      setChosenProvider(provider);
 
       try {
         const check = await api.get<
@@ -238,37 +254,20 @@ const NewAppointment: React.FC<NewAppointmentProps> = ({
           return;
         }
 
-        const free = await api.get<Array<{ time: string }>>(
-          `/providers/${provider.id}/day-availability`,
-          {
-            params: {
-              year: start.getFullYear(),
-              month: start.getMonth() + 1,
-              day: start.getDate(),
-              service_id: option.id,
-            },
-          },
-        );
-
-        const suggestions = free.data
-          .map(({ time }) => {
-            const [hours, minutes] = time.split(':').map(Number);
-            const date = new Date(start);
-            date.setHours(hours, minutes, 0, 0);
-            return date;
-          })
-          .sort(
-            (a, b) =>
-              Math.abs(a.getTime() - start.getTime()) -
-              Math.abs(b.getTime() - start.getTime()),
-          )
-          .slice(0, SUGGESTIONS)
-          .sort((a, b) => a.getTime() - b.getTime());
+        const suggestions = await api.get<{
+          before: string[];
+          after: string[];
+          others: ProviderOption[];
+        }>(`/providers/${provider.id}/suggestions`, {
+          params: { service_id: option.id, date: start.toISOString() },
+        });
 
         setSlot({
           status: 'conflict',
           reason: check.data.reason,
-          suggestions,
+          before: suggestions.data.before.map(date => new Date(date)),
+          after: suggestions.data.after.map(date => new Date(date)),
+          others: suggestions.data.others,
         });
       } catch (err) {
         setSlot(null);
@@ -279,7 +278,23 @@ const NewAppointment: React.FC<NewAppointmentProps> = ({
         });
       }
     },
-    [provider.id, start, addToast],
+    [provider, start, addToast],
+  );
+
+  const chooseTime = useCallback(
+    (date: Date) => {
+      setChosenProvider(provider);
+      setChosenStart(date);
+    },
+    [provider],
+  );
+
+  const chooseOtherProvider = useCallback(
+    (other: ProviderOption) => {
+      setChosenProvider(other);
+      setChosenStart(start);
+    },
+    [start],
   );
 
   const handleConfirm = useCallback(async () => {
@@ -289,7 +304,7 @@ const NewAppointment: React.FC<NewAppointmentProps> = ({
 
     try {
       await api.post('/appointments/by-provider', {
-        provider_id: provider.id,
+        provider_id: chosenProvider.id,
         service_id: service.id,
         date: chosenStart,
         client_id: client.id,
@@ -298,7 +313,7 @@ const NewAppointment: React.FC<NewAppointmentProps> = ({
       onCreated({
         title: 'Agendamento criado',
         description: `${client.name}: ${service.name} com ${
-          provider.name
+          chosenProvider.name
         } às ${format(chosenStart, 'HH:mm')}.`,
       });
     } catch (err) {
@@ -312,7 +327,7 @@ const NewAppointment: React.FC<NewAppointmentProps> = ({
         ),
       });
     }
-  }, [client, service, chosenStart, provider, onCreated, addToast]);
+  }, [client, service, chosenStart, chosenProvider, onCreated, addToast]);
 
   const dayText = capitalize(
     format(start, "EEEE, d 'de' MMMM", { locale: ptBR }),
@@ -390,13 +405,15 @@ const NewAppointment: React.FC<NewAppointmentProps> = ({
           <li>
             <FiScissors />
             <img
-              src={provider.avatar_url || avatarFallback(provider.name)}
+              src={
+                chosenProvider.avatar_url || avatarFallback(chosenProvider.name)
+              }
               alt=""
               onError={e => {
-                e.currentTarget.src = avatarFallback(provider.name);
+                e.currentTarget.src = avatarFallback(chosenProvider.name);
               }}
             />
-            {provider.name}
+            {chosenProvider.name}
           </li>
           <li>
             <FiCalendar />
@@ -558,27 +575,58 @@ const NewAppointment: React.FC<NewAppointmentProps> = ({
                 )}
                 {slot?.status === 'conflict' && (
                   <SlotStatus ok={false}>
-                    <p>
-                      {slot.suggestions.length > 0
-                        ? `Não cabe às ${slotTime}: ${slot.reason} Horários livres próximos:`
-                        : `Não cabe às ${slotTime}: ${slot.reason} Não há outro horário livre neste dia.`}
-                    </p>
-                    {slot.suggestions.length > 0 && (
-                      <Times>
-                        {slot.suggestions.map(date => (
-                          <TimeButton
-                            key={date.getTime()}
-                            type="button"
-                            selected={chosenStart?.getTime() === date.getTime()}
-                            aria-pressed={
-                              chosenStart?.getTime() === date.getTime()
-                            }
-                            onClick={() => setChosenStart(date)}
-                          >
-                            {format(date, 'HH:mm')}
-                          </TimeButton>
-                        ))}
-                      </Times>
+                    <p>{`Não cabe às ${slotTime}: ${slot.reason}`}</p>
+
+                    {slot.before.length + slot.after.length > 0 ? (
+                      <SuggestionRow>
+                        <span>{`Com ${provider.name}:`}</span>
+                        <Times>
+                          {[...slot.before, ...slot.after].map(date => {
+                            const selected =
+                              chosenProvider.id === provider.id &&
+                              chosenStart?.getTime() === date.getTime();
+
+                            return (
+                              <TimeButton
+                                key={date.getTime()}
+                                type="button"
+                                selected={selected}
+                                aria-pressed={selected}
+                                onClick={() => chooseTime(date)}
+                              >
+                                {format(date, 'HH:mm')}
+                              </TimeButton>
+                            );
+                          })}
+                        </Times>
+                      </SuggestionRow>
+                    ) : (
+                      <SuggestionRow>
+                        <span>{`Sem outro horário livre com ${provider.name} neste dia.`}</span>
+                      </SuggestionRow>
+                    )}
+
+                    {slot.others.length > 0 && (
+                      <SuggestionRow>
+                        <span>{`Às ${slotTime} com:`}</span>
+                        <Times>
+                          {slot.others.map(other => {
+                            const selected = chosenProvider.id === other.id;
+
+                            return (
+                              <TimeButton
+                                key={other.id}
+                                type="button"
+                                selected={selected}
+                                aria-pressed={selected}
+                                onClick={() => chooseOtherProvider(other)}
+                              >
+                                {other.name}
+                              </TimeButton>
+                            );
+                          })}
+                        </Times>
+                      </SuggestionRow>
                     )}
                   </SlotStatus>
                 )}
