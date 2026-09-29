@@ -49,6 +49,23 @@ export interface NewSlot {
   color: string;
 }
 
+// Ponto da tela onde o horário foi clicado (para abrir o menu ali)
+export interface ClickPoint {
+  x: number;
+  y: number;
+}
+
+// Pelo teclado não há posição do mouse: usa o centro do horário
+export function clickPoint(event: React.MouseEvent<HTMLElement>): ClickPoint {
+  if (event.clientX || event.clientY) {
+    return { x: event.clientX, y: event.clientY };
+  }
+
+  const rect = event.currentTarget.getBoundingClientRect();
+
+  return { x: rect.left + rect.width / 2, y: rect.top + rect.height / 2 };
+}
+
 interface WeekDay {
   date: Date;
   providers: AgendaProvider[];
@@ -65,7 +82,8 @@ interface WeekViewProps {
   providerFilter: string;
   onCountChange(count: number | null): void;
   onOpenDetails(target: DetailsTarget, opener: HTMLElement): void;
-  onNewSlot(slot: NewSlot): void;
+  // Horário livre clicado: a agenda abre o menu com as opções
+  onSlotClick(slot: NewSlot, point: ClickPoint): void;
   onOpenDay(date: Date): void;
 }
 
@@ -128,7 +146,7 @@ const WeekView: React.FC<WeekViewProps> = ({
   providerFilter,
   onCountChange,
   onOpenDetails,
-  onNewSlot,
+  onSlotClick,
   onOpenDay,
 }) => {
   const { addToast } = useToast();
@@ -334,7 +352,10 @@ const WeekView: React.FC<WeekViewProps> = ({
                       const start = new Date(date);
                       start.setHours(hour, quarter * 15, 0, 0);
 
-                      onNewSlot({ provider, start, color });
+                      onSlotClick(
+                        { provider, start, color },
+                        clickPoint(event),
+                      );
                     }}
                   />
                 );

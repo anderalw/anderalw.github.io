@@ -496,3 +496,82 @@ export const DayHeader = styled.button<{ today: boolean }>`
     background: ${props => (props.today ? colors.primary : 'transparent')};
   }
 `;
+
+// Menu do horário livre: fundo transparente que fecha ao clicar fora
+export const MenuBackdrop = styled.div`
+  position: fixed;
+  inset: 0;
+  z-index: 9;
+`;
+
+export const Menu = styled.div`
+  position: fixed;
+  min-width: 220px;
+  padding: 6px;
+  border: 1px solid ${colors.borderStrong};
+  border-radius: ${radius.md};
+  background: ${colors.surface};
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.45);
+`;
+
+export const MenuHeader = styled.div`
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 8px 10px 10px;
+  margin-bottom: 4px;
+  border-bottom: 1px solid ${colors.border};
+
+  > svg {
+    flex-shrink: 0;
+    margin-top: 2px;
+    color: ${colors.textMuted};
+  }
+
+  div {
+    display: flex;
+    flex-direction: column;
+  }
+
+  strong {
+    font-size: 13px;
+    font-weight: 600;
+    color: ${colors.text};
+
+    &::first-letter {
+      text-transform: uppercase;
+    }
+  }
+
+  small {
+    font-size: 12px;
+    color: ${colors.textMuted};
+  }
+`;
+
+export const MenuItem = styled.button`
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  height: 34px;
+  padding: 0 10px;
+  border: 0;
+  border-radius: 6px;
+  background: transparent;
+  color: ${colors.text};
+  font-size: 14px;
+  text-align: left;
+
+  svg {
+    width: 16px;
+    height: 16px;
+    color: ${colors.primary};
+  }
+
+  &:hover,
+  &:focus-visible {
+    background: ${colors.surfaceHover};
+    outline: none;
+  }
+`;

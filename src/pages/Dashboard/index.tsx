@@ -51,7 +51,13 @@ import AppLayout from '../../components/AppLayout';
 import { Calendar } from '../../components/ui/Calendar';
 import AppointmentDetails from './AppointmentDetails';
 import NewAppointment from './NewAppointment';
-import WeekView, { DetailsTarget, NewSlot } from './WeekView';
+import WeekView, {
+  ClickPoint,
+  DetailsTarget,
+  NewSlot,
+  clickPoint,
+} from './WeekView';
+import SlotMenu from './SlotMenu';
 import useHourHeight from './useHourHeight';
 import {
   Agenda,
@@ -123,6 +129,12 @@ const Dashboard: React.FC = () => {
   const openerRef = useRef<HTMLElement | null>(null);
   // Hora livre clicada: abre o formulário de novo agendamento
   const [newSlot, setNewSlot] = useState<NewSlot | null>(null);
+  // Menu aberto ao clicar num horário livre, antes de escolher a opção
+  const [slotMenu, setSlotMenu] = useState<(NewSlot & ClickPoint) | null>(null);
+
+  const openSlotMenu = useCallback((slot: NewSlot, point: ClickPoint) => {
+    setSlotMenu({ ...slot, ...point });
+  }, []);
 
   const changeView = useCallback((next: ViewMode) => {
     setView(next);
@@ -172,7 +184,7 @@ const Dashboard: React.FC = () => {
   // Atalhos de teclado, como no Google Agenda: T volta para hoje, as setas
   // andam um dia (ou uma semana) e D/S trocam a visão. Ficam desligados com
   // um painel aberto ou digitando
-  const panelOpen = !!details || !!newSlot;
+  const panelOpen = !!details || !!newSlot || !!slotMenu;
   const step = view === 'week' ? 7 : 1;
 
   useEffect(() => {
@@ -424,7 +436,7 @@ const Dashboard: React.FC = () => {
             providerFilter={providerFilter}
             onCountChange={setWeekCount}
             onOpenDetails={openDetails}
-            onNewSlot={setNewSlot}
+            onSlotClick={openSlotMenu}
             onOpenDay={openDay}
           />
         )}
@@ -533,11 +545,10 @@ const Dashboard: React.FC = () => {
                             const start = new Date(selectedDate);
                             start.setHours(hour, quarter * 15, 0, 0);
 
-                            setNewSlot({
-                              provider,
-                              start,
-                              color,
-                            });
+                            openSlotMenu(
+                              { provider, start, color },
+                              clickPoint(event),
+                            );
                           }}
                         />
                       );
@@ -651,6 +662,22 @@ const Dashboard: React.FC = () => {
           onClose={closeDetails}
           providers={details.providers}
           onChanged={handleAppointmentChanged}
+        />
+      )}
+
+      {slotMenu && (
+        <SlotMenu
+          x={slotMenu.x}
+          y={slotMenu.y}
+          providerName={slotMenu.provider.name}
+          start={slotMenu.start}
+          onClose={() => setSlotMenu(null)}
+          onNewAppointment={() => {
+            const { provider, start, color } = slotMenu;
+
+            setSlotMenu(null);
+            setNewSlot({ provider, start, color });
+          }}
         />
       )}
 
