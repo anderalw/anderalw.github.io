@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useCallback, useState } from 'react';
 import { NavLink } from 'react-router-dom';
 import {
   FiBell,
@@ -15,6 +15,7 @@ import {
 import { useAuth } from '../../hooks/Auth';
 import { useNotifications } from '../../hooks/Notifications';
 import avatarFallback from '../../utils/avatarFallback';
+import NotificationsPanel from '../NotificationsPanel';
 
 import {
   Shell,
@@ -23,6 +24,7 @@ import {
   Nav,
   NavSection,
   NavBadge,
+  NavButton,
   Extra,
   UserArea,
   UserInfo,
@@ -44,6 +46,14 @@ const AppLayout: React.FC<AppLayoutProps> = ({ sidebarExtra, children }) => {
   const isClient = role === 'client';
   const { unread } = useNotifications();
   const unreadLabel = unread > 99 ? '99+' : String(unread);
+  // Botão que abriu o painel de notificações (null = fechado)
+  const [panelAnchor, setPanelAnchor] = useState<HTMLElement | null>(null);
+
+  const closePanel = useCallback(() => {
+    // Devolve o foco ao botão do menu
+    panelAnchor?.focus();
+    setPanelAnchor(null);
+  }, [panelAnchor]);
 
   return (
     <Shell>
@@ -72,13 +82,22 @@ const AppLayout: React.FC<AppLayoutProps> = ({ sidebarExtra, children }) => {
               <FiCalendar />
               <span>Agenda</span>
             </NavLink>
-            <NavLink
-              to="/notificacoes"
+            {/* Abre o painel suspenso, sem sair da tela atual */}
+            <NavButton
+              type="button"
+              aria-haspopup="dialog"
+              aria-expanded={!!panelAnchor}
+              className={panelAnchor ? 'active' : undefined}
               title={
                 unread > 0
                   ? `Notificações (${unread} não lidas)`
                   : 'Notificações'
               }
+              onClick={event => {
+                const button = event.currentTarget;
+
+                setPanelAnchor(current => (current ? null : button));
+              }}
             >
               <FiBell />
               <span>Notificações</span>
@@ -87,7 +106,7 @@ const AppLayout: React.FC<AppLayoutProps> = ({ sidebarExtra, children }) => {
                   {unreadLabel}
                 </NavBadge>
               )}
-            </NavLink>
+            </NavButton>
 
             {user.is_admin && (
               <>
@@ -149,6 +168,10 @@ const AppLayout: React.FC<AppLayoutProps> = ({ sidebarExtra, children }) => {
       </Sidebar>
 
       <Main>{children}</Main>
+
+      {panelAnchor && (
+        <NotificationsPanel anchor={panelAnchor} onClose={closePanel} />
+      )}
     </Shell>
   );
 };

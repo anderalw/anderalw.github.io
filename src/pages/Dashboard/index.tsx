@@ -18,6 +18,7 @@ import {
   startOfWeek,
 } from 'date-fns';
 import ptBR from 'date-fns/locale/pt-BR';
+import { useLocation } from 'react-router-dom';
 import DayPicker from 'react-day-picker';
 import 'react-day-picker/lib/style.css';
 import { FiChevronLeft, FiChevronRight } from 'react-icons/fi';
@@ -88,8 +89,8 @@ function savedView(): ViewMode {
 }
 
 // Dia pedido no endereço (?data=yyyy-MM-dd), ex: ao abrir uma notificação
-function dateFromQuery(): Date | null {
-  const value = new URLSearchParams(window.location.search).get('data');
+function dateFromQuery(search = window.location.search): Date | null {
+  const value = new URLSearchParams(search).get('data');
 
   if (!value || !/^\d{4}-\d{2}-\d{2}$/.test(value)) return null;
 
@@ -126,6 +127,7 @@ function weekTitle(start: Date): string {
 
 const Dashboard: React.FC = () => {
   const { user } = useAuth();
+  const location = useLocation();
   const { addToast } = useToast();
   const [selectedDate, setSelectedDate] = useState(
     () => dateFromQuery() || startOfDay(new Date()),
@@ -141,6 +143,16 @@ const Dashboard: React.FC = () => {
   const [view, setView] = useState<ViewMode>(() =>
     dateFromQuery() ? 'day' : savedView(),
   );
+  // Notificação aberta com a agenda já na tela: muda o dia sem recarregar
+  useEffect(() => {
+    const date = dateFromQuery(location.search);
+
+    if (date) {
+      setSelectedDate(date);
+      setView('day');
+    }
+  }, [location.search, location.key]);
+
   // Visão semanal: 'all' ou o id de um barbeiro
   const [providerFilter, setProviderFilter] = useState('all');
   const [weekCount, setWeekCount] = useState<number | null>(null);

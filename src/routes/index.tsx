@@ -16,7 +16,6 @@ import SignUpClient from '../pages/SignUpClient';
 import ManageProviders from '../pages/ManageProviders';
 import ManageServices from '../pages/ManageServices';
 import ManageBlockReasons from '../pages/ManageBlockReasons';
-import Notifications from '../pages/Notifications';
 
 const Routes: React.FC = () => (
   <Switch>
@@ -29,7 +28,6 @@ const Routes: React.FC = () => (
     <Route path="/barbeiro/redefinir-senha" component={ResetPassword} />
     <Route path="/dashboard" component={Dashboard} isPrivate />
     <Route path="/perfil" component={Profile} isPrivate />
-    <Route path="/notificacoes" component={Notifications} isPrivate />
     <Route path="/admin/servicos" component={ManageServices} isPrivate />
     <Route path="/admin/barbeiros" component={ManageProviders} isPrivate />
     <Route

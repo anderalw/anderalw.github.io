@@ -1,31 +1,37 @@
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, {
+  useCallback,
+  useEffect,
+  useLayoutEffect,
+  useMemo,
+  useRef,
+  useState,
+} from 'react';
 import { useHistory } from 'react-router-dom';
 import {
+  differenceInHours,
   format,
   formatDistanceToNowStrict,
   isToday,
   isYesterday,
   parseISO,
-  differenceInHours,
 } from 'date-fns';
 import ptBR from 'date-fns/locale/pt-BR';
-import { FiCalendar, FiCheck, FiRepeat, FiXCircle } from 'react-icons/fi';
+import { FiCalendar, FiRepeat, FiX, FiXCircle } from 'react-icons/fi';
 
 import api from '../../services/api';
 import { useToast } from '../../hooks/Toast';
 import { useNotifications } from '../../hooks/Notifications';
 import getApiErrorMessage from '../../utils/getApiErrorMessage';
 
-import AppLayout from '../../components/AppLayout';
 import {
-  Page,
-  PageHeader,
-  Card,
-  CardHeader,
-  UIButton,
-} from '../../components/ui';
-import {
+  Backdrop,
+  Panel,
+  PanelHeader,
+  HeaderActions,
+  LinkButton,
+  CloseButton,
   Tabs,
+  List,
   DayTitle,
   Item,
   Icon,
@@ -40,7 +46,7 @@ interface NotificationItem {
   content: string;
   read: boolean;
   created_at: string;
-  // Dia do agendamento citado: clicar abre a agenda nele
+  // Dia do agendamento citado: clicar mostra esse dia na agenda
   date: string | null;
 }
 
@@ -49,8 +55,16 @@ interface NotificationsResponse {
   unread: number;
 }
 
+interface NotificationsPanelProps {
+  // Botão que abriu o painel: o painel abre ao lado dele
+  anchor: HTMLElement;
+  onClose(): void;
+}
+
 // Quantas a API devolve (as mais recentes)
 const LIMIT = 50;
+const GAP = 8;
+const PANEL_HEIGHT = 560;
 
 // Tipo pelo texto: cancelado, remarcado/transferido ou novo
 function toneOf(content: string): 'new' | 'moved' | 'canceled' {
@@ -73,7 +87,7 @@ function dayTitle(date: Date): string {
   return format(date, "EEEE, d 'de' MMMM", { locale: ptBR });
 }
 
-// "há 5 minutos" no mesmo dia recente; depois, só o horário
+// "há 5 minutos" nas recentes; depois, só o horário
 function timeLabel(date: Date): string {
   if (differenceInHours(Date.now(), date) < 12) {
     return formatDistanceToNowStrict(date, { locale: ptBR, addSuffix: true });
@@ -82,17 +96,59 @@ function timeLabel(date: Date): string {
   return format(date, 'HH:mm');
 }
 
-// Avisos de novos agendamentos, remarcações e cancelamentos do barbeiro
-// logado. Clicar marca como lida e abre a agenda no dia do agendamento
-const Notifications: React.FC = () => {
+// Painel suspenso com os avisos de novos agendamentos, remarcações e
+// cancelamentos do barbeiro logado. Abre ao lado do menu, sem sair da tela
+// atual; clicar num aviso marca como lido e mostra o dia na agenda
+const NotificationsPanel: React.FC<NotificationsPanelProps> = ({
+  anchor,
+  onClose,
+}) => {
   const history = useHistory();
   const { addToast } = useToast();
   const { unread, setUnread } = useNotifications();
+  const panelRef = useRef<HTMLDivElement>(null);
 
   const [items, setItems] = useState<NotificationItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [onlyUnread, setOnlyUnread] = useState(false);
   const [markingAll, setMarkingAll] = useState(false);
+  const [position, setPosition] = useState({ top: 0, left: 0, height: 0 });
+
+  // Ao lado do botão, sem passar do pé da tela
+  useLayoutEffect(() => {
+    const place = (): void => {
+      const rect = anchor.getBoundingClientRect();
+      const height = Math.min(PANEL_HEIGHT, window.innerHeight - GAP * 2);
+      const top = Math.max(
+        GAP,
+        Math.min(rect.top, window.innerHeight - height - GAP),
+      );
+
+      // Encostado à borda do menu lateral (ou do botão, sem menu)
+      const sidebar = anchor.closest('aside');
+      const edge = sidebar ? sidebar.getBoundingClientRect().right : rect.right;
+
+      setPosition({ top, left: edge + GAP, height });
+    };
+
+    place();
+    window.addEventListener('resize', place);
+
+    return () => window.removeEventListener('resize', place);
+  }, [anchor]);
+
+  // Esc fecha
+  useEffect(() => {
+    panelRef.current?.focus();
+
+    function handleKeyDown(event: KeyboardEvent): void {
+      if (event.key === 'Escape') onClose();
+    }
+
+    window.addEventListener('keydown', handleKeyDown);
+
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [onClose]);
 
   useEffect(() => {
     let active = true;
@@ -171,12 +227,13 @@ const Notifications: React.FC = () => {
       markAsRead(item);
 
       if (item.date) {
+        onClose();
         history.push(
           `/dashboard?data=${format(parseISO(item.date), 'yyyy-MM-dd')}`,
         );
       }
     },
-    [markAsRead, history],
+    [markAsRead, onClose, history],
   );
 
   const handleMarkAll = useCallback(async () => {
@@ -201,48 +258,58 @@ const Notifications: React.FC = () => {
   }, [onlyUnread, setUnread, addToast]);
 
   return (
-    <AppLayout>
-      <Page>
-        <PageHeader>
-          <div>
-            <h1>Notificações</h1>
-            <p>
-              Novos agendamentos, remarcações e cancelamentos da sua agenda.
-            </p>
-          </div>
-          <div>
-            <UIButton
+    <Backdrop
+      // Clicar fora fecha
+      onMouseDown={event => {
+        if (event.target === event.currentTarget) onClose();
+      }}
+    >
+      <Panel
+        ref={panelRef}
+        role="dialog"
+        aria-label="Notificações"
+        tabIndex={-1}
+        style={position}
+      >
+        <PanelHeader>
+          <h2>Notificações</h2>
+          <HeaderActions>
+            <LinkButton
               type="button"
-              variant="secondary"
               onClick={handleMarkAll}
               disabled={markingAll || unread === 0}
             >
-              <FiCheck />
               Marcar todas como lidas
-            </UIButton>
-          </div>
-        </PageHeader>
+            </LinkButton>
+            <CloseButton
+              type="button"
+              aria-label="Fechar"
+              title="Fechar (Esc)"
+              onClick={onClose}
+            >
+              <FiX />
+            </CloseButton>
+          </HeaderActions>
+        </PanelHeader>
 
-        <Card style={{ maxWidth: 820 }}>
-          <CardHeader>
-            <Tabs role="group" aria-label="Filtro">
-              <button
-                type="button"
-                aria-pressed={!onlyUnread}
-                onClick={() => setOnlyUnread(false)}
-              >
-                Todas
-              </button>
-              <button
-                type="button"
-                aria-pressed={onlyUnread}
-                onClick={() => setOnlyUnread(true)}
-              >
-                Não lidas {unread > 0 && `(${unread})`}
-              </button>
-            </Tabs>
-          </CardHeader>
+        <Tabs role="group" aria-label="Filtro">
+          <button
+            type="button"
+            aria-pressed={!onlyUnread}
+            onClick={() => setOnlyUnread(false)}
+          >
+            Todas
+          </button>
+          <button
+            type="button"
+            aria-pressed={onlyUnread}
+            onClick={() => setOnlyUnread(true)}
+          >
+            Não lidas {unread > 0 && `(${unread})`}
+          </button>
+        </Tabs>
 
+        <List>
           {loading &&
             [220, 300, 260].map(width => (
               <Skeleton key={width} aria-hidden="true">
@@ -266,7 +333,6 @@ const Notifications: React.FC = () => {
                 {group.items.map(item => {
                   const tone = toneOf(item.content);
                   const TypeIcon = ICONS[tone];
-                  const created = parseISO(item.created_at);
 
                   return (
                     <Item
@@ -275,17 +341,19 @@ const Notifications: React.FC = () => {
                       unread={!item.read}
                       clickable={!!item.date || !item.read}
                       title={
-                        item.date ? 'Abrir o dia na agenda' : 'Marcar como lida'
+                        item.date ? 'Ver o dia na agenda' : 'Marcar como lida'
                       }
                       onClick={() => handleOpen(item)}
                     >
                       <Icon tone={tone}>
                         <TypeIcon />
                       </Icon>
-                      <p>{item.content}</p>
-                      <time dateTime={item.created_at}>
-                        {timeLabel(created)}
-                      </time>
+                      <div>
+                        <p>{item.content}</p>
+                        <time dateTime={item.created_at}>
+                          {timeLabel(parseISO(item.created_at))}
+                        </time>
+                      </div>
                       <Dot
                         visible={!item.read}
                         aria-label={item.read ? undefined : 'Não lida'}
@@ -299,10 +367,10 @@ const Notifications: React.FC = () => {
           {!loading && items.length === LIMIT && (
             <Footnote>Mostrando as {LIMIT} mais recentes.</Footnote>
           )}
-        </Card>
-      </Page>
-    </AppLayout>
+        </List>
+      </Panel>
+    </Backdrop>
   );
 };
 
-export default Notifications;
+export default NotificationsPanel;

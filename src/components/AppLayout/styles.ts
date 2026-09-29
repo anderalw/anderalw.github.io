@@ -83,7 +83,8 @@ export const Nav = styled.nav`
   gap: 2px;
   padding: 8px 12px;
 
-  a {
+  a,
+  > button {
     position: relative;
     display: flex;
     align-items: center;
@@ -116,7 +117,8 @@ export const Nav = styled.nav`
   @media ${SIDEBAR_COLLAPSE} {
     padding: 8px;
 
-    a {
+    a,
+    > button {
       justify-content: center;
       padding: 0;
 
@@ -155,6 +157,15 @@ export const NavBadge = styled.span`
     font-size: 10px;
     line-height: 16px;
   }
+`;
+
+// Item do menu que abre um painel (ex: notificações), com a cara dos links
+export const NavButton = styled.button`
+  width: 100%;
+  border: 0;
+  background: transparent;
+  text-align: left;
+  font-size: inherit;
 `;
 
 export const NavSection = styled.span`
