@@ -249,6 +249,33 @@ export const HelpText = styled.p`
   line-height: 20px;
 `;
 
+// Dia lotado: convite para a lista de espera
+export const WaitlistBox = styled.div`
+  margin-top: 16px;
+  padding: 14px;
+  border: 1px dashed ${colors.borderStrong};
+  border-radius: ${radius.md};
+
+  strong {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin-bottom: 4px;
+    font-size: 14px;
+    color: ${colors.text};
+  }
+
+  p {
+    font-size: 13px;
+    line-height: 19px;
+    color: ${colors.textMuted};
+  }
+
+  select {
+    margin: 12px 0 10px;
+  }
+`;
+
 export const Summary = styled.div`
   position: sticky;
   top: 28px;

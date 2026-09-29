@@ -65,6 +65,7 @@ import BlockMenu from './BlockMenu';
 import BlockModal from './BlockModal';
 import AgendaBlockCard from './AgendaBlockCard';
 import PendingConfirmations from './PendingConfirmations';
+import WaitlistPanel from './WaitlistPanel';
 import useHourHeight from './useHourHeight';
 import {
   Agenda,
@@ -489,6 +490,14 @@ const Dashboard: React.FC = () => {
               addToast({ type: 'success', ...message });
             }}
           />
+
+          {view === 'day' && (
+            <WaitlistPanel
+              day={selectedDate}
+              providers={activeProviders}
+              refreshKey={refreshKey}
+            />
+          )}
 
           {view === 'week' && (
             <ProviderFilter

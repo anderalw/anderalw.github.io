@@ -24,6 +24,7 @@ import {
 } from '../../../utils/phone';
 
 import { Overlay, CloseButton } from '../AppointmentDetails/styles';
+import { WaitlistItem, PERIOD_LABELS } from '../WaitlistPanel';
 import {
   Field,
   PrimaryButton,
@@ -167,6 +168,8 @@ const NewAppointment: React.FC<NewAppointmentProps> = ({
     email: '',
   });
   const [registering, setRegistering] = useState(false);
+  // Quem está na lista de espera do dia (aparece antes da busca)
+  const [waiting, setWaiting] = useState<WaitlistItem[]>([]);
 
   // Passo 2: serviço (barbeiro e horário vêm do clique)
   const [services, setServices] = useState<Service[]>([]);
@@ -206,6 +209,21 @@ const NewAppointment: React.FC<NewAppointmentProps> = ({
       setServices(response.data);
     });
   }, []);
+
+  useEffect(() => {
+    api
+      .get<WaitlistItem[]>('/waitlist', {
+        params: { date: format(start, 'yyyy-MM-dd') },
+      })
+      .then(response => {
+        setWaiting(
+          response.data.filter(item => !item.booked && item.client !== null),
+        );
+      })
+      .catch(() => {
+        // Sem a lista, a busca funciona normalmente
+      });
+  }, [start]);
 
   // Busca enquanto digita (a partir de 2 letras, com uma pausa)
   useEffect(() => {
@@ -734,6 +752,43 @@ const NewAppointment: React.FC<NewAppointmentProps> = ({
                     autoComplete="off"
                   />
                 </Field>
+
+                {search.trim().length < 2 && waiting.length > 0 && (
+                  <>
+                    <SectionLabel style={{ marginTop: 16 }}>
+                      Na lista de espera deste dia
+                    </SectionLabel>
+                    <SearchResults>
+                      {waiting.map(item => (
+                        <li key={item.id}>
+                          <ResultButton
+                            type="button"
+                            onClick={() =>
+                              item.client &&
+                              selectClient({
+                                id: item.client.id,
+                                name: item.client.name,
+                                phone: item.client.phone,
+                                email: item.client.email,
+                              })
+                            }
+                            title={item.client?.name}
+                          >
+                            <span>{item.client?.name}</span>
+                            <small>
+                              {[
+                                PERIOD_LABELS[item.period],
+                                item.provider && `com ${item.provider.name}`,
+                              ]
+                                .filter(Boolean)
+                                .join(' · ')}
+                            </small>
+                          </ResultButton>
+                        </li>
+                      ))}
+                    </SearchResults>
+                  </>
+                )}
 
                 {results.length > 0 && (
                   <SearchResults>

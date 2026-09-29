@@ -3,7 +3,7 @@ import { format, startOfDay } from 'date-fns';
 import ptBR from 'date-fns/locale/pt-BR';
 import DayPicker from 'react-day-picker';
 import 'react-day-picker/lib/style.css';
-import { FiCheck, FiUsers } from 'react-icons/fi';
+import { FiCheck, FiClock, FiUsers } from 'react-icons/fi';
 
 import api from '../../services/api';
 import { useToast } from '../../hooks/Toast';
@@ -20,6 +20,7 @@ import {
   CardHeader,
   CardBody,
   UIButton,
+  Select,
 } from '../../components/ui';
 import { Calendar } from '../../components/ui/Calendar';
 
@@ -41,6 +42,7 @@ import {
   SummaryList,
   Total,
   SummaryFooter,
+  WaitlistBox,
 } from './styles';
 
 interface Provider {
@@ -60,6 +62,22 @@ interface Service {
 interface AvailableTime {
   time: string;
 }
+
+type WaitlistPeriod = 'any' | 'morning' | 'afternoon' | 'evening';
+
+// Pedido na lista de espera de um dia lotado
+interface WaitlistRequest {
+  id: string;
+  date: string;
+  period: WaitlistPeriod;
+}
+
+const PERIODS: { value: WaitlistPeriod; label: string }[] = [
+  { value: 'any', label: 'Qualquer horário' },
+  { value: 'morning', label: 'De manhã (até 12h)' },
+  { value: 'afternoon', label: 'À tarde (12h às 18h)' },
+  { value: 'evening', label: 'À noite (depois das 18h)' },
+];
 
 // Valor de selectedProvider para "Qualquer barbeiro"
 const ANY_PROVIDER = 'any';
@@ -96,6 +114,21 @@ const CreateAppointment: React.FC = () => {
   const [saving, setSaving] = useState(false);
   // Muda a cada agendamento feito, para recarregar os horários livres
   const [refreshKey, setRefreshKey] = useState(0);
+  // Lista de espera: pedidos do cliente e o período escolhido
+  const [waitlist, setWaitlist] = useState<WaitlistRequest[]>([]);
+  const [waitPeriod, setWaitPeriod] = useState<WaitlistPeriod>('any');
+  const [joining, setJoining] = useState(false);
+
+  const loadWaitlist = useCallback(() => {
+    api
+      .get<WaitlistRequest[]>('/waitlist/me')
+      .then(response => setWaitlist(response.data))
+      .catch(() => {
+        // Sem a lista, o agendamento funciona normalmente
+      });
+  }, []);
+
+  useEffect(loadWaitlist, [loadWaitlist]);
 
   // Serviços ativos e barbeiros, ao abrir a página
   useEffect(() => {
@@ -231,6 +264,71 @@ const CreateAppointment: React.FC = () => {
   ]);
 
   const canConfirm = !!(service && providerChosen && appointmentDate);
+
+  const dateKey = selectedDate ? format(selectedDate, 'yyyy-MM-dd') : '';
+  const waitingRequest = waitlist.find(item => item.date === dateKey);
+  const dayIsFull =
+    !!selectedService &&
+    !!selectedDate &&
+    !loadingTimes &&
+    availableTimes.length === 0;
+
+  const joinWaitlist = useCallback(async () => {
+    if (!selectedDate) return;
+
+    setJoining(true);
+
+    try {
+      await api.post('/waitlist/me', {
+        date: format(selectedDate, 'yyyy-MM-dd'),
+        provider_id: isAnyProvider ? null : selectedProvider,
+        service_id: selectedService || null,
+        period: waitPeriod,
+      });
+
+      addToast({
+        type: 'success',
+        title: 'Você está na lista de espera',
+        description: 'Se abrir um horário neste dia, avisamos por e-mail.',
+      });
+      loadWaitlist();
+    } catch (err) {
+      addToast({
+        type: 'error',
+        title: 'Não foi possível entrar na lista',
+        description: getApiErrorMessage(err, 'Tente novamente.'),
+      });
+    } finally {
+      setJoining(false);
+    }
+  }, [
+    selectedDate,
+    isAnyProvider,
+    selectedProvider,
+    selectedService,
+    waitPeriod,
+    addToast,
+    loadWaitlist,
+  ]);
+
+  const leaveWaitlist = useCallback(async () => {
+    if (!waitingRequest) return;
+
+    setJoining(true);
+
+    try {
+      await api.delete(`/waitlist/${waitingRequest.id}`);
+      loadWaitlist();
+    } catch (err) {
+      addToast({
+        type: 'error',
+        title: 'Não foi possível sair da lista',
+        description: getApiErrorMessage(err, 'Tente novamente.'),
+      });
+    } finally {
+      setJoining(false);
+    }
+  }, [waitingRequest, addToast, loadWaitlist]);
 
   let timesMessage = '';
 
@@ -377,7 +475,71 @@ const CreateAppointment: React.FC = () => {
                     </span>
                     <TimesBox>
                       {timesMessage ? (
-                        <HelpText>{timesMessage}</HelpText>
+                        <>
+                          <HelpText>{timesMessage}</HelpText>
+
+                          {dayIsFull && waitingRequest && (
+                            <WaitlistBox>
+                              <strong>
+                                <FiClock /> Você está na lista de espera
+                              </strong>
+                              <p>
+                                Se alguém cancelar um horário neste dia,
+                                avisamos você por e-mail. Quem agendar primeiro
+                                fica com o horário.
+                              </p>
+                              <UIButton
+                                type="button"
+                                variant="ghost"
+                                size="sm"
+                                style={{ marginTop: 10 }}
+                                disabled={joining}
+                                onClick={leaveWaitlist}
+                              >
+                                Sair da lista
+                              </UIButton>
+                            </WaitlistBox>
+                          )}
+
+                          {dayIsFull && !waitingRequest && (
+                            <WaitlistBox>
+                              <strong>Quer esperar uma vaga?</strong>
+                              <p>
+                                Entre na lista de espera: se alguém cancelar,
+                                avisamos você por e-mail.
+                              </p>
+                              <Select
+                                aria-label="Período"
+                                value={waitPeriod}
+                                onChange={event =>
+                                  setWaitPeriod(
+                                    event.target.value as WaitlistPeriod,
+                                  )
+                                }
+                              >
+                                {PERIODS.map(option => (
+                                  <option
+                                    key={option.value}
+                                    value={option.value}
+                                  >
+                                    {option.label}
+                                  </option>
+                                ))}
+                              </Select>
+                              <UIButton
+                                type="button"
+                                size="sm"
+                                disabled={joining}
+                                onClick={joinWaitlist}
+                              >
+                                <FiClock />
+                                {joining
+                                  ? 'Entrando...'
+                                  : 'Entrar na lista de espera'}
+                              </UIButton>
+                            </WaitlistBox>
+                          )}
+                        </>
                       ) : (
                         <HourList>
                           {availableTimes.map(({ time }) => (
