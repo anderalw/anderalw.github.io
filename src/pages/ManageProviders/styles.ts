@@ -158,7 +158,7 @@ export const ScheduleTable = styled.table`
 
   td {
     /* Mesma altura com ou sem os campos de horário */
-    height: 50px;
+    height: 46px;
     border-top: 1px solid ${colors.border};
   }
 
@@ -166,8 +166,9 @@ export const ScheduleTable = styled.table`
     border-top: 0;
   }
 
-  input[type='time'] {
-    width: 116px;
+  /* Hora e minutos */
+  td > div {
+    width: 130px;
   }
 
   td.until {
@@ -179,22 +180,6 @@ export const ScheduleTable = styled.table`
 
   td.off {
     text-align: right;
-  }
-`;
-
-export const DayToggle = styled.label`
-  display: inline-flex;
-  align-items: center;
-  gap: 10px;
-  cursor: pointer;
-  color: ${colors.text};
-  font-weight: 500;
-
-  input {
-    width: 16px;
-    height: 16px;
-    accent-color: ${colors.primary};
-    cursor: pointer;
   }
 `;
 
@@ -255,4 +240,24 @@ export const ConfirmBox = styled.div`
     gap: 8px;
     margin-top: 24px;
   }
+`;
+
+// Dias de atendimento: os mesmos botões do bloqueio que se repete
+export const WorkDays = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 8px;
+
+  > span {
+    font-size: 13px;
+    font-weight: 500;
+    color: ${colors.textMuted};
+  }
+`;
+
+// Nome do dia em cada linha; esmaecido na folga
+export const DayName = styled.span<{ off: boolean }>`
+  font-weight: 500;
+  color: ${props => (props.off ? colors.textSubtle : colors.text)};
 `;

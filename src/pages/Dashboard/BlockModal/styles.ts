@@ -4,6 +4,7 @@ import { colors, radius } from '../../../styles/theme';
 import { inputStyles } from '../../../components/ui';
 import { WideDialog } from '../modalLayout';
 import { ViewSwitch } from '../styles';
+import WeekdayPicker from '../../../components/WeekdayPicker';
 
 // Tamanho fixo: marcar "dia inteiro" ou aparecer um erro não muda a altura
 export const BlockDialog = styled(WideDialog)`
@@ -80,16 +81,80 @@ export const PickerOption = styled.label`
   }
 `;
 
-// Campo do motivo com os atalhos na mesma linha
-export const ReasonRow = styled.div`
+// Motivo: campo com busca e lista que abre para cima
+export const SelectWrapper = styled.div<{ invalid: boolean }>`
+  position: relative;
+
+  /* Lupa enquanto busca e seta à direita */
+  > svg {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 16px;
+    height: 16px;
+    color: ${colors.textMuted};
+    pointer-events: none;
+    left: 12px;
+  }
+
+  > svg.chevron {
+    left: auto;
+    right: 12px;
+  }
+
+  ${props =>
+    props.invalid &&
+    css`
+      input,
+      input:hover:not(:disabled) {
+        border-color: ${colors.danger};
+      }
+    `}
+`;
+
+export const SelectInput = styled.input<{ searching: boolean }>`
+  ${inputStyles}
+  padding-left: ${props => (props.searching ? '36px' : '12px')};
+  padding-right: 36px;
+  cursor: ${props => (props.searching ? 'text' : 'pointer')};
+`;
+
+export const SelectList = styled.div`
+  position: absolute;
+  bottom: calc(100% + 4px);
+  left: 0;
+  right: 0;
+  z-index: 2;
+  max-height: 220px;
+  overflow-y: auto;
+  padding: 6px;
+  border: 1px solid ${colors.borderStrong};
+  border-radius: ${radius.md};
+  background: ${colors.surface};
+  box-shadow: 0 -12px 32px rgba(0, 0, 0, 0.45);
+`;
+
+export const SelectOption = styled.div<{
+  highlighted: boolean;
+  selected: boolean;
+}>`
   display: flex;
   align-items: center;
-  gap: 10px;
+  height: 34px;
+  padding: 0 10px;
+  border-radius: 6px;
+  color: ${props => (props.selected ? colors.primary : colors.text)};
+  font-size: 14px;
+  font-weight: ${props => (props.selected ? 600 : 400)};
+  cursor: pointer;
+  background: ${props =>
+    props.highlighted ? colors.surfaceHover : 'transparent'};
+`;
 
-  > input {
-    flex: 1;
-    min-width: 0;
-  }
+export const SelectEmpty = styled.p`
+  padding: 8px 10px;
+  color: ${colors.textMuted};
+  font-size: 13px;
 `;
 
 // Barbeiro e o modo (uma vez ou repetir) na mesma linha
@@ -112,18 +177,6 @@ export const ModeSwitch = styled(ViewSwitch)`
   button {
     height: 32px;
     padding: 0 14px;
-  }
-`;
-
-// Os sete dias da semana, marcáveis
-export const DayChips = styled.div`
-  grid-column: span 2;
-  display: flex;
-  gap: 6px;
-
-  button {
-    width: 40px;
-    padding: 0;
   }
 `;
 
@@ -168,7 +221,7 @@ export const Field = styled.label`
 // Data e hora lado a lado
 export const PeriodRow = styled.div`
   display: grid;
-  grid-template-columns: 56px minmax(0, 1fr) 120px;
+  grid-template-columns: 56px minmax(0, 1fr) 130px;
   align-items: center;
   gap: 12px;
   min-height: 38px;
@@ -196,35 +249,6 @@ export const WholeDay = styled.label`
     accent-color: ${colors.primary};
     cursor: pointer;
   }
-`;
-
-export const Reasons = styled.div`
-  display: flex;
-  flex-shrink: 0;
-  gap: 6px;
-`;
-
-export const ReasonChip = styled.button<{ selected: boolean }>`
-  height: 28px;
-  padding: 0 10px;
-  border: 1px solid ${colors.borderStrong};
-  border-radius: 999px;
-  background: transparent;
-  color: ${colors.textMuted};
-  font-size: 13px;
-
-  &:hover {
-    color: ${colors.text};
-    background: ${colors.surfaceHover};
-  }
-
-  ${props =>
-    props.selected &&
-    css`
-      border-color: ${colors.primary};
-      color: ${colors.primary};
-      background: ${colors.primarySoft};
-    `}
 `;
 
 // Espaço sempre reservado: o erro aparece sem mexer no resto
@@ -259,4 +283,9 @@ export const Summary = styled.div<{ error: boolean }>`
         color: ${colors.danger};
       }
     `}
+`;
+
+// Os dias da semana, ocupando as duas colunas dos campos
+export const DayChips = styled(WeekdayPicker)`
+  grid-column: span 2;
 `;

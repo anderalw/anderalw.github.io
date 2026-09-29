@@ -10,7 +10,9 @@ import getApiErrorMessage from '../../utils/getApiErrorMessage';
 import { WeekSchedule } from '../../utils/scheduleSummary';
 
 import FormField from '../../components/FormField';
-import { UIButton, TextInput, Badge } from '../../components/ui';
+import { UIButton, Badge } from '../../components/ui';
+import TimeSelect from '../../components/TimeSelect';
+import WeekdayPicker from '../../components/WeekdayPicker';
 import { colors } from '../../styles/theme';
 import { Overlay, CloseButton } from '../Dashboard/AppointmentDetails/styles';
 import {
@@ -27,7 +29,8 @@ import {
   FormAside,
   SectionTitle,
   ScheduleTable,
-  DayToggle,
+  DayName,
+  WorkDays,
 } from './styles';
 
 export interface TeamMember {
@@ -276,46 +279,52 @@ const ProviderModal: React.FC<ProviderModalProps> = ({
 
             <Main>
               <SectionTitle>Horários de atendimento</SectionTitle>
+              <WorkDays>
+                <span>Dias</span>
+                <WeekdayPicker
+                  selected={rows
+                    .filter(row => row.enabled)
+                    .map(row => row.day_of_week)}
+                  onToggle={day => {
+                    const index = rows.findIndex(
+                      row => row.day_of_week === day,
+                    );
+
+                    updateRow(index, 'enabled', !rows[index].enabled);
+                  }}
+                />
+              </WorkDays>
               <ScheduleTable>
                 <tbody>
                   {rows.map((row, index) => (
                     <tr key={row.day_of_week}>
                       <td>
-                        <DayToggle>
-                          <input
-                            type="checkbox"
-                            checked={row.enabled}
-                            onChange={e =>
-                              updateRow(index, 'enabled', e.target.checked)
-                            }
-                          />
-                          <span>{dayNames[row.day_of_week]}</span>
-                        </DayToggle>
+                        <DayName off={!row.enabled}>
+                          {dayNames[row.day_of_week]}
+                        </DayName>
                       </td>
                       {row.enabled ? (
                         <>
                           <td>
-                            <TextInput
-                              type="time"
-                              step={3600}
+                            <TimeSelect
+                              stepMinutes={60}
                               aria-label={`Início, ${
                                 dayNames[row.day_of_week]
                               }`}
                               value={row.start_time}
-                              onChange={e =>
-                                updateRow(index, 'start_time', e.target.value)
+                              onChange={value =>
+                                updateRow(index, 'start_time', value)
                               }
                             />
                           </td>
                           <td className="until">até</td>
                           <td>
-                            <TextInput
-                              type="time"
-                              step={3600}
+                            <TimeSelect
+                              stepMinutes={60}
                               aria-label={`Fim, ${dayNames[row.day_of_week]}`}
                               value={row.end_time}
-                              onChange={e =>
-                                updateRow(index, 'end_time', e.target.value)
+                              onChange={value =>
+                                updateRow(index, 'end_time', value)
                               }
                             />
                           </td>

@@ -15,6 +15,7 @@ import SignInClient from '../pages/SignInClient';
 import SignUpClient from '../pages/SignUpClient';
 import ManageProviders from '../pages/ManageProviders';
 import ManageServices from '../pages/ManageServices';
+import ManageBlockReasons from '../pages/ManageBlockReasons';
 
 const Routes: React.FC = () => (
   <Switch>
@@ -29,6 +30,11 @@ const Routes: React.FC = () => (
     <Route path="/perfil" component={Profile} isPrivate />
     <Route path="/admin/servicos" component={ManageServices} isPrivate />
     <Route path="/admin/barbeiros" component={ManageProviders} isPrivate />
+    <Route
+      path="/admin/motivos-bloqueio"
+      component={ManageBlockReasons}
+      isPrivate
+    />
     {/* Endereços antigos das telas de administração */}
     <Redirect from="/admin/services" to="/admin/servicos" />
     <Redirect from="/admin/create-provider" to="/admin/barbeiros" />

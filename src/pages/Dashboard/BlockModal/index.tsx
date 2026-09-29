@@ -27,12 +27,11 @@ import {
   PeriodRow,
   WholeDay,
   DayChips,
-  Reasons,
-  ReasonChip,
-  ReasonRow,
   Summary,
 } from './styles';
+import TimeSelect from '../../../components/TimeSelect';
 import ProviderPicker from './ProviderPicker';
+import ReasonSelect, { BlockReason } from './ReasonSelect';
 
 interface BlockModalProps {
   // Barbeiro e horário clicados na agenda
@@ -46,19 +45,6 @@ interface BlockModalProps {
 }
 
 type Mode = 'once' | 'repeat';
-
-const QUICK_REASONS = ['Almoço', 'Consulta', 'Folga', 'Férias'];
-
-// Domingo a sábado, como no calendário
-const WEEKDAYS = [
-  { day: 0, label: 'D', name: 'Domingo' },
-  { day: 1, label: 'S', name: 'Segunda' },
-  { day: 2, label: 'T', name: 'Terça' },
-  { day: 3, label: 'Q', name: 'Quarta' },
-  { day: 4, label: 'Q', name: 'Quinta' },
-  { day: 5, label: 'S', name: 'Sexta' },
-  { day: 6, label: 'S', name: 'Sábado' },
-];
 
 const toDateValue = (date: Date): string => format(date, 'yyyy-MM-dd');
 const toTimeValue = (date: Date): string => format(date, 'HH:mm');
@@ -95,9 +81,32 @@ const BlockModal: React.FC<BlockModalProps> = ({
   // Repetir
   const [days, setDays] = useState([0, 1, 2, 3, 4, 5, 6]);
   const [noEnd, setNoEnd] = useState(true);
-  const [reason, setReason] = useState('');
+  // Motivo cadastrado (obrigatório), escolhido na lista com busca
+  const [reasons, setReasons] = useState<BlockReason[]>([]);
+  const [reasonsLoading, setReasonsLoading] = useState(true);
+  const [reasonId, setReasonId] = useState<string | null>(null);
   const [error, setError] = useState('');
   const [saving, setSaving] = useState(false);
+
+  useEffect(() => {
+    let active = true;
+
+    api
+      .get<BlockReason[]>('/block-reasons')
+      .then(response => {
+        if (active) setReasons(response.data);
+      })
+      .catch(() => {
+        if (active) setReasons([]);
+      })
+      .finally(() => {
+        if (active) setReasonsLoading(false);
+      });
+
+    return () => {
+      active = false;
+    };
+  }, []);
 
   useEffect(() => {
     function handleKeyDown(event: KeyboardEvent): void {
@@ -222,6 +231,12 @@ const BlockModal: React.FC<BlockModalProps> = ({
         return;
       }
 
+      // O motivo é obrigatório
+      if (!reasonId) {
+        setError('Escolha o motivo do bloqueio.');
+        return;
+      }
+
       setError('');
       setSaving(true);
 
@@ -234,14 +249,14 @@ const BlockModal: React.FC<BlockModalProps> = ({
             end_time: toTime,
             starts_on: fromDate,
             ends_on: noEnd ? null : toDate,
-            reason: reason.trim() || null,
+            reason_id: reasonId,
           });
         } else if (period) {
           await api.post('/blocks', {
             provider_ids: providerIds,
             start_date: period.start.toISOString(),
             end_date: period.end.toISOString(),
-            reason: reason.trim() || null,
+            reason_id: reasonId,
           });
         }
 
@@ -277,7 +292,7 @@ const BlockModal: React.FC<BlockModalProps> = ({
       fromDate,
       noEnd,
       toDate,
-      reason,
+      reasonId,
       period,
       providers,
       provider.name,
@@ -294,6 +309,12 @@ const BlockModal: React.FC<BlockModalProps> = ({
       setError('');
     };
 
+  // Campos de lista (horários): mesmo efeito do edit
+  const pick = (setter: (value: string) => void) => (value: string) => {
+    setter(value);
+    setError('');
+  };
+
   const toggleDay = (day: number): void => {
     setDays(current =>
       current.includes(day)
@@ -304,6 +325,7 @@ const BlockModal: React.FC<BlockModalProps> = ({
   };
 
   const repeat = mode === 'repeat';
+  const missingReason = error === 'Escolha o motivo do bloqueio.';
 
   return (
     <Overlay
@@ -377,39 +399,21 @@ const BlockModal: React.FC<BlockModalProps> = ({
               <>
                 <PeriodRow>
                   <span>Horário</span>
-                  <TextInput
-                    type="time"
-                    step={900}
+                  <TimeSelect
                     aria-label="Hora de início"
                     value={fromTime}
-                    onChange={edit(setFromTime)}
+                    onChange={pick(setFromTime)}
                   />
-                  <TextInput
-                    type="time"
-                    step={900}
+                  <TimeSelect
                     aria-label="Hora de fim"
                     value={toTime}
-                    onChange={edit(setToTime)}
+                    onChange={pick(setToTime)}
                   />
                 </PeriodRow>
 
                 <PeriodRow>
                   <span>Dias</span>
-                  <DayChips role="group" aria-label="Dias da semana">
-                    {WEEKDAYS.map(({ day, label, name }) => (
-                      <ReasonChip
-                        key={day}
-                        type="button"
-                        title={name}
-                        aria-label={name}
-                        selected={days.includes(day)}
-                        aria-pressed={days.includes(day)}
-                        onClick={() => toggleDay(day)}
-                      >
-                        {label}
-                      </ReasonChip>
-                    ))}
-                  </DayChips>
+                  <DayChips selected={days} onToggle={toggleDay} />
                 </PeriodRow>
 
                 <PeriodRow>
@@ -464,13 +468,11 @@ const BlockModal: React.FC<BlockModalProps> = ({
                       if (value > toDate) setToDate(value);
                     })}
                   />
-                  <TextInput
-                    type="time"
-                    step={900}
+                  <TimeSelect
                     aria-label="Hora de início"
                     value={fromTime}
                     disabled={wholeDay}
-                    onChange={edit(setFromTime)}
+                    onChange={pick(setFromTime)}
                   />
                 </PeriodRow>
 
@@ -483,13 +485,11 @@ const BlockModal: React.FC<BlockModalProps> = ({
                     min={fromDate}
                     onChange={edit(setToDate)}
                   />
-                  <TextInput
-                    type="time"
-                    step={900}
+                  <TimeSelect
                     aria-label="Hora de fim"
                     value={toTime}
                     disabled={wholeDay}
-                    onChange={edit(setToTime)}
+                    onChange={pick(setToTime)}
                   />
                 </PeriodRow>
 
@@ -517,39 +517,26 @@ const BlockModal: React.FC<BlockModalProps> = ({
             )}
 
             <Field as="div">
-              <span>Motivo (opcional, só a equipe vê)</span>
-              <ReasonRow>
-                <TextInput
-                  value={reason}
-                  maxLength={60}
-                  placeholder="Ex: Almoço"
-                  aria-label="Motivo"
-                  onChange={event => setReason(event.target.value)}
-                />
-                <Reasons>
-                  {QUICK_REASONS.map(option => (
-                    <ReasonChip
-                      key={option}
-                      type="button"
-                      selected={reason === option}
-                      aria-pressed={reason === option}
-                      onClick={() => {
-                        setReason(option);
-                        // Folga e férias costumam ser o dia inteiro
-                        if (
-                          !repeat &&
-                          (option === 'Folga' || option === 'Férias')
-                        ) {
-                          setWholeDay(true);
-                          setError('');
-                        }
-                      }}
-                    >
-                      {option}
-                    </ReasonChip>
-                  ))}
-                </Reasons>
-              </ReasonRow>
+              <span>Motivo (só a equipe vê)</span>
+              <ReasonSelect
+                reasons={reasons}
+                loading={reasonsLoading}
+                value={reasonId}
+                invalid={missingReason}
+                onChange={chosen => {
+                  setReasonId(chosen.id);
+                  setError('');
+                  // Folga e férias costumam ser o dia inteiro
+                  if (
+                    !repeat &&
+                    ['folga', 'férias', 'ferias'].includes(
+                      chosen.name.toLowerCase(),
+                    )
+                  ) {
+                    setWholeDay(true);
+                  }
+                }}
+              />
             </Field>
 
             <Summary error={!!error} role={error ? 'alert' : undefined}>

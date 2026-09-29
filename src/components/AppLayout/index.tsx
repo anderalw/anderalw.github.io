@@ -3,6 +3,7 @@ import { NavLink } from 'react-router-dom';
 import {
   FiCalendar,
   FiScissors,
+  FiSlash,
   FiUsers,
   FiUser,
   FiLogOut,
@@ -77,6 +78,13 @@ const AppLayout: React.FC<AppLayoutProps> = ({ sidebarExtra, children }) => {
                 <NavLink to="/admin/barbeiros" title="Barbeiros">
                   <FiUsers />
                   <span>Barbeiros</span>
+                </NavLink>
+                <NavLink
+                  to="/admin/motivos-bloqueio"
+                  title="Motivos de bloqueio"
+                >
+                  <FiSlash />
+                  <span>Motivos de bloqueio</span>
                 </NavLink>
               </>
             )}
