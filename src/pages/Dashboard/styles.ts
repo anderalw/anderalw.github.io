@@ -251,6 +251,8 @@ interface AppointmentCardProps {
   past: boolean;
   // Situação registrada; 'pending' = já começou e ninguém registrou
   attendance?: 'completed' | 'no_show' | 'pending' | null;
+  // Futuro e confirmado pelo cliente
+  confirmed?: boolean;
   // Horas baixas: esconde o telefone e junta horário e cliente
   compact: boolean;
 }
@@ -306,6 +308,17 @@ export const AppointmentCard = styled.button<AppointmentCardProps>`
       time::after {
         content: ' · faltou';
         color: ${colors.danger};
+        font-weight: 600;
+      }
+    `}
+
+  /* Confirmado pelo cliente: aviso verde no horário */
+  ${props =>
+    props.confirmed &&
+    css`
+      time::after {
+        content: ' · confirmado';
+        color: ${colors.success};
         font-weight: 600;
       }
     `}

@@ -38,6 +38,7 @@ import {
   AttendanceCard,
   UndoButton,
   CreatedAt,
+  ConfirmationNote,
   StatusBadge,
   AppointmentStatus,
   CloseButton,
@@ -57,6 +58,8 @@ export interface AppointmentDetailsData {
   price_cents: number | null;
   // Registrado depois do horário; null = a confirmar
   attendance: 'completed' | 'no_show' | null;
+  confirmed_at: string | null;
+  confirmation_requested_at: string | null;
   created_at: string;
   client: {
     id: string;
@@ -82,6 +85,7 @@ type Mode = 'view' | 'reschedule' | 'confirm-cancel';
 
 const STATUS_LABELS: Record<AppointmentStatus, string> = {
   upcoming: 'Agendado',
+  confirmed: 'Confirmado pelo cliente',
   ongoing: 'Em andamento',
   pending: 'A confirmar',
   completed: 'Atendido',
@@ -137,6 +141,23 @@ const AppointmentDetails: React.FC<AppointmentDetailsProps> = ({
     status = 'pending';
   } else if (started) {
     status = 'ongoing';
+  } else if (appointment.confirmed_at) {
+    status = 'confirmed';
+  }
+
+  // Situação da confirmação por e-mail (só antes do horário)
+  let confirmationText: string | null = null;
+
+  if (!started && appointment.confirmed_at) {
+    confirmationText = `Confirmado pelo cliente em ${format(
+      parseISO(appointment.confirmed_at),
+      "dd/MM 'às' HH:mm",
+    )}`;
+  } else if (!started && appointment.confirmation_requested_at) {
+    confirmationText = `Confirmação pedida por e-mail em ${format(
+      parseISO(appointment.confirmation_requested_at),
+      "dd/MM 'às' HH:mm",
+    )}; aguardando o cliente`;
   }
 
   const { client } = appointment;
@@ -289,6 +310,12 @@ const AppointmentDetails: React.FC<AppointmentDetailsProps> = ({
               )}
             </DetailList>
 
+            {confirmationText && (
+              <ConfirmationNote confirmed={!!appointment.confirmed_at}>
+                {confirmationText}
+              </ConfirmationNote>
+            )}
+
             <CreatedAt>
               {`Agendado em ${format(
                 parseISO(appointment.created_at),
@@ -301,7 +328,7 @@ const AppointmentDetails: React.FC<AppointmentDetailsProps> = ({
             {mode === 'view' && (
               <>
                 {/* Só dá para alterar o que ainda não começou */}
-                {status === 'upcoming' ? (
+                {!started ? (
                   <>
                     <SectionTitle>O que você quer fazer?</SectionTitle>
                     <ActionCard

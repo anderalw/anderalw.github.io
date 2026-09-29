@@ -17,6 +17,7 @@ import ManageProviders from '../pages/ManageProviders';
 import ManageServices from '../pages/ManageServices';
 import ManageBlockReasons from '../pages/ManageBlockReasons';
 import Revenue from '../pages/Revenue';
+import ConfirmAppointment from '../pages/ConfirmAppointment';
 
 const Routes: React.FC = () => (
   <Switch>
@@ -44,6 +45,8 @@ const Routes: React.FC = () => (
     {/* Rotas dos Clientes */}
     <Route path="/cliente/login" component={SignInClient} />
     <Route path="/cliente/cadastro" component={SignUpClient} />
+    {/* Link do e-mail da véspera: funciona com ou sem login */}
+    <Route path="/confirmar-agendamento" component={ConfirmAppointment} />
     <Route path="/agendar" component={CreateAppointment} isClient />
     <Route path="/meus-agendamentos" component={MyAppointments} isClient />
 

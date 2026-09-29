@@ -732,6 +732,10 @@ const Dashboard: React.FC = () => {
                                 appointment.attendance ||
                                 (isBefore(now, parsedDate) ? null : 'pending')
                               }
+                              confirmed={
+                                !!appointment.confirmed_at &&
+                                isBefore(now, parsedDate)
+                              }
                               // Cards baixos (horas baixas ou serviços curtos)
                               // mostram só horário e cliente numa linha
                               compact={compact || height < COMPACT_CARD_HEIGHT}

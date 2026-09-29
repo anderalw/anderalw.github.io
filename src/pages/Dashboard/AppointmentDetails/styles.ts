@@ -90,6 +90,7 @@ export const RescheduleArea = styled.div`
 // pending: já terminou e ninguém registrou se foi atendido
 export type AppointmentStatus =
   | 'upcoming'
+  | 'confirmed'
   | 'ongoing'
   | 'pending'
   | 'completed'
@@ -97,6 +98,7 @@ export type AppointmentStatus =
 
 const statusColors: Record<AppointmentStatus, string> = {
   upcoming: colors.primary,
+  confirmed: colors.success,
   ongoing: '#4dabf7',
   pending: '#fcc419',
   completed: colors.success,
@@ -356,6 +358,22 @@ export const UndoButton = styled.button`
 
   &:hover:not(:disabled) {
     color: ${colors.text};
+  }
+`;
+
+// Situação da confirmação por e-mail, acima de "Agendado em"
+export const ConfirmationNote = styled.p<{ confirmed: boolean }>`
+  margin-top: auto;
+  padding: 10px 12px;
+  border-radius: 8px;
+  background: ${props =>
+    props.confirmed ? colors.successSoft : colors.surfaceHover};
+  color: ${props => (props.confirmed ? colors.success : colors.textMuted)};
+  font-size: 12px;
+  line-height: 1.4;
+
+  & + p {
+    margin-top: 12px;
   }
 `;
 
