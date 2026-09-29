@@ -227,17 +227,12 @@ export const HourCell = styled.div<{ off: boolean; bookable?: boolean }>`
       }
     `}
 
-  /* Fora do expediente: hachurado, como os horários bloqueados do Google Agenda */
+  /* Fora do expediente: fundo liso mais escuro. O hachurado fica só para os
+     bloqueios, para os dois não se confundirem */
   ${props =>
     props.off &&
     css`
-      background: repeating-linear-gradient(
-        -45deg,
-        ${colors.sunken},
-        ${colors.sunken} 6px,
-        ${colors.surface} 6px,
-        ${colors.surface} 12px
-      );
+      background: ${colors.sunken};
     `}
 `;
 
