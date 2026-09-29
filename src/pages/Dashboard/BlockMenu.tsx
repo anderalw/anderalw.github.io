@@ -3,7 +3,7 @@ import { addDays, differenceInCalendarDays, format, isSameDay } from 'date-fns';
 import ptBR from 'date-fns/locale/pt-BR';
 import { FiSlash, FiTrash2 } from 'react-icons/fi';
 
-import { ParsedBlock } from './agenda';
+import { ParsedBlock, describeDays } from './agenda';
 import { MenuBackdrop, Menu, MenuHeader, DangerMenuItem } from './styles';
 
 interface BlockMenuProps {
@@ -18,6 +18,10 @@ interface BlockMenuProps {
 }
 
 const MARGIN = 8;
+
+// 'yyyy-MM-dd' → 'dd/MM'
+const shortDate = (value: string): string =>
+  `${value.slice(8, 10)}/${value.slice(5, 7)}`;
 
 const isMidnight = (date: Date): boolean =>
   date.getHours() === 0 && date.getMinutes() === 0;
@@ -98,6 +102,8 @@ const BlockMenu: React.FC<BlockMenuProps> = ({
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [onClose, removing]);
 
+  const { recurrence } = block;
+
   // Um dia só: mostra a data antes do horário
   const sameDay =
     isSameDay(block.parsedStart, block.parsedEnd) || wholeDays(block) === 1;
@@ -118,13 +124,30 @@ const BlockMenu: React.FC<BlockMenuProps> = ({
           <FiSlash />
           <div>
             <strong>{block.reason || 'Horário bloqueado'}</strong>
-            <small>
-              {sameDay &&
-                `${format(block.parsedStart, "EEE, d 'de' MMM", {
-                  locale: ptBR,
-                })} · `}
-              {blockRange(block)}
-            </small>
+            {recurrence ? (
+              <>
+                <small>
+                  {`${describeDays(recurrence.days_of_week)} · ${
+                    recurrence.start_time
+                  } – ${recurrence.end_time}`}
+                </small>
+                <small>
+                  {`A partir de ${shortDate(recurrence.starts_on)} · ${
+                    recurrence.ends_on
+                      ? `até ${shortDate(recurrence.ends_on)}`
+                      : 'sem data de fim'
+                  }`}
+                </small>
+              </>
+            ) : (
+              <small>
+                {sameDay &&
+                  `${format(block.parsedStart, "EEE, d 'de' MMM", {
+                    locale: ptBR,
+                  })} · `}
+                {blockRange(block)}
+              </small>
+            )}
             <small>{providerName}</small>
           </div>
         </MenuHeader>
@@ -137,7 +160,11 @@ const BlockMenu: React.FC<BlockMenuProps> = ({
           onClick={onRemove}
         >
           <FiTrash2 />
-          {removing ? 'Removendo...' : 'Remover bloqueio'}
+          {removing && 'Removendo...'}
+          {!removing &&
+            (recurrence
+              ? 'Remover repetição (todos os dias)'
+              : 'Remover bloqueio')}
         </DangerMenuItem>
       </Menu>
     </MenuBackdrop>

@@ -41,6 +41,33 @@ export interface AgendaBlock {
   start_date: string;
   end_date: string;
   reason: string | null;
+  // Bloqueio que se repete: a regra; null no avulso
+  recurrence: {
+    days_of_week: number[];
+    start_time: string;
+    end_time: string;
+    // 'yyyy-MM-dd'; ends_on null = sem data de fim
+    starts_on: string;
+    ends_on: string | null;
+  } | null;
+}
+
+const WEEKDAY_NAMES = ['dom', 'seg', 'ter', 'qua', 'qui', 'sex', 'sáb'];
+
+// "Todos os dias", "De segunda a sexta", "seg, qua e sex"
+export function describeDays(days: number[]): string {
+  const sorted = [...days].sort();
+  const key = sorted.join(',');
+
+  if (key === '0,1,2,3,4,5,6') return 'Todos os dias';
+  if (key === '1,2,3,4,5') return 'De segunda a sexta';
+  if (key === '1,2,3,4,5,6') return 'De segunda a sábado';
+
+  const names = sorted.map(day => WEEKDAY_NAMES[day]);
+
+  return names.length === 1
+    ? `Toda ${names[0]}`
+    : `${names.slice(0, -1).join(', ')} e ${names[names.length - 1]}`;
 }
 
 export interface Agenda {

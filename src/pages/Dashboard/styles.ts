@@ -521,8 +521,18 @@ export const BlockCard = styled.button<{ color: string; compact: boolean }>`
   white-space: nowrap;
 
   strong {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
     font-weight: 600;
     color: ${colors.text};
+
+    /* Ícone de repetição */
+    svg {
+      width: 11px;
+      height: 11px;
+      flex-shrink: 0;
+    }
   }
 
   span {

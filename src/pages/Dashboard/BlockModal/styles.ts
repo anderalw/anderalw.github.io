@@ -2,11 +2,59 @@ import styled, { css } from 'styled-components';
 
 import { colors, radius } from '../../../styles/theme';
 import { WideDialog } from '../modalLayout';
+import { ViewSwitch } from '../styles';
 
 // Tamanho fixo: marcar "dia inteiro" ou aparecer um erro não muda a altura
 export const BlockDialog = styled(WideDialog)`
   max-width: 560px;
-  height: min(560px, 100%);
+  height: min(600px, 100%);
+`;
+
+// Campo do motivo com os atalhos na mesma linha
+export const ReasonRow = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 10px;
+
+  > input {
+    flex: 1;
+    min-width: 0;
+  }
+`;
+
+// Barbeiro e o modo (uma vez ou repetir) na mesma linha
+export const TopRow = styled.div`
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: end;
+  gap: 12px;
+  margin-bottom: 12px;
+
+  > label {
+    margin-bottom: 0;
+  }
+`;
+
+// Uma vez / Repetir, na altura dos campos
+export const ModeSwitch = styled(ViewSwitch)`
+  margin-left: 0;
+
+  button {
+    height: 32px;
+    padding: 0 14px;
+  }
+`;
+
+// Os sete dias da semana, marcáveis
+export const DayChips = styled.div`
+  grid-column: span 2;
+  display: flex;
+  gap: 6px;
+
+  button {
+    width: 40px;
+    padding: 0;
+  }
 `;
 
 export const Subtitle = styled.p`
@@ -36,7 +84,7 @@ export const Field = styled.label`
   display: flex;
   flex-direction: column;
   gap: 6px;
-  margin-bottom: 16px;
+  margin-bottom: 14px;
 
   > span {
     font-size: 13px;
@@ -51,6 +99,7 @@ export const PeriodRow = styled.div`
   grid-template-columns: 56px minmax(0, 1fr) 120px;
   align-items: center;
   gap: 12px;
+  min-height: 38px;
   margin-bottom: 12px;
 
   > span {
@@ -64,7 +113,7 @@ export const WholeDay = styled.label`
   display: inline-flex;
   align-items: center;
   gap: 10px;
-  margin: 0 0 14px 68px;
+  margin: 0;
   color: ${colors.text};
   font-size: 14px;
   cursor: pointer;
@@ -79,9 +128,8 @@ export const WholeDay = styled.label`
 
 export const Reasons = styled.div`
   display: flex;
-  flex-wrap: wrap;
+  flex-shrink: 0;
   gap: 6px;
-  margin-top: 2px;
 `;
 
 export const ReasonChip = styled.button<{ selected: boolean }>`
@@ -108,27 +156,35 @@ export const ReasonChip = styled.button<{ selected: boolean }>`
 `;
 
 // Espaço sempre reservado: o erro aparece sem mexer no resto
-export const FormError = styled.p`
-  margin-top: 8px;
-  min-height: 40px;
-  padding: 0;
-  font-size: 13px;
-  line-height: 20px;
-  color: ${colors.danger};
-`;
-
-export const Summary = styled.div`
+// Resumo do que vai ser bloqueado; com erro, mostra o motivo em vermelho.
+// Altura de duas linhas reservada: o texto trocar não mexe no resto
+export const Summary = styled.div<{ error: boolean }>`
   display: flex;
   align-items: center;
   gap: 8px;
+  min-height: 60px;
   padding: 10px 12px;
+  border: 1px solid transparent;
   border-radius: ${radius.md};
   background: ${colors.sunken};
   color: ${colors.textMuted};
   font-size: 13px;
+  line-height: 20px;
 
   svg {
     flex-shrink: 0;
     color: ${colors.textSubtle};
   }
+
+  ${props =>
+    props.error &&
+    css`
+      border-color: ${colors.danger};
+      background: ${colors.dangerSoft};
+      color: ${colors.danger};
+
+      svg {
+        color: ${colors.danger};
+      }
+    `}
 `;

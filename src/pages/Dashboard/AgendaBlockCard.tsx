@@ -1,4 +1,5 @@
 import React from 'react';
+import { FiRepeat } from 'react-icons/fi';
 
 import { ParsedBlock, blockPosition } from './agenda';
 import { blockRange } from './BlockMenu';
@@ -49,7 +50,10 @@ const AgendaBlockCard: React.FC<AgendaBlockCardProps> = ({
       title={`${title} · ${range} · ${providerName}`}
       onClick={event => onClick(block, clickPoint(event))}
     >
-      <strong>{title}</strong>
+      <strong>
+        {block.recurrence && <FiRepeat aria-label="Repete" />}
+        {title}
+      </strong>
       <span>{range}</span>
     </BlockCard>
   );

@@ -9,24 +9,27 @@ import {
   startOfDay,
 } from 'date-fns';
 import ptBR from 'date-fns/locale/pt-BR';
-import { FiCheck, FiInfo, FiX } from 'react-icons/fi';
+import { FiAlertCircle, FiCheck, FiInfo, FiX } from 'react-icons/fi';
 
 import api from '../../../services/api';
 import getApiErrorMessage from '../../../utils/getApiErrorMessage';
 import { UIButton, TextInput, Select } from '../../../components/ui';
 import { Overlay, CloseButton } from '../AppointmentDetails/styles';
 import { DialogHeader, Main, Footer } from '../modalLayout';
-import { AgendaProvider } from '../agenda';
+import { AgendaProvider, describeDays } from '../agenda';
 import {
   BlockDialog,
   Subtitle,
   Form,
   Field,
+  TopRow,
+  ModeSwitch,
   PeriodRow,
   WholeDay,
+  DayChips,
   Reasons,
   ReasonChip,
-  FormError,
+  ReasonRow,
   Summary,
 } from './styles';
 
@@ -41,10 +44,25 @@ interface BlockModalProps {
   onCreated(message: { title: string; description: string }): void;
 }
 
+type Mode = 'once' | 'repeat';
+
 const QUICK_REASONS = ['Almoço', 'Consulta', 'Folga', 'Férias'];
+
+// Domingo a sábado, como no calendário
+const WEEKDAYS = [
+  { day: 0, label: 'D', name: 'Domingo' },
+  { day: 1, label: 'S', name: 'Segunda' },
+  { day: 2, label: 'T', name: 'Terça' },
+  { day: 3, label: 'Q', name: 'Quarta' },
+  { day: 4, label: 'Q', name: 'Quinta' },
+  { day: 5, label: 'S', name: 'Sexta' },
+  { day: 6, label: 'S', name: 'Sábado' },
+];
 
 const toDateValue = (date: Date): string => format(date, 'yyyy-MM-dd');
 const toTimeValue = (date: Date): string => format(date, 'HH:mm');
+const shortDate = (value: string): string =>
+  value ? `${value.slice(8, 10)}/${value.slice(5, 7)}` : '';
 
 // Junta os campos de data ('yyyy-MM-dd') e hora ('HH:mm')
 function combine(date: string, time: string): Date | null {
@@ -53,8 +71,8 @@ function combine(date: string, time: string): Date | null {
   return Number.isNaN(parsed.getTime()) ? null : parsed;
 }
 
-// Bloqueia um período na agenda de um barbeiro: um trecho do dia (almoço,
-// consulta) ou dias inteiros (folga, férias)
+// Bloqueia horários na agenda de um barbeiro: uma vez só (consulta, folga,
+// férias) ou repetindo nos dias da semana escolhidos (almoço)
 const BlockModal: React.FC<BlockModalProps> = ({
   provider,
   start,
@@ -63,12 +81,18 @@ const BlockModal: React.FC<BlockModalProps> = ({
   onClose,
   onCreated,
 }) => {
+  const [mode, setMode] = useState<Mode>('once');
   const [providerId, setProviderId] = useState(provider.id);
-  const [wholeDay, setWholeDay] = useState(false);
-  const [fromDate, setFromDate] = useState(toDateValue(start));
+  // Horário (nos dois modos) e datas
   const [fromTime, setFromTime] = useState(toTimeValue(start));
-  const [toDate, setToDate] = useState(toDateValue(start));
   const [toTime, setToTime] = useState(toTimeValue(addHours(start, 1)));
+  const [fromDate, setFromDate] = useState(toDateValue(start));
+  const [toDate, setToDate] = useState(toDateValue(start));
+  // Uma vez
+  const [wholeDay, setWholeDay] = useState(false);
+  // Repetir
+  const [days, setDays] = useState([0, 1, 2, 3, 4, 5, 6]);
+  const [noEnd, setNoEnd] = useState(true);
   const [reason, setReason] = useState('');
   const [error, setError] = useState('');
   const [saving, setSaving] = useState(false);
@@ -83,8 +107,8 @@ const BlockModal: React.FC<BlockModalProps> = ({
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [onClose, saving]);
 
-  // Período escolhido. Dia inteiro vai da meia-noite do primeiro dia até a
-  // meia-noite depois do último
+  // Uma vez: período escolhido. Dia inteiro vai da meia-noite do primeiro
+  // dia até a meia-noite depois do último
   const period = useMemo(() => {
     if (wholeDay) {
       const first = combine(fromDate, '00:00');
@@ -101,53 +125,86 @@ const BlockModal: React.FC<BlockModalProps> = ({
     return from && to ? { start: from, end: to } : null;
   }, [wholeDay, fromDate, fromTime, toDate, toTime]);
 
+  // Problema que impede salvar, mostrado no resumo
+  const problem = useMemo(() => {
+    if (mode === 'repeat') {
+      if (days.length === 0) return 'Escolha pelo menos um dia da semana.';
+      if (!fromTime || !toTime || toTime <= fromTime) {
+        return 'Escolha um horário final depois do inicial.';
+      }
+      if (!fromDate) return 'Escolha a data inicial.';
+      if (!noEnd && (!toDate || toDate < fromDate)) {
+        return 'Escolha uma data final depois da inicial.';
+      }
+
+      return null;
+    }
+
+    if (!period || period.end <= period.start) {
+      return 'Escolha um fim depois do início.';
+    }
+
+    return null;
+  }, [mode, days, fromTime, toTime, fromDate, toDate, noEnd, period]);
+
   const summary = useMemo(() => {
-    if (!period || period.end <= period.start) return null;
+    if (problem) return problem;
+
+    if (mode === 'repeat') {
+      const until = noEnd ? 'sem data de fim' : `até ${shortDate(toDate)}`;
+
+      return `${describeDays(
+        days,
+      )}, das ${fromTime} às ${toTime}, a partir de ${shortDate(
+        fromDate,
+      )}, ${until}.`;
+    }
+
+    if (!period) return '';
 
     if (wholeDay) {
-      const days = differenceInCalendarDays(period.end, period.start);
+      const count = differenceInCalendarDays(period.end, period.start);
 
-      return days === 1
+      return count === 1
         ? `O dia ${format(period.start, "d 'de' MMMM", {
             locale: ptBR,
           })} inteiro fica bloqueado.`
-        : `${days} dias bloqueados, de ${format(
+        : `${count} dias bloqueados, de ${format(
             period.start,
             'dd/MM',
           )} a ${format(addDays(period.end, -1), 'dd/MM')}.`;
     }
 
     if (isSameDay(period.start, period.end)) {
-      return `Ninguém consegue agendar das ${format(
-        period.start,
+      return `Das ${format(period.start, 'HH:mm')} às ${format(
+        period.end,
         'HH:mm',
-      )} às ${format(period.end, 'HH:mm')} de ${format(
-        period.start,
-        "d 'de' MMMM",
-        { locale: ptBR },
-      )}.`;
+      )} de ${format(period.start, "d 'de' MMMM", { locale: ptBR })}.`;
     }
 
-    return `Ninguém consegue agendar das ${format(
+    return `Das ${format(period.start, 'HH:mm')} (${format(
       period.start,
-      'HH:mm',
-    )} (${format(period.start, 'dd/MM')}) às ${format(
-      period.end,
-      'HH:mm',
-    )} (${format(period.end, 'dd/MM')}).`;
-  }, [period, wholeDay]);
+      'dd/MM',
+    )}) às ${format(period.end, 'HH:mm')} (${format(period.end, 'dd/MM')}).`;
+  }, [
+    problem,
+    mode,
+    noEnd,
+    toDate,
+    days,
+    fromTime,
+    toTime,
+    fromDate,
+    period,
+    wholeDay,
+  ]);
 
   const handleSubmit = useCallback(
     async (event: React.FormEvent) => {
       event.preventDefault();
 
-      if (!period) {
-        setError('Preencha as datas e os horários.');
-        return;
-      }
-
-      if (period.end <= period.start) {
-        setError('O fim do bloqueio precisa ser depois do início.');
+      if (problem) {
+        setError(problem);
         return;
       }
 
@@ -155,19 +212,31 @@ const BlockModal: React.FC<BlockModalProps> = ({
       setSaving(true);
 
       try {
-        await api.post('/blocks', {
-          provider_id: providerId,
-          start_date: period.start.toISOString(),
-          end_date: period.end.toISOString(),
-          reason: reason.trim() || null,
-        });
+        if (mode === 'repeat') {
+          await api.post('/blocks/recurring', {
+            provider_id: providerId,
+            days_of_week: days,
+            start_time: fromTime,
+            end_time: toTime,
+            starts_on: fromDate,
+            ends_on: noEnd ? null : toDate,
+            reason: reason.trim() || null,
+          });
+        } else if (period) {
+          await api.post('/blocks', {
+            provider_id: providerId,
+            start_date: period.start.toISOString(),
+            end_date: period.end.toISOString(),
+            reason: reason.trim() || null,
+          });
+        }
 
         const name =
           providers.find(item => item.id === providerId)?.name || provider.name;
 
         onCreated({
           title: 'Horário bloqueado',
-          description: `${name} · ${summary || ''}`.trim(),
+          description: `${name} · ${summary}`,
         });
       } catch (err) {
         setSaving(false);
@@ -179,16 +248,43 @@ const BlockModal: React.FC<BlockModalProps> = ({
         );
       }
     },
-    [period, providerId, reason, providers, provider.name, summary, onCreated],
+    [
+      problem,
+      mode,
+      providerId,
+      days,
+      fromTime,
+      toTime,
+      fromDate,
+      noEnd,
+      toDate,
+      reason,
+      period,
+      providers,
+      provider.name,
+      summary,
+      onCreated,
+    ],
   );
 
-  // Alterar o período apaga o erro anterior
+  // Alterar qualquer campo apaga o erro anterior
   const edit =
     (setter: (value: string) => void) =>
     (event: React.ChangeEvent<HTMLInputElement>) => {
       setter(event.target.value);
       setError('');
     };
+
+  const toggleDay = (day: number): void => {
+    setDays(current =>
+      current.includes(day)
+        ? current.filter(item => item !== day)
+        : [...current, day].sort(),
+    );
+    setError('');
+  };
+
+  const repeat = mode === 'repeat';
 
   return (
     <Overlay
@@ -221,112 +317,231 @@ const BlockModal: React.FC<BlockModalProps> = ({
 
         <Form onSubmit={handleSubmit} noValidate>
           <Main>
-            <Field>
-              <span>Barbeiro</span>
-              <Select
-                value={providerId}
-                onChange={event => {
-                  setProviderId(event.target.value);
-                  setError('');
-                }}
-              >
-                {providers.map(item => (
-                  <option key={item.id} value={item.id}>
-                    {item.name}
-                  </option>
-                ))}
-              </Select>
-            </Field>
+            <TopRow>
+              <Field>
+                <span>Barbeiro</span>
+                <Select
+                  value={providerId}
+                  onChange={event => {
+                    setProviderId(event.target.value);
+                    setError('');
+                  }}
+                >
+                  {providers.map(item => (
+                    <option key={item.id} value={item.id}>
+                      {item.name}
+                    </option>
+                  ))}
+                </Select>
+              </Field>
 
-            <PeriodRow>
-              <span>De</span>
-              <TextInput
-                type="date"
-                aria-label="Data de início"
-                value={fromDate}
-                onChange={edit(value => {
-                  setFromDate(value);
-                  // Mantém o fim junto quando ele ficaria antes do início
-                  if (value > toDate) setToDate(value);
-                })}
-              />
-              <TextInput
-                type="time"
-                step={900}
-                aria-label="Hora de início"
-                value={fromTime}
-                disabled={wholeDay}
-                onChange={edit(setFromTime)}
-              />
-            </PeriodRow>
+              <ModeSwitch role="group" aria-label="Frequência">
+                <button
+                  type="button"
+                  aria-pressed={!repeat}
+                  onClick={() => {
+                    setMode('once');
+                    setError('');
+                  }}
+                >
+                  Uma vez
+                </button>
+                <button
+                  type="button"
+                  aria-pressed={repeat}
+                  onClick={() => {
+                    setMode('repeat');
+                    setError('');
+                  }}
+                >
+                  Repetir
+                </button>
+              </ModeSwitch>
+            </TopRow>
 
-            <PeriodRow>
-              <span>Até</span>
-              <TextInput
-                type="date"
-                aria-label="Data de fim"
-                value={toDate}
-                min={fromDate}
-                onChange={edit(setToDate)}
-              />
-              <TextInput
-                type="time"
-                step={900}
-                aria-label="Hora de fim"
-                value={toTime}
-                disabled={wholeDay}
-                onChange={edit(setToTime)}
-              />
-            </PeriodRow>
+            {repeat ? (
+              <>
+                <PeriodRow>
+                  <span>Horário</span>
+                  <TextInput
+                    type="time"
+                    step={900}
+                    aria-label="Hora de início"
+                    value={fromTime}
+                    onChange={edit(setFromTime)}
+                  />
+                  <TextInput
+                    type="time"
+                    step={900}
+                    aria-label="Hora de fim"
+                    value={toTime}
+                    onChange={edit(setToTime)}
+                  />
+                </PeriodRow>
 
-            <WholeDay>
-              <input
-                type="checkbox"
-                checked={wholeDay}
-                onChange={event => {
-                  setWholeDay(event.target.checked);
-                  setError('');
-                }}
-              />
-              Dia inteiro
-            </WholeDay>
+                <PeriodRow>
+                  <span>Dias</span>
+                  <DayChips role="group" aria-label="Dias da semana">
+                    {WEEKDAYS.map(({ day, label, name }) => (
+                      <ReasonChip
+                        key={day}
+                        type="button"
+                        title={name}
+                        aria-label={name}
+                        selected={days.includes(day)}
+                        aria-pressed={days.includes(day)}
+                        onClick={() => toggleDay(day)}
+                      >
+                        {label}
+                      </ReasonChip>
+                    ))}
+                  </DayChips>
+                </PeriodRow>
 
-            <Field>
-              <span>Motivo (opcional, só a equipe vê)</span>
-              <TextInput
-                value={reason}
-                maxLength={60}
-                placeholder="Ex: Almoço"
-                onChange={event => setReason(event.target.value)}
-              />
-              <Reasons>
-                {QUICK_REASONS.map(option => (
-                  <ReasonChip
-                    key={option}
-                    type="button"
-                    selected={reason === option}
-                    aria-pressed={reason === option}
-                    onClick={() => {
-                      setReason(option);
-                      // Folga e férias costumam ser o dia inteiro
-                      if (option === 'Folga' || option === 'Férias') {
-                        setWholeDay(true);
+                <PeriodRow>
+                  <span>De</span>
+                  <TextInput
+                    type="date"
+                    aria-label="Data inicial"
+                    value={fromDate}
+                    onChange={edit(setFromDate)}
+                  />
+                  <span />
+                </PeriodRow>
+
+                <PeriodRow>
+                  <span>Até</span>
+                  <TextInput
+                    type="date"
+                    aria-label="Data final"
+                    value={toDate}
+                    min={fromDate}
+                    disabled={noEnd}
+                    onChange={edit(setToDate)}
+                  />
+                  <WholeDay>
+                    <input
+                      type="checkbox"
+                      checked={noEnd}
+                      onChange={event => {
+                        setNoEnd(event.target.checked);
+                        // Ao escolher uma data final, começa pela inicial
+                        if (!event.target.checked && toDate < fromDate) {
+                          setToDate(fromDate);
+                        }
                         setError('');
-                      }
-                    }}
-                  >
-                    {option}
-                  </ReasonChip>
-                ))}
-              </Reasons>
+                      }}
+                    />
+                    Sem fim
+                  </WholeDay>
+                </PeriodRow>
+              </>
+            ) : (
+              <>
+                <PeriodRow>
+                  <span>De</span>
+                  <TextInput
+                    type="date"
+                    aria-label="Data de início"
+                    value={fromDate}
+                    onChange={edit(value => {
+                      setFromDate(value);
+                      // Mantém o fim junto quando ele ficaria antes do início
+                      if (value > toDate) setToDate(value);
+                    })}
+                  />
+                  <TextInput
+                    type="time"
+                    step={900}
+                    aria-label="Hora de início"
+                    value={fromTime}
+                    disabled={wholeDay}
+                    onChange={edit(setFromTime)}
+                  />
+                </PeriodRow>
+
+                <PeriodRow>
+                  <span>Até</span>
+                  <TextInput
+                    type="date"
+                    aria-label="Data de fim"
+                    value={toDate}
+                    min={fromDate}
+                    onChange={edit(setToDate)}
+                  />
+                  <TextInput
+                    type="time"
+                    step={900}
+                    aria-label="Hora de fim"
+                    value={toTime}
+                    disabled={wholeDay}
+                    onChange={edit(setToTime)}
+                  />
+                </PeriodRow>
+
+                <PeriodRow>
+                  <span />
+                  <WholeDay>
+                    <input
+                      type="checkbox"
+                      checked={wholeDay}
+                      onChange={event => {
+                        setWholeDay(event.target.checked);
+                        setError('');
+                      }}
+                    />
+                    Dia inteiro
+                  </WholeDay>
+                  <span />
+                </PeriodRow>
+
+                {/* Mesma altura do modo Repetir (uma linha a mais) */}
+                <PeriodRow aria-hidden="true">
+                  <span />
+                </PeriodRow>
+              </>
+            )}
+
+            <Field as="div">
+              <span>Motivo (opcional, só a equipe vê)</span>
+              <ReasonRow>
+                <TextInput
+                  value={reason}
+                  maxLength={60}
+                  placeholder="Ex: Almoço"
+                  aria-label="Motivo"
+                  onChange={event => setReason(event.target.value)}
+                />
+                <Reasons>
+                  {QUICK_REASONS.map(option => (
+                    <ReasonChip
+                      key={option}
+                      type="button"
+                      selected={reason === option}
+                      aria-pressed={reason === option}
+                      onClick={() => {
+                        setReason(option);
+                        // Folga e férias costumam ser o dia inteiro
+                        if (
+                          !repeat &&
+                          (option === 'Folga' || option === 'Férias')
+                        ) {
+                          setWholeDay(true);
+                          setError('');
+                        }
+                      }}
+                    >
+                      {option}
+                    </ReasonChip>
+                  ))}
+                </Reasons>
+              </ReasonRow>
             </Field>
 
-            <Summary>
-              <FiInfo />
-              {summary || 'Escolha um fim depois do início.'}
+            <Summary error={!!error} role={error ? 'alert' : undefined}>
+              {error ? <FiAlertCircle /> : <FiInfo />}
+              {error || summary}
             </Summary>
-
-            <FormError role="alert">{error}</FormError>
           </Main>
 
           <Footer>
