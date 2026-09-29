@@ -226,7 +226,7 @@ const PaymentStep: React.FC<PaymentStepProps> = ({
   onConfirm,
 }) => {
   const [method, setMethod] = useState<PaymentMethod | null>(initialMethod);
-  // Maquininhas da operadora configurada (vazio: sem cobrança integrada)
+  // Maquininhas ativas cadastradas (vazio: sem cobrança integrada)
   const [devices, setDevices] = useState<TerminalDevice[]>([]);
   const [deviceId, setDeviceId] = useState<string | null>(null);
   const [charging, setCharging] = useState(false);

@@ -12,6 +12,8 @@ import { colors, radius } from '../../styles/theme';
 interface SimDevice {
   id: string;
   name: string;
+  external_id: string;
+  active: boolean;
   charge: {
     external_id: string;
     amount_cents: number;
@@ -234,10 +236,20 @@ const VirtualTerminal: React.FC = () => {
         <p style={{ textAlign: 'center', color: colors.danger }}>{error}</p>
       )}
 
+      {devices && devices.length === 0 && !error && (
+        <p style={{ textAlign: 'center', color: colors.textMuted }}>
+          Nenhuma maquininha cadastrada no simulador. Cadastre em Configurações
+          → Maquininha de cartão.
+        </p>
+      )}
+
       <Devices>
         {(devices || []).map(device => (
           <Device key={device.id}>
-            <span>{device.name}</span>
+            <span>
+              {device.name} · {device.external_id}
+              {!device.active && ' (desativada)'}
+            </span>
             <Screen>
               {device.charge ? (
                 <>
