@@ -1,14 +1,14 @@
 import { AxiosError } from 'axios';
 
-// Corpo que a API devolve em erros de negócio (AppError)
+// Corpo que a API devolve em erros de negócio e de validação dos campos
 interface ApiErrorBody {
   status?: string;
   message?: unknown;
 }
 
-// Devolve a mensagem de um erro de negócio da API (AppError), que já vem
+// Devolve a mensagem da API (erro de negócio ou campo inválido), que já vem
 // em português, ou o texto genérico para os outros casos (falha de rede,
-// erro interno, validação de campos)
+// erro interno)
 export default function getApiErrorMessage(
   err: unknown,
   fallback: string,
