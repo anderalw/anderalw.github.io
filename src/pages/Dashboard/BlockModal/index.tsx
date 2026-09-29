@@ -13,7 +13,7 @@ import { FiAlertCircle, FiCheck, FiInfo, FiX } from 'react-icons/fi';
 
 import api from '../../../services/api';
 import getApiErrorMessage from '../../../utils/getApiErrorMessage';
-import { UIButton, TextInput, Select } from '../../../components/ui';
+import { UIButton, TextInput } from '../../../components/ui';
 import { Overlay, CloseButton } from '../AppointmentDetails/styles';
 import { DialogHeader, Main, Footer } from '../modalLayout';
 import { AgendaProvider, describeDays } from '../agenda';
@@ -32,6 +32,7 @@ import {
   ReasonRow,
   Summary,
 } from './styles';
+import ProviderPicker from './ProviderPicker';
 
 interface BlockModalProps {
   // Barbeiro e horário clicados na agenda
@@ -82,7 +83,8 @@ const BlockModal: React.FC<BlockModalProps> = ({
   onCreated,
 }) => {
   const [mode, setMode] = useState<Mode>('once');
-  const [providerId, setProviderId] = useState(provider.id);
+  // Um ou mais barbeiros; começa com o da coluna clicada
+  const [providerIds, setProviderIds] = useState([provider.id]);
   // Horário (nos dois modos) e datas
   const [fromTime, setFromTime] = useState(toTimeValue(start));
   const [toTime, setToTime] = useState(toTimeValue(addHours(start, 1)));
@@ -127,6 +129,8 @@ const BlockModal: React.FC<BlockModalProps> = ({
 
   // Problema que impede salvar, mostrado no resumo
   const problem = useMemo(() => {
+    if (providerIds.length === 0) return 'Escolha pelo menos um barbeiro.';
+
     if (mode === 'repeat') {
       if (days.length === 0) return 'Escolha pelo menos um dia da semana.';
       if (!fromTime || !toTime || toTime <= fromTime) {
@@ -145,7 +149,17 @@ const BlockModal: React.FC<BlockModalProps> = ({
     }
 
     return null;
-  }, [mode, days, fromTime, toTime, fromDate, toDate, noEnd, period]);
+  }, [
+    providerIds,
+    mode,
+    days,
+    fromTime,
+    toTime,
+    fromDate,
+    toDate,
+    noEnd,
+    period,
+  ]);
 
   const summary = useMemo(() => {
     if (problem) return problem;
@@ -214,7 +228,7 @@ const BlockModal: React.FC<BlockModalProps> = ({
       try {
         if (mode === 'repeat') {
           await api.post('/blocks/recurring', {
-            provider_id: providerId,
+            provider_ids: providerIds,
             days_of_week: days,
             start_time: fromTime,
             end_time: toTime,
@@ -224,19 +238,24 @@ const BlockModal: React.FC<BlockModalProps> = ({
           });
         } else if (period) {
           await api.post('/blocks', {
-            provider_id: providerId,
+            provider_ids: providerIds,
             start_date: period.start.toISOString(),
             end_date: period.end.toISOString(),
             reason: reason.trim() || null,
           });
         }
 
-        const name =
-          providers.find(item => item.id === providerId)?.name || provider.name;
+        const names = providers
+          .filter(item => providerIds.includes(item.id))
+          .map(item => item.name);
+        const who =
+          names.length > 2
+            ? `${names.length} barbeiros`
+            : names.join(' e ') || provider.name;
 
         onCreated({
           title: 'Horário bloqueado',
-          description: `${name} · ${summary}`,
+          description: `${who} · ${summary}`,
         });
       } catch (err) {
         setSaving(false);
@@ -251,7 +270,7 @@ const BlockModal: React.FC<BlockModalProps> = ({
     [
       problem,
       mode,
-      providerId,
+      providerIds,
       days,
       fromTime,
       toTime,
@@ -318,21 +337,16 @@ const BlockModal: React.FC<BlockModalProps> = ({
         <Form onSubmit={handleSubmit} noValidate>
           <Main>
             <TopRow>
-              <Field>
-                <span>Barbeiro</span>
-                <Select
-                  value={providerId}
-                  onChange={event => {
-                    setProviderId(event.target.value);
+              <Field as="div">
+                <span>Barbeiros</span>
+                <ProviderPicker
+                  providers={providers}
+                  selected={providerIds}
+                  onChange={selected => {
+                    setProviderIds(selected);
                     setError('');
                   }}
-                >
-                  {providers.map(item => (
-                    <option key={item.id} value={item.id}>
-                      {item.name}
-                    </option>
-                  ))}
-                </Select>
+                />
               </Field>
 
               <ModeSwitch role="group" aria-label="Frequência">

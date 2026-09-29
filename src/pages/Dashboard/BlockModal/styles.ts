@@ -1,6 +1,7 @@
 import styled, { css } from 'styled-components';
 
 import { colors, radius } from '../../../styles/theme';
+import { inputStyles } from '../../../components/ui';
 import { WideDialog } from '../modalLayout';
 import { ViewSwitch } from '../styles';
 
@@ -8,6 +9,75 @@ import { ViewSwitch } from '../styles';
 export const BlockDialog = styled(WideDialog)`
   max-width: 560px;
   height: min(600px, 100%);
+`;
+
+// Escolha de um ou mais barbeiros
+export const PickerWrapper = styled.div`
+  position: relative;
+`;
+
+export const PickerButton = styled.button`
+  ${inputStyles}
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  text-align: left;
+  cursor: pointer;
+
+  span {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  svg {
+    flex-shrink: 0;
+    color: ${colors.textMuted};
+  }
+`;
+
+// Abre por cima dos outros campos, sem empurrar nada
+export const PickerList = styled.div`
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 0;
+  right: 0;
+  z-index: 2;
+  max-height: 240px;
+  overflow-y: auto;
+  padding: 6px;
+  border: 1px solid ${colors.borderStrong};
+  border-radius: ${radius.md};
+  background: ${colors.surface};
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.45);
+`;
+
+export const PickerOption = styled.label`
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  height: 34px;
+  padding: 0 10px;
+  border-radius: 6px;
+  color: ${colors.text};
+  font-size: 14px;
+  cursor: pointer;
+
+  &:hover {
+    background: ${colors.surfaceHover};
+  }
+
+  input {
+    width: 16px;
+    height: 16px;
+    accent-color: ${colors.primary};
+    cursor: pointer;
+  }
+
+  strong {
+    font-weight: 600;
+  }
 `;
 
 // Campo do motivo com os atalhos na mesma linha
@@ -30,7 +100,7 @@ export const TopRow = styled.div`
   gap: 12px;
   margin-bottom: 12px;
 
-  > label {
+  > :first-child {
     margin-bottom: 0;
   }
 `;
@@ -71,6 +141,8 @@ export const Form = styled.form`
 
   > :first-child {
     flex: 1;
+    /* A lista de barbeiros abre por cima dos campos, sem criar rolagem */
+    overflow: visible;
   }
 
   /* Seletores nativos de data e hora no tema escuro */
@@ -169,7 +241,7 @@ export const Summary = styled.div<{ error: boolean }>`
   background: ${colors.sunken};
   color: ${colors.textMuted};
   font-size: 13px;
-  line-height: 20px;
+  line-height: 18px;
 
   svg {
     flex-shrink: 0;
