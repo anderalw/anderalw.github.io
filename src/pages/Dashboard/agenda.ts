@@ -1,4 +1,4 @@
-import { parseISO } from 'date-fns';
+import { addDays, max, min, parseISO, startOfDay } from 'date-fns';
 
 // Tipos e regras comuns às visões de dia e de semana da agenda
 
@@ -33,9 +33,61 @@ export interface AgendaAppointment {
   } | null;
 }
 
+// Período em que o barbeiro não atende (almoço, consulta, férias). Pode
+// começar antes ou terminar depois do dia mostrado
+export interface AgendaBlock {
+  id: string;
+  provider_id: string;
+  start_date: string;
+  end_date: string;
+  reason: string | null;
+}
+
 export interface Agenda {
   providers: AgendaProvider[];
   appointments: AgendaAppointment[];
+  blocks: AgendaBlock[];
+}
+
+export type ParsedBlock = AgendaBlock & {
+  parsedStart: Date;
+  parsedEnd: Date;
+};
+
+export function parseBlocks(blocks: AgendaBlock[] = []): ParsedBlock[] {
+  return blocks.map(block => ({
+    ...block,
+    parsedStart: parseISO(block.start_date),
+    parsedEnd: parseISO(block.end_date),
+  }));
+}
+
+// Posição do bloqueio na coluna de um dia, cortado às horas mostradas.
+// null se ele não aparece nesse intervalo
+export function blockPosition(
+  block: ParsedBlock,
+  day: Date,
+  startHour: number,
+  endHour: number,
+  hourHeight: number,
+): { top: number; height: number } | null {
+  const shownStart = startOfDay(day);
+  shownStart.setHours(startHour);
+  // endHour 24 vira a meia-noite do dia seguinte
+  const shownEnd = startOfDay(day);
+  shownEnd.setHours(endHour);
+
+  const from = max([block.parsedStart, shownStart]);
+  const to = min([block.parsedEnd, shownEnd, addDays(startOfDay(day), 1)]);
+
+  if (to.getTime() <= from.getTime()) return null;
+
+  const hour = 60 * 60 * 1000;
+
+  return {
+    top: ((from.getTime() - shownStart.getTime()) / hour) * hourHeight,
+    height: ((to.getTime() - from.getTime()) / hour) * hourHeight,
+  };
 }
 
 export type ParsedAppointment = AgendaAppointment & {

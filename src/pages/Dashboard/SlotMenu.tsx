@@ -1,7 +1,7 @@
 import React, { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { format } from 'date-fns';
 import ptBR from 'date-fns/locale/pt-BR';
-import { FiCalendar, FiPlus } from 'react-icons/fi';
+import { FiCalendar, FiPlus, FiSlash } from 'react-icons/fi';
 
 import { MenuBackdrop, Menu, MenuHeader, MenuItem } from './styles';
 
@@ -12,6 +12,7 @@ interface SlotMenuProps {
   providerName: string;
   start: Date;
   onNewAppointment(): void;
+  onBlock(): void;
   onClose(): void;
 }
 
@@ -25,6 +26,7 @@ const SlotMenu: React.FC<SlotMenuProps> = ({
   providerName,
   start,
   onNewAppointment,
+  onBlock,
   onClose,
 }) => {
   const menuRef = useRef<HTMLDivElement>(null);
@@ -93,6 +95,10 @@ const SlotMenu: React.FC<SlotMenuProps> = ({
         >
           <FiPlus />
           Novo agendamento
+        </MenuItem>
+        <MenuItem type="button" role="menuitem" onClick={onBlock}>
+          <FiSlash />
+          Bloquear horário
         </MenuItem>
       </Menu>
     </MenuBackdrop>

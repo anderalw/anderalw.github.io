@@ -52,17 +52,22 @@ import { Calendar } from '../../components/ui/Calendar';
 import AppointmentDetails from './AppointmentDetails';
 import NewAppointment from './NewAppointment';
 import WeekView, {
+  BlockTarget,
   ClickPoint,
   DetailsTarget,
   NewSlot,
   clickPoint,
 } from './WeekView';
 import SlotMenu from './SlotMenu';
+import BlockMenu from './BlockMenu';
+import BlockModal from './BlockModal';
+import AgendaBlockCard from './AgendaBlockCard';
 import useHourHeight from './useHourHeight';
 import {
   Agenda,
   MONTHS,
   parseAppointments,
+  parseBlocks,
   providerColor,
   hourRange,
   toHour,
@@ -116,6 +121,7 @@ const Dashboard: React.FC = () => {
   const [agenda, setAgenda] = useState<Agenda>({
     providers: [],
     appointments: [],
+    blocks: [],
   });
   const [loading, setLoading] = useState(true);
   const [now, setNow] = useState(new Date());
@@ -132,9 +138,24 @@ const Dashboard: React.FC = () => {
   // Menu aberto ao clicar num horário livre, antes de escolher a opção
   const [slotMenu, setSlotMenu] = useState<(NewSlot & ClickPoint) | null>(null);
 
+  // Horário escolhido para bloquear (abre o formulário de bloqueio)
+  const [blockSlot, setBlockSlot] = useState<NewSlot | null>(null);
+  // Bloqueio clicado na agenda: menu para ver o motivo ou remover
+  const [blockMenu, setBlockMenu] = useState<(BlockTarget & ClickPoint) | null>(
+    null,
+  );
+  const [removingBlock, setRemovingBlock] = useState(false);
+
   const openSlotMenu = useCallback((slot: NewSlot, point: ClickPoint) => {
     setSlotMenu({ ...slot, ...point });
   }, []);
+
+  const openBlockMenu = useCallback(
+    (target: BlockTarget, point: ClickPoint) => {
+      setBlockMenu({ ...target, ...point });
+    },
+    [],
+  );
 
   const changeView = useCallback((next: ViewMode) => {
     setView(next);
@@ -168,11 +189,36 @@ const Dashboard: React.FC = () => {
     (message: { title: string; description: string }) => {
       setDetails(null);
       setNewSlot(null);
+      setBlockSlot(null);
+      setBlockMenu(null);
       setRefreshKey(key => key + 1);
       addToast({ type: 'success', ...message });
     },
     [addToast],
   );
+
+  const removeBlock = useCallback(async () => {
+    if (!blockMenu) return;
+
+    setRemovingBlock(true);
+
+    try {
+      await api.delete(`/blocks/${blockMenu.block.id}`);
+
+      handleAppointmentChanged({
+        title: 'Bloqueio removido',
+        description: `${blockMenu.providerName} volta a receber agendamentos nesse horário.`,
+      });
+    } catch (err) {
+      addToast({
+        type: 'error',
+        title: 'Não foi possível remover o bloqueio',
+        description: getApiErrorMessage(err, 'Tente novamente.'),
+      });
+    } finally {
+      setRemovingBlock(false);
+    }
+  }, [blockMenu, handleAppointmentChanged, addToast]);
 
   // Atualiza a linha da hora atual a cada minuto
   useEffect(() => {
@@ -184,7 +230,8 @@ const Dashboard: React.FC = () => {
   // Atalhos de teclado, como no Google Agenda: T volta para hoje, as setas
   // andam um dia (ou uma semana) e D/S trocam a visão. Ficam desligados com
   // um painel aberto ou digitando
-  const panelOpen = !!details || !!newSlot || !!slotMenu;
+  const panelOpen =
+    !!details || !!newSlot || !!slotMenu || !!blockSlot || !!blockMenu;
   const step = view === 'week' ? 7 : 1;
 
   useEffect(() => {
@@ -272,6 +319,8 @@ const Dashboard: React.FC = () => {
     () => parseAppointments(agenda.appointments),
     [agenda.appointments],
   );
+
+  const blocks = useMemo(() => parseBlocks(agenda.blocks), [agenda.blocks]);
 
   // Do início do expediente mais cedo ao fim do mais tarde, incluindo
   // agendamentos que por algum motivo estejam fora desse intervalo
@@ -437,6 +486,7 @@ const Dashboard: React.FC = () => {
             onCountChange={setWeekCount}
             onOpenDetails={openDetails}
             onSlotClick={openSlotMenu}
+            onBlockClick={openBlockMenu}
             onOpenDay={openDay}
           />
         )}
@@ -555,6 +605,27 @@ const Dashboard: React.FC = () => {
                     })}
 
                     {!provider.schedule && <DayOffLabel>Folga</DayOffLabel>}
+
+                    {blocks
+                      .filter(block => block.provider_id === provider.id)
+                      .map(block => (
+                        <AgendaBlockCard
+                          key={block.id}
+                          block={block}
+                          day={selectedDate}
+                          startHour={startHour}
+                          endHour={endHour}
+                          hourHeight={hourHeight}
+                          color={color}
+                          providerName={provider.name}
+                          onClick={(target, point) =>
+                            openBlockMenu(
+                              { block: target, providerName: provider.name },
+                              point,
+                            )
+                          }
+                        />
+                      ))}
 
                     {appointments
                       .filter(item => item.provider_id === provider.id)
@@ -678,6 +749,38 @@ const Dashboard: React.FC = () => {
             setSlotMenu(null);
             setNewSlot({ provider, start, color });
           }}
+          onBlock={() => {
+            const { provider, start, color } = slotMenu;
+
+            setSlotMenu(null);
+            setBlockSlot({ provider, start, color });
+          }}
+        />
+      )}
+
+      {blockMenu && (
+        <BlockMenu
+          x={blockMenu.x}
+          y={blockMenu.y}
+          block={blockMenu.block}
+          providerName={blockMenu.providerName}
+          removing={removingBlock}
+          onRemove={removeBlock}
+          onClose={() => setBlockMenu(null)}
+        />
+      )}
+
+      {blockSlot && (
+        <BlockModal
+          provider={blockSlot.provider}
+          start={blockSlot.start}
+          color={blockSlot.color}
+          providers={
+            // Na visão semanal os barbeiros do dia não estão carregados
+            activeProviders.length > 0 ? activeProviders : [blockSlot.provider]
+          }
+          onClose={() => setBlockSlot(null)}
+          onCreated={handleAppointmentChanged}
         />
       )}
 

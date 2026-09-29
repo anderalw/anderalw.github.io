@@ -497,6 +497,53 @@ export const DayHeader = styled.button<{ today: boolean }>`
   }
 `;
 
+// Horário bloqueado (almoço, consulta, férias): hachurado com a cor do
+// barbeiro, clicável para ver o motivo e remover
+export const BlockCard = styled.button<{ color: string; compact: boolean }>`
+  position: absolute;
+  left: 2px;
+  right: 2px;
+  display: flex;
+  flex-direction: ${props => (props.compact ? 'row' : 'column')};
+  align-items: ${props => (props.compact ? 'center' : 'flex-start')};
+  gap: ${props => (props.compact ? '6px' : '1px')};
+  overflow: hidden;
+  padding: ${props => (props.compact ? '0 8px' : '6px 8px')};
+  border: 1px dashed ${colors.borderStrong};
+  border-left: 3px solid ${props => props.color};
+  border-radius: 6px;
+  background: repeating-linear-gradient(
+    -45deg,
+    ${colors.sunken},
+    ${colors.sunken} 6px,
+    ${colors.surfaceHover} 6px,
+    ${colors.surfaceHover} 12px
+  );
+  color: ${colors.textMuted};
+  text-align: left;
+  font-size: 12px;
+  line-height: 16px;
+  white-space: nowrap;
+
+  strong {
+    font-weight: 600;
+    color: ${colors.text};
+  }
+
+  span {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    color: ${colors.textMuted};
+  }
+
+  &:hover,
+  &:focus-visible {
+    border-color: ${colors.textSubtle};
+    border-left-color: ${props => props.color};
+    outline: none;
+  }
+`;
+
 // Menu do horário livre: fundo transparente que fecha ao clicar fora
 export const MenuBackdrop = styled.div`
   position: fixed;
@@ -573,5 +620,14 @@ export const MenuItem = styled.button`
   &:focus-visible {
     background: ${colors.surfaceHover};
     outline: none;
+  }
+`;
+
+// Opção de remover, em vermelho
+export const DangerMenuItem = styled(MenuItem)`
+  color: ${colors.danger};
+
+  svg {
+    color: ${colors.danger};
   }
 `;

@@ -9,12 +9,15 @@ import {
   Agenda,
   AgendaProvider,
   ParsedAppointment,
+  ParsedBlock,
   parseAppointments,
+  parseBlocks,
   providerColor,
   hourRange,
   toHour,
 } from './agenda';
 import useHourHeight from './useHourHeight';
+import AgendaBlockCard from './AgendaBlockCard';
 import {
   COMPACT_HOUR_HEIGHT,
   TIME_COLUMN_WIDTH,
@@ -70,6 +73,13 @@ interface WeekDay {
   date: Date;
   providers: AgendaProvider[];
   appointments: ParsedAppointment[];
+  blocks: ParsedBlock[];
+}
+
+// Bloqueio clicado: a agenda abre o menu para ver ou remover
+export interface BlockTarget {
+  block: ParsedBlock;
+  providerName: string;
 }
 
 interface WeekViewProps {
@@ -84,6 +94,7 @@ interface WeekViewProps {
   onOpenDetails(target: DetailsTarget, opener: HTMLElement): void;
   // Horário livre clicado: a agenda abre o menu com as opções
   onSlotClick(slot: NewSlot, point: ClickPoint): void;
+  onBlockClick(target: BlockTarget, point: ClickPoint): void;
   onOpenDay(date: Date): void;
 }
 
@@ -147,6 +158,7 @@ const WeekView: React.FC<WeekViewProps> = ({
   onCountChange,
   onOpenDetails,
   onSlotClick,
+  onBlockClick,
   onOpenDay,
 }) => {
   const { addToast } = useToast();
@@ -175,6 +187,7 @@ const WeekView: React.FC<WeekViewProps> = ({
             date: addDays(weekStart, index),
             providers: day.providers,
             appointments: parseAppointments(day.appointments),
+            blocks: parseBlocks(day.blocks),
           })),
         );
       })
@@ -364,6 +377,31 @@ const WeekView: React.FC<WeekViewProps> = ({
               {single && week && day && day.working.length === 0 && (
                 <DayOffLabel>Folga</DayOffLabel>
               )}
+
+              {/* Bloqueios só com um barbeiro escolhido: com todos, a
+                  coluna do dia mistura os barbeiros */}
+              {provider &&
+                day &&
+                day.blocks
+                  .filter(block => block.provider_id === provider.id)
+                  .map(block => (
+                    <AgendaBlockCard
+                      key={block.id}
+                      block={block}
+                      day={date}
+                      startHour={startHour}
+                      endHour={endHour}
+                      hourHeight={hourHeight}
+                      color={color}
+                      providerName={provider.name}
+                      onClick={(target, point) =>
+                        onBlockClick(
+                          { block: target, providerName: provider.name },
+                          point,
+                        )
+                      }
+                    />
+                  ))}
 
               {day &&
                 placeSideBySide(day.appointments).map(
