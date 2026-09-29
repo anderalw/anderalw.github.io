@@ -27,6 +27,8 @@ import RescheduleForm from '../../../components/RescheduleForm';
 import avatarFallback from '../../../utils/avatarFallback';
 import { formatPhone, phoneHref as toPhoneHref } from '../../../utils/phone';
 import { AgendaClient } from '../agenda';
+import { PaymentMethod, PAYMENT_LABELS } from '../../../utils/payment';
+import PaymentStep from './PaymentStep';
 import { AlertTag } from '../../Clients/styles';
 
 import {
@@ -58,6 +60,7 @@ import {
   NotesText,
   ScopeOptions,
   SeriesNote,
+  UndoRow,
 } from './styles';
 
 export interface AppointmentDetailsData {
@@ -68,6 +71,8 @@ export interface AppointmentDetailsData {
   price_cents: number | null;
   // Registrado depois do horário; null = a confirmar
   attendance: 'completed' | 'no_show' | null;
+  payment_method: PaymentMethod | null;
+  paid_cents: number | null;
   confirmed_at: string | null;
   // Barbeiro que registrou a confirmação; null = o cliente, pelo link
   confirmed_by: { id: string; name: string } | null;
@@ -89,7 +94,7 @@ interface AppointmentDetailsProps {
   onChanged(message: { title: string; description: string }): void;
 }
 
-type Mode = 'view' | 'reschedule' | 'confirm-cancel';
+type Mode = 'view' | 'reschedule' | 'confirm-cancel' | 'payment';
 
 const STATUS_LABELS: Record<AppointmentStatus, string> = {
   upcoming: 'Agendado',
@@ -204,6 +209,22 @@ const AppointmentDetails: React.FC<AppointmentDetailsProps> = ({
     )}; aguardando o cliente`;
   }
 
+  // Linha do cartão "Atendido": o pagamento registrado ou o que vai entrar
+  const received = appointment.paid_cents ?? appointment.price_cents;
+  let attendedText = 'Entra no faturamento.';
+
+  if (appointment.attendance === 'completed') {
+    attendedText = `${
+      appointment.payment_method
+        ? PAYMENT_LABELS[appointment.payment_method]
+        : 'Pagamento não informado'
+    }${received !== null ? ` · ${formatPrice(received)}` : ''}`;
+  } else if (appointment.price_cents !== null) {
+    attendedText = `Entra no faturamento (${formatPrice(
+      appointment.price_cents,
+    )}).`;
+  }
+
   const { client } = appointment;
   const clientName = client?.name || 'Cliente removido';
   const phone = client?.phone || null;
@@ -271,6 +292,53 @@ const AppointmentDetails: React.FC<AppointmentDetailsProps> = ({
       }
     },
     [appointment.id, clientName, when, onChanged, addToast],
+  );
+
+  // Atendido com a forma de pagamento; já concluído: só troca o pagamento
+  const handlePayment = useCallback(
+    async (method: PaymentMethod | null, paidCents: number | null) => {
+      setSavingAttendance(true);
+
+      try {
+        if (appointment.attendance === 'completed') {
+          await api.patch(`/cash/payments/${appointment.id}`, {
+            payment_method: method,
+            paid_cents: paidCents,
+          });
+        } else {
+          await api.patch(`/appointments/${appointment.id}/attendance`, {
+            attendance: 'completed',
+            payment_method: method,
+            paid_cents: paidCents,
+          });
+        }
+
+        onChanged({
+          title:
+            appointment.attendance === 'completed'
+              ? 'Pagamento atualizado'
+              : 'Atendimento concluído',
+          description: `${clientName} em ${when}${
+            method ? ` · ${PAYMENT_LABELS[method]}` : ''
+          }.`,
+        });
+      } catch (err) {
+        addToast({
+          type: 'error',
+          title: 'Não foi possível registrar',
+          description: getApiErrorMessage(err, 'Tente novamente.'),
+        });
+        setSavingAttendance(false);
+      }
+    },
+    [
+      appointment.id,
+      appointment.attendance,
+      clientName,
+      when,
+      onChanged,
+      addToast,
+    ],
   );
 
   const handleAttendance = useCallback(
@@ -530,18 +598,12 @@ const AppointmentDetails: React.FC<AppointmentDetailsProps> = ({
                         savingAttendance ||
                         appointment.attendance === 'completed'
                       }
-                      onClick={() => handleAttendance('completed')}
+                      onClick={() => setMode('payment')}
                     >
                       <FiCheckCircle />
                       <span>
                         <strong>Atendido</strong>
-                        <small>
-                          {appointment.price_cents !== null
-                            ? `Entra no faturamento (${formatPrice(
-                                appointment.price_cents,
-                              )}).`
-                            : 'Entra no faturamento.'}
-                        </small>
+                        <small>{attendedText}</small>
                       </span>
                     </AttendanceCard>
                     <AttendanceCard
@@ -563,19 +625,31 @@ const AppointmentDetails: React.FC<AppointmentDetailsProps> = ({
                       </span>
                     </AttendanceCard>
 
-                    {/* Espaço reservado: o link aparece sem mexer no resto */}
-                    <UndoButton
-                      type="button"
+                    {/* Espaço reservado: os links aparecem sem mexer no resto */}
+                    <UndoRow
                       style={{
                         visibility: appointment.attendance
                           ? 'visible'
                           : 'hidden',
                       }}
-                      disabled={savingAttendance}
-                      onClick={() => handleAttendance(null)}
                     >
-                      Desfazer registro
-                    </UndoButton>
+                      {appointment.attendance === 'completed' && (
+                        <UndoButton
+                          type="button"
+                          disabled={savingAttendance}
+                          onClick={() => setMode('payment')}
+                        >
+                          Alterar pagamento
+                        </UndoButton>
+                      )}
+                      <UndoButton
+                        type="button"
+                        disabled={savingAttendance}
+                        onClick={() => handleAttendance(null)}
+                      >
+                        Desfazer registro
+                      </UndoButton>
+                    </UndoRow>
                   </>
                 )}
 
@@ -609,6 +683,18 @@ const AppointmentDetails: React.FC<AppointmentDetailsProps> = ({
                   />
                 </RescheduleArea>
               </>
+            )}
+
+            {mode === 'payment' && (
+              <PaymentStep
+                priceCents={appointment.price_cents}
+                initialMethod={appointment.payment_method}
+                initialPaidCents={appointment.paid_cents}
+                editing={appointment.attendance === 'completed'}
+                saving={savingAttendance}
+                onBack={() => setMode('view')}
+                onConfirm={handlePayment}
+              />
             )}
 
             {mode === 'confirm-cancel' && (

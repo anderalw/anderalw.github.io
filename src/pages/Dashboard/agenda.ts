@@ -1,5 +1,7 @@
 import { addDays, max, min, parseISO, startOfDay } from 'date-fns';
 
+import { PaymentMethod } from '../../utils/payment';
+
 // Tipos e regras comuns às visões de dia e de semana da agenda
 
 export interface AgendaProvider {
@@ -42,6 +44,9 @@ export interface AgendaAppointment {
   price_cents: number | null;
   // Registrado depois do horário: atendido ou falta; null = a confirmar
   attendance: Attendance | null;
+  // Pagamento do atendimento concluído (null = não informado / o preço)
+  payment_method: PaymentMethod | null;
+  paid_cents: number | null;
   // Confirmado pelo cliente no link do e-mail da véspera, ou registrado
   // pela barbearia
   confirmed_at: string | null;

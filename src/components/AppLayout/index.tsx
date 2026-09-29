@@ -12,6 +12,7 @@ import {
   FiPlusCircle,
   FiList,
   FiUserCheck,
+  FiInbox,
 } from 'react-icons/fi';
 
 import { useAuth } from '../../hooks/Auth';
@@ -113,6 +114,10 @@ const AppLayout: React.FC<AppLayoutProps> = ({ sidebarExtra, children }) => {
             <NavLink to="/clientes" title="Clientes">
               <FiUserCheck />
               <span>Clientes</span>
+            </NavLink>
+            <NavLink to="/caixa" title="Caixa">
+              <FiInbox />
+              <span>Caixa</span>
             </NavLink>
 
             {user.is_admin && (

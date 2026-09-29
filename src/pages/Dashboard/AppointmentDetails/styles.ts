@@ -466,3 +466,9 @@ export const SeriesNote = styled.small`
   font-size: 12px;
   color: ${colors.textMuted};
 `;
+
+// Links discretos abaixo da situação (alterar pagamento, desfazer)
+export const UndoRow = styled.div`
+  display: flex;
+  gap: 16px;
+`;

@@ -16,6 +16,11 @@ import { useAuth } from '../../hooks/Auth';
 import { useToast } from '../../hooks/Toast';
 import getApiErrorMessage from '../../utils/getApiErrorMessage';
 import { formatPrice } from '../../utils/money';
+import {
+  PaymentMethod,
+  PAYMENT_METHODS,
+  PAYMENT_LABELS,
+} from '../../utils/payment';
 
 import AppLayout from '../../components/AppLayout';
 import {
@@ -62,6 +67,8 @@ interface RevenueReport {
     revenue_cents: number;
   }>;
   days: Array<{ date: string; completed: number; revenue_cents: number }>;
+  // Recebido em cada forma de pagamento (unknown = não informada)
+  methods: Record<PaymentMethod | 'unknown', { count: number; cents: number }>;
 }
 
 type Preset = 'today' | 'week' | 'month' | 'last-month';
@@ -357,6 +364,46 @@ const Revenue: React.FC = () => {
                 </tbody>
               </Table>
             )}
+          </Card>
+
+          <Card>
+            <CardHeader>
+              <h2>Por forma de pagamento</h2>
+            </CardHeader>
+            <Table>
+              <thead>
+                <tr>
+                  <th>Forma</th>
+                  <th className="num">Atendidos</th>
+                  <th className="num">Parte</th>
+                  <th className="num">Recebido</th>
+                </tr>
+              </thead>
+              <tbody>
+                {([...PAYMENT_METHODS, 'unknown'] as const).map(method => {
+                  const item = report?.methods[method];
+                  const share =
+                    item && totals && totals.revenue_cents > 0
+                      ? Math.round((item.cents / totals.revenue_cents) * 100)
+                      : 0;
+
+                  return (
+                    <tr key={method}>
+                      <td>
+                        {method === 'unknown'
+                          ? 'Não informada'
+                          : PAYMENT_LABELS[method]}
+                      </td>
+                      <td className="num">{item ? item.count : '–'}</td>
+                      <td className="num">{item ? `${share}%` : '–'}</td>
+                      <td className="num">
+                        {item ? formatPrice(item.cents) : '–'}
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </Table>
           </Card>
         </Tables>
       </Page>
