@@ -59,6 +59,8 @@ export interface AppointmentDetailsData {
   // Registrado depois do horário; null = a confirmar
   attendance: 'completed' | 'no_show' | null;
   confirmed_at: string | null;
+  // Barbeiro que registrou a confirmação; null = o cliente, pelo link
+  confirmed_by: { id: string; name: string } | null;
   confirmation_requested_at: string | null;
   created_at: string;
   client: {
@@ -85,7 +87,7 @@ type Mode = 'view' | 'reschedule' | 'confirm-cancel';
 
 const STATUS_LABELS: Record<AppointmentStatus, string> = {
   upcoming: 'Agendado',
-  confirmed: 'Confirmado pelo cliente',
+  confirmed: 'Confirmado',
   ongoing: 'Em andamento',
   pending: 'A confirmar',
   completed: 'Atendido',
@@ -110,6 +112,7 @@ const AppointmentDetails: React.FC<AppointmentDetailsProps> = ({
   const [mode, setMode] = useState<Mode>('view');
   const [canceling, setCanceling] = useState(false);
   const [savingAttendance, setSavingAttendance] = useState(false);
+  const [savingConfirmation, setSavingConfirmation] = useState(false);
 
   // Foco no botão de fechar ao abrir, e Esc fecha o painel
   useEffect(() => {
@@ -149,10 +152,14 @@ const AppointmentDetails: React.FC<AppointmentDetailsProps> = ({
   let confirmationText: string | null = null;
 
   if (!started && appointment.confirmed_at) {
-    confirmationText = `Confirmado pelo cliente em ${format(
+    const confirmedWhen = format(
       parseISO(appointment.confirmed_at),
       "dd/MM 'às' HH:mm",
-    )}`;
+    );
+
+    confirmationText = appointment.confirmed_by
+      ? `Confirmação registrada por ${appointment.confirmed_by.name} em ${confirmedWhen}`
+      : `Confirmado pelo cliente (link do e-mail) em ${confirmedWhen}`;
   } else if (!started && appointment.confirmation_requested_at) {
     confirmationText = `Confirmação pedida por e-mail em ${format(
       parseISO(appointment.confirmation_requested_at),
@@ -189,6 +196,33 @@ const AppointmentDetails: React.FC<AppointmentDetailsProps> = ({
       setCanceling(false);
     }
   }, [appointment.id, clientName, when, onChanged, addToast]);
+
+  // Cliente que confirmou por telefone ou WhatsApp: a barbearia registra
+  // (e pode desfazer o próprio registro)
+  const handleConfirmation = useCallback(
+    async (confirmed: boolean) => {
+      setSavingConfirmation(true);
+
+      try {
+        await api.patch(`/appointments/${appointment.id}/confirmation`, {
+          confirmed,
+        });
+
+        onChanged({
+          title: confirmed ? 'Presença confirmada' : 'Confirmação desfeita',
+          description: `${clientName} em ${when}.`,
+        });
+      } catch (err) {
+        addToast({
+          type: 'error',
+          title: 'Não foi possível registrar',
+          description: getApiErrorMessage(err, 'Tente novamente.'),
+        });
+        setSavingConfirmation(false);
+      }
+    },
+    [appointment.id, clientName, when, onChanged, addToast],
+  );
 
   const handleAttendance = useCallback(
     async (attendance: 'completed' | 'no_show' | null) => {
@@ -331,6 +365,44 @@ const AppointmentDetails: React.FC<AppointmentDetailsProps> = ({
                 {!started ? (
                   <>
                     <SectionTitle>O que você quer fazer?</SectionTitle>
+                    <AttendanceCard
+                      type="button"
+                      tone="success"
+                      selected={!!appointment.confirmed_at}
+                      aria-pressed={!!appointment.confirmed_at}
+                      style={{ marginBottom: 10 }}
+                      // A confirmação do cliente pelo link não se desfaz
+                      disabled={
+                        savingConfirmation ||
+                        (!!appointment.confirmed_at &&
+                          !appointment.confirmed_by)
+                      }
+                      title={
+                        appointment.confirmed_by
+                          ? 'Clique para desfazer'
+                          : undefined
+                      }
+                      onClick={() =>
+                        handleConfirmation(!appointment.confirmed_at)
+                      }
+                    >
+                      <FiCheckCircle />
+                      <span>
+                        <strong>
+                          {appointment.confirmed_at
+                            ? 'Presença confirmada'
+                            : 'Confirmar presença'}
+                        </strong>
+                        <small>
+                          {!appointment.confirmed_at &&
+                            'O cliente confirmou por telefone ou WhatsApp.'}
+                          {appointment.confirmed_at &&
+                            (appointment.confirmed_by
+                              ? 'Registrado pela barbearia. Clique para desfazer.'
+                              : 'O cliente confirmou pelo link do e-mail.')}
+                        </small>
+                      </span>
+                    </AttendanceCard>
                     <ActionCard
                       type="button"
                       onClick={() => setMode('reschedule')}

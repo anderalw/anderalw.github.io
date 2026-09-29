@@ -27,8 +27,11 @@ export interface AgendaAppointment {
   price_cents: number | null;
   // Registrado depois do horário: atendido ou falta; null = a confirmar
   attendance: Attendance | null;
-  // Confirmado pelo cliente no link do e-mail da véspera
+  // Confirmado pelo cliente no link do e-mail da véspera, ou registrado
+  // pela barbearia
   confirmed_at: string | null;
+  // Barbeiro que registrou a confirmação; null = o cliente, pelo link
+  confirmed_by: { id: string; name: string } | null;
   // Quando o pedido de confirmação foi enviado (null = ainda não)
   confirmation_requested_at: string | null;
   created_at: string;

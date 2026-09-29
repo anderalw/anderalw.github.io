@@ -64,6 +64,7 @@ import SlotMenu from './SlotMenu';
 import BlockMenu from './BlockMenu';
 import BlockModal from './BlockModal';
 import AgendaBlockCard from './AgendaBlockCard';
+import PendingConfirmations from './PendingConfirmations';
 import useHourHeight from './useHourHeight';
 import {
   Agenda,
@@ -416,6 +417,16 @@ const Dashboard: React.FC = () => {
       : `${count} agendamentos${suffix}`;
   }, [view, weekCount, appointments.length, loading]);
 
+  // Agendamento aberto pela lista de confirmações de amanhã
+  const openFromConfirmations = useCallback(
+    (target: DetailsTarget, day: Date, opener: HTMLElement) => {
+      setSelectedDate(startOfDay(day));
+      changeView('day');
+      openDetails(target, opener);
+    },
+    [changeView, openDetails],
+  );
+
   const openDay = useCallback(
     (date: Date) => {
       setSelectedDate(startOfDay(date));
@@ -468,6 +479,16 @@ const Dashboard: React.FC = () => {
           </NavButton>
           <h1>{view === 'week' ? weekTitle(weekStart) : selectedDateAsText}</h1>
           <span>{countText}</span>
+
+          <PendingConfirmations
+            now={now}
+            refreshKey={refreshKey}
+            onOpen={openFromConfirmations}
+            onChanged={message => {
+              setRefreshKey(key => key + 1);
+              addToast({ type: 'success', ...message });
+            }}
+          />
 
           {view === 'week' && (
             <ProviderFilter
