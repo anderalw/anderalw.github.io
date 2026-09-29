@@ -1,16 +1,17 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { FormHandles } from '@unform/core';
 import * as Yup from 'yup';
-import { FiCheck, FiX } from 'react-icons/fi';
+import { FiCheck, FiPlus, FiTrash2, FiX } from 'react-icons/fi';
 
 import api from '../../services/api';
 import { useToast } from '../../hooks/Toast';
 import getValidationErrors from '../../utils/getValidationErros';
 import getApiErrorMessage from '../../utils/getApiErrorMessage';
 import { WeekSchedule } from '../../utils/scheduleSummary';
+import describeDays, { listDays } from '../../utils/describeDays';
 
 import FormField from '../../components/FormField';
-import { UIButton, Badge } from '../../components/ui';
+import { UIButton } from '../../components/ui';
 import TimeSelect from '../../components/TimeSelect';
 import WeekdayPicker from '../../components/WeekdayPicker';
 import { colors } from '../../styles/theme';
@@ -28,9 +29,12 @@ import {
   FormColumns,
   FormAside,
   SectionTitle,
-  ScheduleTable,
-  DayName,
-  WorkDays,
+  AddSchedule,
+  AddRow,
+  AddHint,
+  GroupList,
+  GroupItem,
+  DaysOff,
 } from './styles';
 
 export interface TeamMember {
@@ -69,24 +73,39 @@ const dayNames = [
 // Segunda primeiro, domingo por último
 const WEEK_ORDER = [1, 2, 3, 4, 5, 6, 0];
 
-interface DayRow {
-  day_of_week: number;
+// Dias com o mesmo horário, mostrados numa linha só
+interface ScheduleGroup {
+  days: number[];
   start_time: string;
   end_time: string;
-  enabled: boolean;
 }
 
-function toRows(schedules: WeekSchedule[]): DayRow[] {
-  return WEEK_ORDER.map(day_of_week => {
-    const schedule = schedules.find(item => item.day_of_week === day_of_week);
+function toGroups(schedules: WeekSchedule[]): ScheduleGroup[] {
+  const groups: ScheduleGroup[] = [];
 
-    return {
-      day_of_week,
-      start_time: schedule?.start_time.slice(0, 5) || '09:00',
-      end_time: schedule?.end_time.slice(0, 5) || '18:00',
-      enabled: !!schedule,
-    };
+  WEEK_ORDER.forEach(day => {
+    const schedule = schedules.find(item => item.day_of_week === day);
+
+    if (!schedule) return;
+
+    const group = groups.find(
+      item =>
+        item.start_time === schedule.start_time &&
+        item.end_time === schedule.end_time,
+    );
+
+    if (group) {
+      group.days.push(day);
+    } else {
+      groups.push({
+        days: [day],
+        start_time: schedule.start_time,
+        end_time: schedule.end_time,
+      });
+    }
   });
+
+  return groups;
 }
 
 // Modal para cadastrar ou editar um barbeiro: dados de acesso à esquerda e
@@ -100,10 +119,66 @@ const ProviderModal: React.FC<ProviderModalProps> = ({
   const { addToast } = useToast();
   const isNew = !member;
 
-  const [rows, setRows] = useState<DayRow[]>(() =>
-    toRows(member?.schedules || []),
+  // Um horário por dia de atendimento ('HH:mm')
+  const [schedules, setSchedules] = useState<WeekSchedule[]>(() =>
+    (member?.schedules || []).map(item => ({
+      day_of_week: item.day_of_week,
+      start_time: item.start_time.slice(0, 5),
+      end_time: item.end_time.slice(0, 5),
+    })),
   );
+  // Formulário de adicionar: dias marcados e o horário deles
+  const [newDays, setNewDays] = useState<number[]>([]);
+  const [newStart, setNewStart] = useState('09:00');
+  const [newEnd, setNewEnd] = useState('18:00');
+  const [scheduleError, setScheduleError] = useState('');
   const [saving, setSaving] = useState(false);
+
+  const groups = toGroups(schedules);
+  const daysOff = WEEK_ORDER.filter(
+    day => !schedules.some(item => item.day_of_week === day),
+  );
+
+  const toggleNewDay = (day: number): void => {
+    setNewDays(current =>
+      current.includes(day)
+        ? current.filter(item => item !== day)
+        : [...current, day],
+    );
+    setScheduleError('');
+  };
+
+  // Aplica o horário aos dias marcados. Um dia que já tinha horário passa a
+  // usar o novo (assim um dia diferente dos outros é só adicionar de novo)
+  const handleAddSchedule = (): void => {
+    if (newDays.length === 0) {
+      setScheduleError('Marque os dias da semana.');
+      return;
+    }
+
+    if (newEnd <= newStart) {
+      setScheduleError('O fim precisa ser depois do início.');
+      return;
+    }
+
+    setSchedules(current => [
+      ...current.filter(item => !newDays.includes(item.day_of_week)),
+      ...newDays.map(day_of_week => ({
+        day_of_week,
+        start_time: newStart,
+        end_time: newEnd,
+      })),
+    ]);
+    setNewDays([]);
+    setScheduleError('');
+  };
+
+  // Os dias do grupo viram folga
+  const handleRemoveGroup = (group: ScheduleGroup): void => {
+    setSchedules(current =>
+      current.filter(item => !group.days.includes(item.day_of_week)),
+    );
+  };
 
   // Esc fecha o modal (a não ser no meio do salvamento)
   useEffect(() => {
@@ -115,16 +190,6 @@ const ProviderModal: React.FC<ProviderModalProps> = ({
 
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [onClose, saving]);
-
-  const updateRow = (
-    index: number,
-    field: keyof DayRow,
-    value: string | boolean,
-  ): void => {
-    setRows(current =>
-      current.map((row, i) => (i === index ? { ...row, [field]: value } : row)),
-    );
-  };
 
   const handleSubmit = useCallback(
     async (data: ProviderFormData) => {
@@ -143,14 +208,6 @@ const ProviderModal: React.FC<ProviderModalProps> = ({
         });
 
         await schema.validate(data, { abortEarly: false });
-
-        const schedules = rows
-          .filter(row => row.enabled)
-          .map(({ day_of_week, start_time, end_time }) => ({
-            day_of_week,
-            start_time,
-            end_time,
-          }));
 
         // Valida os horários antes de gravar qualquer coisa
         const invalid = schedules.find(
@@ -220,7 +277,7 @@ const ProviderModal: React.FC<ProviderModalProps> = ({
         setSaving(false);
       }
     },
-    [isNew, member, rows, addToast, onSaved],
+    [isNew, member, schedules, addToast, onSaved],
   );
 
   return (
@@ -279,65 +336,74 @@ const ProviderModal: React.FC<ProviderModalProps> = ({
 
             <Main>
               <SectionTitle>Horários de atendimento</SectionTitle>
-              <WorkDays>
-                <span>Dias</span>
-                <WeekdayPicker
-                  selected={rows
-                    .filter(row => row.enabled)
-                    .map(row => row.day_of_week)}
-                  onToggle={day => {
-                    const index = rows.findIndex(
-                      row => row.day_of_week === day,
-                    );
+              <AddSchedule>
+                <AddRow>
+                  <span>Dias</span>
+                  <WeekdayPicker selected={newDays} onToggle={toggleNewDay} />
+                </AddRow>
+                <AddRow>
+                  <span>Horário</span>
+                  <TimeSelect
+                    stepMinutes={60}
+                    aria-label="Início"
+                    value={newStart}
+                    onChange={value => {
+                      setNewStart(value);
+                      setScheduleError('');
+                    }}
+                  />
+                  <small>até</small>
+                  <TimeSelect
+                    stepMinutes={60}
+                    aria-label="Fim"
+                    value={newEnd}
+                    onChange={value => {
+                      setNewEnd(value);
+                      setScheduleError('');
+                    }}
+                  />
+                  <UIButton
+                    type="button"
+                    variant="secondary"
+                    onClick={handleAddSchedule}
+                  >
+                    <FiPlus />
+                    Adicionar
+                  </UIButton>
+                </AddRow>
+                {/* Espaço reservado: a dica vira o erro sem mexer no resto */}
+                <AddHint error={!!scheduleError}>
+                  {scheduleError ||
+                    'Um dia que já tem horário passa a usar o novo.'}
+                </AddHint>
+              </AddSchedule>
 
-                    updateRow(index, 'enabled', !rows[index].enabled);
-                  }}
-                />
-              </WorkDays>
-              <ScheduleTable>
-                <tbody>
-                  {rows.map((row, index) => (
-                    <tr key={row.day_of_week}>
-                      <td>
-                        <DayName off={!row.enabled}>
-                          {dayNames[row.day_of_week]}
-                        </DayName>
-                      </td>
-                      {row.enabled ? (
-                        <>
-                          <td>
-                            <TimeSelect
-                              stepMinutes={60}
-                              aria-label={`Início, ${
-                                dayNames[row.day_of_week]
-                              }`}
-                              value={row.start_time}
-                              onChange={value =>
-                                updateRow(index, 'start_time', value)
-                              }
-                            />
-                          </td>
-                          <td className="until">até</td>
-                          <td>
-                            <TimeSelect
-                              stepMinutes={60}
-                              aria-label={`Fim, ${dayNames[row.day_of_week]}`}
-                              value={row.end_time}
-                              onChange={value =>
-                                updateRow(index, 'end_time', value)
-                              }
-                            />
-                          </td>
-                        </>
-                      ) : (
-                        <td colSpan={3} className="off">
-                          <Badge>Folga</Badge>
-                        </td>
-                      )}
-                    </tr>
-                  ))}
-                </tbody>
-              </ScheduleTable>
+              <GroupList>
+                {groups.map(group => (
+                  <GroupItem key={group.days.join(',')}>
+                    <strong>{describeDays(group.days)}</strong>
+                    <span>
+                      {group.start_time} – {group.end_time}
+                    </span>
+                    <UIButton
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      title={`Remover ${describeDays(group.days)}`}
+                      aria-label={`Remover ${describeDays(group.days)}`}
+                      onClick={() => handleRemoveGroup(group)}
+                    >
+                      <FiTrash2 />
+                    </UIButton>
+                  </GroupItem>
+                ))}
+
+                <DaysOff>
+                  {groups.length === 0
+                    ? 'Nenhum horário ainda: marque os dias, escolha o horário e clique em Adicionar.'
+                    : daysOff.length > 0 && `Folga: ${listDays(daysOff)}`}
+                </DaysOff>
+              </GroupList>
             </Main>
           </FormColumns>
 

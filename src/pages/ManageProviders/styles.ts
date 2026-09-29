@@ -152,37 +152,6 @@ export const SectionTitle = styled.h3`
   }
 `;
 
-export const ScheduleTable = styled.table`
-  width: 100%;
-  border-collapse: collapse;
-
-  td {
-    /* Mesma altura com ou sem os campos de horário */
-    height: 46px;
-    border-top: 1px solid ${colors.border};
-  }
-
-  tr:first-child td {
-    border-top: 0;
-  }
-
-  /* Hora e minutos */
-  td > div {
-    width: 130px;
-  }
-
-  td.until {
-    width: 40px;
-    text-align: center;
-    color: ${colors.textSubtle};
-    font-size: 13px;
-  }
-
-  td.off {
-    text-align: right;
-  }
-`;
-
 export const ConfirmOverlay = styled.div`
   ${overlay}
   z-index: 20;
@@ -242,22 +211,83 @@ export const ConfirmBox = styled.div`
   }
 `;
 
-// Dias de atendimento: os mesmos botões do bloqueio que se repete
-export const WorkDays = styled.div`
+// Formulário de adicionar horário: dias, horário e o botão
+export const AddSchedule = styled.div`
+  padding: 14px 16px 10px;
+  border: 1px solid ${colors.border};
+  border-radius: ${radius.md};
+  background: ${colors.sunken};
+`;
+
+export const AddRow = styled.div`
   display: flex;
   align-items: center;
-  gap: 16px;
-  margin-bottom: 8px;
+  gap: 10px;
+
+  & + & {
+    margin-top: 12px;
+  }
 
   > span {
+    width: 56px;
+    flex-shrink: 0;
     font-size: 13px;
     font-weight: 500;
     color: ${colors.textMuted};
   }
+
+  > small {
+    color: ${colors.textSubtle};
+    font-size: 13px;
+  }
+
+  /* Hora e minutos */
+  > div[class]:not([role='group']) {
+    width: 118px;
+  }
+
+  > button {
+    margin-left: auto;
+  }
 `;
 
-// Nome do dia em cada linha; esmaecido na folga
-export const DayName = styled.span<{ off: boolean }>`
-  font-weight: 500;
-  color: ${props => (props.off ? colors.textSubtle : colors.text)};
+// Dica fixa que vira a mensagem de erro, sempre com a mesma altura
+export const AddHint = styled.p<{ error: boolean }>`
+  min-height: 18px;
+  margin: 8px 0 0 66px;
+  font-size: 12px;
+  line-height: 18px;
+  color: ${props => (props.error ? colors.danger : colors.textSubtle)};
+`;
+
+// Horários já adicionados, um grupo de dias por linha
+export const GroupList = styled.div`
+  margin-top: 14px;
+`;
+
+export const GroupItem = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  height: 40px;
+  padding: 0 4px 0 12px;
+  border-bottom: 1px solid ${colors.border};
+
+  strong {
+    flex: 1;
+    min-width: 0;
+    font-weight: 500;
+    color: ${colors.text};
+  }
+
+  span {
+    font-variant-numeric: tabular-nums;
+    color: ${colors.textMuted};
+  }
+`;
+
+export const DaysOff = styled.p`
+  padding: 10px 12px 0;
+  font-size: 13px;
+  color: ${colors.textSubtle};
 `;

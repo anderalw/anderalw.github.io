@@ -52,23 +52,7 @@ export interface AgendaBlock {
   } | null;
 }
 
-const WEEKDAY_NAMES = ['dom', 'seg', 'ter', 'qua', 'qui', 'sex', 'sáb'];
-
-// "Todos os dias", "De segunda a sexta", "seg, qua e sex"
-export function describeDays(days: number[]): string {
-  const sorted = [...days].sort();
-  const key = sorted.join(',');
-
-  if (key === '0,1,2,3,4,5,6') return 'Todos os dias';
-  if (key === '1,2,3,4,5') return 'De segunda a sexta';
-  if (key === '1,2,3,4,5,6') return 'De segunda a sábado';
-
-  const names = sorted.map(day => WEEKDAY_NAMES[day]);
-
-  return names.length === 1
-    ? `Toda ${names[0]}`
-    : `${names.slice(0, -1).join(', ')} e ${names[names.length - 1]}`;
-}
+export { default as describeDays } from '../../utils/describeDays';
 
 export interface Agenda {
   providers: AgendaProvider[];
