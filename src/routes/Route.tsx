@@ -11,6 +11,8 @@ interface RouteProps extends ReactDOMRouteProps {
   isPrivate?: boolean;
   // Rota exclusiva de clientes
   isClient?: boolean;
+  // Aberta a todos, com ou sem sessão (ex: o site da barbearia)
+  isOpen?: boolean;
   component: React.ComponentType;
 }
 
@@ -23,6 +25,7 @@ const homeByRole = {
 const Route: React.FC<RouteProps> = ({
   isPrivate = false,
   isClient = false,
+  isOpen = false,
   component: Component,
   ...rest
 }) => {
@@ -30,7 +33,9 @@ const Route: React.FC<RouteProps> = ({
 
   let allowed: boolean;
 
-  if (isPrivate) {
+  if (isOpen) {
+    allowed = true;
+  } else if (isPrivate) {
     allowed = role === 'provider';
   } else if (isClient) {
     allowed = role === 'client';

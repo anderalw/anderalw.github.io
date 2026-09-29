@@ -21,6 +21,7 @@ import { Branding, colorVariables, useBranding } from '../../hooks/Branding';
 import getApiErrorMessage from '../../utils/getApiErrorMessage';
 
 import AppLayout from '../../components/AppLayout';
+import SiteSettings from './SiteSettings';
 import {
   Page,
   PageHeader,
@@ -220,154 +221,158 @@ const Settings: React.FC = () => {
         </PageHeader>
 
         <Layout>
-          <Card as="form" onSubmit={handleSave}>
-            <CardHeader>
-              <div>
-                <h2>Identidade da barbearia</h2>
-                <p>
-                  Vale para o painel, o site de agendamento e os e-mails aos
-                  clientes.
-                </p>
-              </div>
-            </CardHeader>
-            <CardBody>
-              <Field>
-                <FieldLabel htmlFor="shop-name">Nome da barbearia</FieldLabel>
-                <NameInput>
-                  <TextInput
-                    id="shop-name"
-                    value={name}
-                    maxLength={40}
-                    placeholder="Ex: Barbearia do Zé"
-                    onChange={event => {
-                      editedRef.current = true;
-                      setName(event.target.value);
-                      setError('');
-                    }}
-                  />
-                </NameInput>
-                <small>
-                  Aparece no menu, nas telas de entrada, na aba do navegador e
-                  na assinatura dos e-mails.
-                </small>
-              </Field>
-
-              <Field>
-                <span>Cor principal</span>
-                <Swatches role="radiogroup" aria-label="Cor principal">
-                  {PALETTE.map(option => (
-                    <Swatch
-                      key={option.value}
-                      type="button"
-                      role="radio"
-                      aria-checked={color === option.value}
-                      aria-label={option.label}
-                      title={option.label}
-                      color={option.value}
-                      selected={color === option.value}
-                      onClick={() => chooseColor(option.value)}
-                    />
-                  ))}
-                  <CustomColor>
-                    <input
-                      type="color"
-                      aria-label="Escolher outra cor"
-                      title="Escolher outra cor"
-                      value={color}
-                      onChange={event => chooseColor(event.target.value)}
-                    />
+          <div>
+            <Card as="form" onSubmit={handleSave}>
+              <CardHeader>
+                <div>
+                  <h2>Identidade da barbearia</h2>
+                  <p>
+                    Vale para o painel, o site de agendamento e os e-mails aos
+                    clientes.
+                  </p>
+                </div>
+              </CardHeader>
+              <CardBody>
+                <Field>
+                  <FieldLabel htmlFor="shop-name">Nome da barbearia</FieldLabel>
+                  <NameInput>
                     <TextInput
-                      type="text"
-                      aria-label="Código da cor"
-                      value={hexText}
-                      maxLength={7}
+                      id="shop-name"
+                      value={name}
+                      maxLength={40}
+                      placeholder="Ex: Barbearia do Zé"
                       onChange={event => {
-                        const value = event.target.value.trim();
-
-                        setHexText(value);
-                        if (HEX.test(value)) chooseColor(value);
+                        editedRef.current = true;
+                        setName(event.target.value);
+                        setError('');
                       }}
                     />
-                  </CustomColor>
-                </Swatches>
-                <small>
-                  Botões, destaques e o menu. O texto sobre a cor fica escuro ou
-                  branco automaticamente, para ser legível.
-                </small>
-              </Field>
+                  </NameInput>
+                  <small>
+                    Aparece no menu, nas telas de entrada, na aba do navegador e
+                    na assinatura dos e-mails.
+                  </small>
+                </Field>
 
-              <Field>
-                <span>Logo</span>
-                <LogoRow>
-                  <LogoBox>
-                    {branding.logo_url ? (
-                      <img src={branding.logo_url} alt="Logo atual" />
-                    ) : (
-                      <FiImage size={28} color={colors.textSubtle} />
-                    )}
-                  </LogoBox>
-                  <LogoActions>
-                    <div>
-                      <UIButton
+                <Field>
+                  <span>Cor principal</span>
+                  <Swatches role="radiogroup" aria-label="Cor principal">
+                    {PALETTE.map(option => (
+                      <Swatch
+                        key={option.value}
                         type="button"
-                        variant="secondary"
-                        size="sm"
-                        disabled={uploading}
-                        onClick={() => fileRef.current?.click()}
-                      >
-                        <FiUpload />
-                        {uploading ? 'Enviando...' : 'Enviar imagem'}
-                      </UIButton>
-                      {branding.logo_url && (
+                        role="radio"
+                        aria-checked={color === option.value}
+                        aria-label={option.label}
+                        title={option.label}
+                        color={option.value}
+                        selected={color === option.value}
+                        onClick={() => chooseColor(option.value)}
+                      />
+                    ))}
+                    <CustomColor>
+                      <input
+                        type="color"
+                        aria-label="Escolher outra cor"
+                        title="Escolher outra cor"
+                        value={color}
+                        onChange={event => chooseColor(event.target.value)}
+                      />
+                      <TextInput
+                        type="text"
+                        aria-label="Código da cor"
+                        value={hexText}
+                        maxLength={7}
+                        onChange={event => {
+                          const value = event.target.value.trim();
+
+                          setHexText(value);
+                          if (HEX.test(value)) chooseColor(value);
+                        }}
+                      />
+                    </CustomColor>
+                  </Swatches>
+                  <small>
+                    Botões, destaques e o menu. O texto sobre a cor fica escuro
+                    ou branco automaticamente, para ser legível.
+                  </small>
+                </Field>
+
+                <Field>
+                  <span>Logo</span>
+                  <LogoRow>
+                    <LogoBox>
+                      {branding.logo_url ? (
+                        <img src={branding.logo_url} alt="Logo atual" />
+                      ) : (
+                        <FiImage size={28} color={colors.textSubtle} />
+                      )}
+                    </LogoBox>
+                    <LogoActions>
+                      <div>
                         <UIButton
                           type="button"
-                          variant="ghost"
+                          variant="secondary"
                           size="sm"
                           disabled={uploading}
-                          onClick={removeLogo}
+                          onClick={() => fileRef.current?.click()}
                         >
-                          <FiTrash2 />
-                          Remover
+                          <FiUpload />
+                          {uploading ? 'Enviando...' : 'Enviar imagem'}
                         </UIButton>
-                      )}
-                    </div>
-                    <small>
-                      PNG, JPG, WEBP ou SVG, até 2 MB. De preferência quadrada e
-                      com fundo transparente. Sem logo, aparece a tesoura.
-                    </small>
-                  </LogoActions>
-                  <input
-                    ref={fileRef}
-                    type="file"
-                    accept="image/png,image/jpeg,image/webp,image/svg+xml"
-                    hidden
-                    onChange={handleLogo}
-                  />
-                </LogoRow>
-              </Field>
+                        {branding.logo_url && (
+                          <UIButton
+                            type="button"
+                            variant="ghost"
+                            size="sm"
+                            disabled={uploading}
+                            onClick={removeLogo}
+                          >
+                            <FiTrash2 />
+                            Remover
+                          </UIButton>
+                        )}
+                      </div>
+                      <small>
+                        PNG, JPG, WEBP ou SVG, até 2 MB. De preferência quadrada
+                        e com fundo transparente. Sem logo, aparece a tesoura.
+                      </small>
+                    </LogoActions>
+                    <input
+                      ref={fileRef}
+                      type="file"
+                      accept="image/png,image/jpeg,image/webp,image/svg+xml"
+                      hidden
+                      onChange={handleLogo}
+                    />
+                  </LogoRow>
+                </Field>
 
-              <SaveError role="alert">{error}</SaveError>
-            </CardBody>
-            <CardFooter>
-              {changed && <Badge tone="primary">Alterações não salvas</Badge>}
-              <UIButton
-                type="button"
-                variant="ghost"
-                disabled={!changed || saving}
-                onClick={() => {
-                  setName(branding.name);
-                  chooseColor(branding.primary_color);
-                  editedRef.current = false;
-                }}
-              >
-                Desfazer
-              </UIButton>
-              <UIButton type="submit" disabled={!changed || saving}>
-                <FiCheck />
-                {saving ? 'Salvando...' : 'Salvar'}
-              </UIButton>
-            </CardFooter>
-          </Card>
+                <SaveError role="alert">{error}</SaveError>
+              </CardBody>
+              <CardFooter>
+                {changed && <Badge tone="primary">Alterações não salvas</Badge>}
+                <UIButton
+                  type="button"
+                  variant="ghost"
+                  disabled={!changed || saving}
+                  onClick={() => {
+                    setName(branding.name);
+                    chooseColor(branding.primary_color);
+                    editedRef.current = false;
+                  }}
+                >
+                  Desfazer
+                </UIButton>
+                <UIButton type="submit" disabled={!changed || saving}>
+                  <FiCheck />
+                  {saving ? 'Salvando...' : 'Salvar'}
+                </UIButton>
+              </CardFooter>
+            </Card>
+
+            <SiteSettings />
+          </div>
 
           <div>
             <Card

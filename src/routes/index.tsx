@@ -26,7 +26,7 @@ import Settings from '../pages/Settings';
 
 const Routes: React.FC = () => (
   <Switch>
-    <Route path="/" exact component={Landing} />
+    <Route path="/" exact component={Landing} isOpen />
 
     {/* Rotas dos Barbeiros */}
     <Route path="/barbeiro" exact component={SignIn} />
