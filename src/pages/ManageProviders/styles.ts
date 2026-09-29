@@ -109,7 +109,7 @@ const overlay = css`
   position: fixed;
   inset: 0;
   z-index: 10;
-  background: rgba(12, 11, 14, 0.6);
+  background: ${colors.overlay};
   animation: ${fadeIn} 0.15s ease-out;
 `;
 

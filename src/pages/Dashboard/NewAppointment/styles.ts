@@ -71,9 +71,8 @@ export const StatusArea = styled.div`
 export const SlotStatus = styled.div<{ ok: boolean }>`
   padding: 10px 12px;
   border-radius: ${radius.md};
-  background: ${props =>
-    props.ok ? colors.successSoft : 'rgba(252, 196, 25, 0.1)'};
-  color: ${props => (props.ok ? colors.success : '#ffe066')};
+  background: ${props => (props.ok ? colors.successSoft : colors.warningSoft)};
+  color: ${props => (props.ok ? colors.success : colors.warning)};
 
   p {
     color: inherit;
@@ -319,7 +318,7 @@ export const Occurrence = styled.li<{ status: 'free' | 'taken' | 'loading' }>`
   ${props =>
     props.status === 'taken' &&
     css`
-      border-color: rgba(242, 85, 90, 0.4);
+      border-color: color-mix(in srgb, ${colors.danger} 40%, transparent);
       background: ${colors.dangerSoft};
       color: ${colors.textMuted};
       text-decoration: line-through;

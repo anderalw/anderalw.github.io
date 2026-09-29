@@ -14,6 +14,7 @@ import {
 } from 'react-icons/fi';
 
 import api from '../../services/api';
+import { colors } from '../../styles/theme';
 import { useAuth } from '../../hooks/Auth';
 import { useToast } from '../../hooks/Toast';
 import { Branding, colorVariables, useBranding } from '../../hooks/Branding';
@@ -302,7 +303,7 @@ const Settings: React.FC = () => {
                     {branding.logo_url ? (
                       <img src={branding.logo_url} alt="Logo atual" />
                     ) : (
-                      <FiImage size={28} color="#6f6a70" />
+                      <FiImage size={28} color={colors.textSubtle} />
                     )}
                   </LogoBox>
                   <LogoActions>

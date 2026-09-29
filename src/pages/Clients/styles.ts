@@ -63,8 +63,8 @@ export const AlertTag = styled.span`
   gap: 4px;
   padding: 1px 7px;
   border-radius: 999px;
-  background: rgba(252, 196, 25, 0.12);
-  color: #fcc419;
+  background: ${colors.warningSoft};
+  color: ${colors.warning};
   font-size: 11px;
   font-weight: 600;
   white-space: nowrap;
@@ -107,6 +107,6 @@ export const PolicyNote = styled.p`
     flex-shrink: 0;
     width: 16px;
     height: 16px;
-    color: #fcc419;
+    color: ${colors.warning};
   }
 `;

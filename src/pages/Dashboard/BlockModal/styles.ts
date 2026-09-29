@@ -1,6 +1,6 @@
 import styled, { css } from 'styled-components';
 
-import { colors, radius } from '../../../styles/theme';
+import { colors, radius, shadow } from '../../../styles/theme';
 import { inputStyles } from '../../../components/ui';
 import { WideDialog } from '../modalLayout';
 import { ViewSwitch } from '../styles';
@@ -51,7 +51,7 @@ export const PickerList = styled.div`
   border: 1px solid ${colors.borderStrong};
   border-radius: ${radius.md};
   background: ${colors.surface};
-  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.45);
+  box-shadow: ${shadow.popover};
 `;
 
 export const PickerOption = styled.label`
@@ -131,7 +131,7 @@ export const SelectList = styled.div`
   border: 1px solid ${colors.borderStrong};
   border-radius: ${radius.md};
   background: ${colors.surface};
-  box-shadow: 0 -12px 32px rgba(0, 0, 0, 0.45);
+  box-shadow: ${shadow.popover};
 `;
 
 export const SelectOption = styled.div<{

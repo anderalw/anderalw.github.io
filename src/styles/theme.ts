@@ -1,21 +1,21 @@
-// Cores e medidas do painel do barbeiro. As telas do cliente ainda usam os
-// valores antigos direto no CSS
+// Cores e medidas do sistema. Todas as cores são variáveis CSS: os valores
+// dos modos escuro e claro ficam em global.ts, e a cor principal (a da
+// barbearia) é definida em hooks/Branding
 export const colors = {
   // Fundo da aplicação e das áreas afundadas (campos, trilhas)
-  background: '#1b1a1f',
-  sunken: '#161519',
+  background: 'var(--c-background)',
+  sunken: 'var(--c-sunken)',
   // Menu lateral, cards e painéis
-  surface: '#232228',
-  surfaceHover: '#2c2a32',
-  border: '#302e36',
-  borderStrong: '#423f4a',
+  surface: 'var(--c-surface)',
+  surfaceHover: 'var(--c-surface-hover)',
+  border: 'var(--c-border)',
+  borderStrong: 'var(--c-border-strong)',
 
-  text: '#f4ede8',
-  textMuted: '#a9a4a1',
-  textSubtle: '#6f6a70',
+  text: 'var(--c-text)',
+  textMuted: 'var(--c-text-muted)',
+  textSubtle: 'var(--c-text-subtle)',
 
-  // Cor da barbearia (configurável): variáveis CSS definidas em
-  // hooks/Branding, com o laranja do GoBarber como padrão (global.ts)
+  // Cor da barbearia (configurável)
   primary: 'var(--color-primary)',
   primaryHover: 'var(--color-primary-hover)',
   // Texto sobre a cor principal (escuro ou branco, conforme a cor)
@@ -24,10 +24,19 @@ export const colors = {
   // "r, g, b" da cor principal, para transparências: rgba(${primaryRgb}, .2)
   primaryRgb: 'var(--color-primary-rgb)',
 
-  danger: '#f2555a',
-  dangerSoft: 'rgba(242, 85, 90, 0.12)',
-  success: '#4cc38a',
-  successSoft: 'rgba(76, 195, 138, 0.12)',
+  danger: 'var(--c-danger)',
+  dangerSoft: 'var(--c-danger-soft)',
+  success: 'var(--c-success)',
+  successSoft: 'var(--c-success-soft)',
+  // Avisos (a confirmar, faltas recentes, sem forma de pagamento)
+  warning: 'var(--c-warning)',
+  warningSoft: 'var(--c-warning-soft)',
+  // Informação (em andamento, remarcado)
+  info: 'var(--c-info)',
+  infoSoft: 'var(--c-info-soft)',
+
+  // Fundo escurecido atrás dos modais
+  overlay: 'var(--c-overlay)',
 };
 
 export const radius = {
@@ -37,7 +46,8 @@ export const radius = {
 };
 
 export const shadow = {
-  popover: '0 12px 32px rgba(0, 0, 0, 0.45)',
+  popover: 'var(--c-shadow-popover)',
+  card: 'var(--c-shadow-card)',
 };
 
 export const SIDEBAR_WIDTH = 248;

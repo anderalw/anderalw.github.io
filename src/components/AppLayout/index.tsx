@@ -21,6 +21,7 @@ import { useAuth } from '../../hooks/Auth';
 import { useNotifications } from '../../hooks/Notifications';
 import { useBranding } from '../../hooks/Branding';
 import BrandMark, { BrandName } from '../BrandMark';
+import ThemeToggle from '../ThemeToggle';
 import avatarFallback from '../../utils/avatarFallback';
 import NotificationsPanel from '../NotificationsPanel';
 
@@ -188,6 +189,7 @@ const AppLayout: React.FC<AppLayoutProps> = ({ sidebarExtra, children }) => {
             </UserInfo>
           )}
 
+          <ThemeToggle />
           <SignOutButton type="button" onClick={signOut} title="Sair">
             <FiLogOut />
           </SignOutButton>

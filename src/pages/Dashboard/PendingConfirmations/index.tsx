@@ -25,6 +25,7 @@ import {
 import { FaWhatsapp } from 'react-icons/fa';
 
 import api from '../../../services/api';
+import { colors } from '../../../styles/theme';
 import { useToast } from '../../../hooks/Toast';
 import getApiErrorMessage from '../../../utils/getApiErrorMessage';
 import { formatPhone, phoneHref, whatsappHref } from '../../../utils/phone';
@@ -397,7 +398,7 @@ const PendingConfirmations: React.FC<PendingConfirmationsProps> = ({
                             {appointment.client?.name || 'Cliente removido'}
                             {appointment.client?.no_show_alert && (
                               <span
-                                style={{ color: '#fcc419' }}
+                                style={{ color: colors.warning }}
                                 title="Cliente com faltas recentes"
                               >
                                 {' ⚠ faltas recentes'}

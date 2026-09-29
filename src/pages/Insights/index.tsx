@@ -13,6 +13,7 @@ import { FiUser } from 'react-icons/fi';
 import { FaWhatsapp } from 'react-icons/fa';
 
 import api from '../../services/api';
+import { colors } from '../../styles/theme';
 import { useAuth } from '../../hooks/Auth';
 import { useToast } from '../../hooks/Toast';
 import getApiErrorMessage from '../../utils/getApiErrorMessage';
@@ -413,7 +414,10 @@ const Insights: React.FC = () => {
                     </span>
                   </header>
                   <Track>
-                    <Fill value={service.count / maxService} color="#4dabf7" />
+                    <Fill
+                      value={service.count / maxService}
+                      color={colors.info}
+                    />
                   </Track>
                 </li>
               ))}

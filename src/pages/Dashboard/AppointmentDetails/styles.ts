@@ -1,6 +1,6 @@
 import styled, { css, keyframes } from 'styled-components';
 
-import { colors } from '../../../styles/theme';
+import { colors, shadow } from '../../../styles/theme';
 
 const fadeIn = keyframes`
   from { opacity: 0; }
@@ -23,7 +23,7 @@ export const Overlay = styled.div`
   align-items: center;
   justify-content: center;
   padding: 16px;
-  background: rgba(18, 17, 22, 0.7);
+  background: ${colors.overlay};
   animation: ${fadeIn} 0.15s ease-out;
 `;
 
@@ -36,7 +36,7 @@ export const Dialog = styled.div<{ color: string }>`
   border: 1px solid ${colors.border};
   border-radius: 12px;
   border-top: 6px solid ${props => props.color};
-  box-shadow: 0 16px 48px rgba(0, 0, 0, 0.45);
+  box-shadow: ${shadow.popover};
   padding: 20px 24px 24px;
   animation: ${popIn} 0.18s ease-out;
 
@@ -99,8 +99,8 @@ export type AppointmentStatus =
 const statusColors: Record<AppointmentStatus, string> = {
   upcoming: colors.primary,
   confirmed: colors.success,
-  ongoing: '#4dabf7',
-  pending: '#fcc419',
+  ongoing: colors.info,
+  pending: colors.warning,
   completed: colors.success,
   no_show: colors.danger,
 };
@@ -236,7 +236,7 @@ export const SecondaryButton = styled.button`
 export const DangerButton = styled.button`
   border: 1px solid ${colors.danger};
   background: transparent;
-  color: #ff6b6b;
+  color: ${colors.danger};
 
   &:hover:not(:disabled) {
     background: ${colors.dangerSoft};

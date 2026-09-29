@@ -19,7 +19,8 @@ export const Layout = styled.div`
   gap: 24px;
   align-items: start;
 
-  @media (max-width: 1180px) {
+  /* Abaixo disso a tabela não cabe ao lado do fechamento: um embaixo do outro */
+  @media (max-width: 1360px) {
     grid-template-columns: minmax(0, 1fr);
   }
 `;
@@ -32,9 +33,9 @@ export const PendingNote = styled.p`
   min-height: 40px;
   margin-bottom: 16px;
   padding: 10px 14px;
-  border: 1px solid rgba(252, 196, 25, 0.35);
+  border: 1px solid color-mix(in srgb, ${colors.warning} 35%, transparent);
   border-radius: ${radius.md};
-  background: rgba(252, 196, 25, 0.08);
+  background: ${colors.warningSoft};
   font-size: 13px;
   color: ${colors.text};
 
@@ -42,7 +43,7 @@ export const PendingNote = styled.p`
     flex-shrink: 0;
     width: 16px;
     height: 16px;
-    color: #fcc419;
+    color: ${colors.warning};
   }
 
   a {
@@ -127,8 +128,8 @@ export const MethodSelect = styled.select<{ missing: boolean }>`
   ${props =>
     props.missing &&
     css`
-      border-color: rgba(252, 196, 25, 0.6);
-      color: #fcc419;
+      border-color: color-mix(in srgb, ${colors.warning} 60%, transparent);
+      color: ${colors.warning};
     `}
 
   &:disabled {
@@ -172,7 +173,7 @@ export const Difference = styled.dd<{ tone: 'ok' | 'short' | 'over' }>`
 
     if (props.tone === 'over') {
       return css`
-        color: #fcc419 !important;
+        color: ${colors.warning} !important;
       `;
     }
 
@@ -207,8 +208,8 @@ export const ClosedInfo = styled.p<{ warning?: boolean }>`
   font-size: 13px;
   line-height: 1.4;
   background: ${props =>
-    props.warning ? 'rgba(252, 196, 25, 0.08)' : colors.successSoft};
-  color: ${props => (props.warning ? '#fcc419' : colors.success)};
+    props.warning ? colors.warningSoft : colors.successSoft};
+  color: ${props => (props.warning ? colors.warning : colors.success)};
 `;
 
 export const Notes = styled.p`

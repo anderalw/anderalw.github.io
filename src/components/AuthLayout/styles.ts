@@ -200,3 +200,11 @@ export const Photo = styled.div<{ image: string }>`
     display: none;
   }
 `;
+
+// Marca à esquerda e o botão de modo claro/escuro à direita
+export const TopBar = styled.div`
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+`;

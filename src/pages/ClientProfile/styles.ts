@@ -184,7 +184,7 @@ const toneColors: Record<HistoryTone, string> = {
   success: colors.success,
   danger: colors.danger,
   primary: colors.primary,
-  warning: '#fcc419',
+  warning: colors.warning,
   muted: colors.textMuted,
 };
 

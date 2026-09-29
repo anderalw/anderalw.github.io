@@ -11,7 +11,7 @@ interface ContainerProps {
 
 // Cor de destaque de cada tipo (faixa à esquerda e ícone)
 const toastColors = {
-  info: '#4dabf7',
+  info: colors.info,
   success: colors.success,
   error: colors.danger,
 };

@@ -7,6 +7,23 @@
 
     <title>GoBarber</title>
 
+    <!-- Modo claro ou escuro antes de o app carregar (sem piscar o escuro).
+         A escolha é salva por src/hooks/Theme.tsx -->
+    <script>
+      (function () {
+        try {
+          var choice = localStorage.getItem('@GoBarber:theme');
+          var light =
+            choice === 'light' ||
+            (choice === 'system' &&
+              window.matchMedia('(prefers-color-scheme: light)').matches);
+          document.documentElement.dataset.theme = light ? 'light' : 'dark';
+        } catch (e) {
+          document.documentElement.dataset.theme = 'dark';
+        }
+      })();
+    </script>
+
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet"/>
   </head>
   <body>

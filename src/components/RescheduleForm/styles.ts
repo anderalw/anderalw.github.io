@@ -1,5 +1,4 @@
 import styled, { css } from 'styled-components';
-import { shade } from 'polished';
 
 import { colors } from '../../styles/theme';
 
@@ -63,7 +62,7 @@ export const TimeButton = styled.button<{ selected: boolean }>`
   transition: background-color 0.2s;
 
   &:hover {
-    background: ${shade(0.2, colors.borderStrong)};
+    background: ${colors.textSubtle};
   }
 
   ${props =>

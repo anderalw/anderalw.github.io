@@ -199,8 +199,8 @@ export const Icon = styled.span<{ tone: 'new' | 'moved' | 'canceled' }>`
         `;
       case 'moved':
         return css`
-          color: #4dabf7;
-          background: rgba(77, 171, 247, 0.12);
+          color: ${colors.info};
+          background: ${colors.infoSoft};
         `;
       default:
         return css`

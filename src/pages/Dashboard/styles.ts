@@ -1,7 +1,7 @@
 import styled, { css } from 'styled-components';
-import { shade, transparentize } from 'polished';
+import { transparentize } from 'polished';
 
-import { colors, radius } from '../../styles/theme';
+import { colors, radius, shadow } from '../../styles/theme';
 
 // Limites da altura de 1 hora na grade (px). A altura real é calculada
 // para o dia inteiro caber na tela e chega ao CSS pela variável
@@ -270,7 +270,10 @@ export const AppointmentCard = styled.button<AppointmentCardProps>`
   border: 0;
   border-radius: 6px;
   border-left: 4px solid ${props => props.color};
-  background: ${props => shade(0.55, props.color)};
+  /* A cor do barbeiro misturada ao fundo: escura no modo escuro, clara no
+     claro (a proporção vem de global.ts) */
+  background: ${props =>
+    `color-mix(in srgb, ${props.color} var(--c-card-tint), var(--c-card-base))`};
   color: inherit;
   font: inherit;
   text-align: left;
@@ -280,7 +283,11 @@ export const AppointmentCard = styled.button<AppointmentCardProps>`
   ${props =>
     props.past &&
     css`
-      background: ${shade(0.78, props.color)};
+      background: color-mix(
+        in srgb,
+        ${props.color} var(--c-card-tint-past),
+        var(--c-card-base)
+      );
 
       > * {
         opacity: 0.6;
@@ -320,7 +327,7 @@ export const AppointmentCard = styled.button<AppointmentCardProps>`
     css`
       strong::before {
         content: '⚠ ';
-        color: #fcc419;
+        color: ${colors.warning};
       }
     `}
 
@@ -353,7 +360,7 @@ export const AppointmentCard = styled.button<AppointmentCardProps>`
 
   &:hover {
     transform: scale(1.02);
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.35);
+    box-shadow: ${shadow.card};
   }
 
   &:focus-visible {
@@ -370,7 +377,7 @@ export const AppointmentCard = styled.button<AppointmentCardProps>`
 
   strong {
     display: block;
-    color: #fff;
+    color: ${colors.text};
     font-size: 14px;
     white-space: nowrap;
     overflow: hidden;
@@ -632,7 +639,7 @@ export const Menu = styled.div`
   border: 1px solid ${colors.borderStrong};
   border-radius: ${radius.md};
   background: ${colors.surface};
-  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.45);
+  box-shadow: ${shadow.popover};
 `;
 
 export const MenuHeader = styled.div`

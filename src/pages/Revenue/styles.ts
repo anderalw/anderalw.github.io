@@ -65,7 +65,7 @@ const toneColors: Record<Tone, string> = {
   primary: colors.primary,
   success: colors.success,
   danger: colors.danger,
-  warning: '#fcc419',
+  warning: colors.warning,
   neutral: colors.textMuted,
 };
 

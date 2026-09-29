@@ -2,6 +2,7 @@ import React from 'react';
 
 import { useBranding } from '../../hooks/Branding';
 import BrandMark, { BrandName } from '../BrandMark';
+import ThemeToggle from '../ThemeToggle';
 import signInBackgroundImg from '../../assets/sign-in-background.png';
 import signUpBackgroundImg from '../../assets/sign-up-background.png';
 
@@ -13,6 +14,7 @@ import {
   Heading,
   Footer,
   Photo,
+  TopBar,
 } from './styles';
 
 export { InlineLink } from './styles';
@@ -49,10 +51,13 @@ const AuthLayout: React.FC<AuthLayoutProps> = ({
   return (
     <Container>
       <Panel wide={wide}>
-        <Brand to="/" title={branding.name}>
-          <BrandMark size={32} />
-          <BrandName>{branding.name}</BrandName>
-        </Brand>
+        <TopBar>
+          <Brand to="/" title={branding.name}>
+            <BrandMark size={32} />
+            <BrandName>{branding.name}</BrandName>
+          </Brand>
+          <ThemeToggle />
+        </TopBar>
 
         <Body wide={wide}>
           <Heading wide={wide}>
