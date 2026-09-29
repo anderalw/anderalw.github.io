@@ -139,6 +139,25 @@ export const Tables = styled.div`
   gap: 24px;
   margin-top: 24px;
 
+  /* Cinco colunas em meia largura: espaçamento menor que o padrão */
+  th {
+    padding: 10px 12px;
+  }
+
+  td {
+    padding: 0 12px;
+  }
+
+  th:first-child,
+  td:first-child {
+    padding-left: 20px;
+  }
+
+  th:last-child,
+  td:last-child {
+    padding-right: 20px;
+  }
+
   @media (max-width: 1180px) {
     grid-template-columns: minmax(0, 1fr);
   }
