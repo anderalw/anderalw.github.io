@@ -16,6 +16,7 @@ import SignUpClient from '../pages/SignUpClient';
 import ManageProviders from '../pages/ManageProviders';
 import ManageServices from '../pages/ManageServices';
 import ManageBlockReasons from '../pages/ManageBlockReasons';
+import Revenue from '../pages/Revenue';
 
 const Routes: React.FC = () => (
   <Switch>
@@ -30,6 +31,7 @@ const Routes: React.FC = () => (
     <Route path="/perfil" component={Profile} isPrivate />
     <Route path="/admin/servicos" component={ManageServices} isPrivate />
     <Route path="/admin/barbeiros" component={ManageProviders} isPrivate />
+    <Route path="/admin/faturamento" component={Revenue} isPrivate />
     <Route
       path="/admin/motivos-bloqueio"
       component={ManageBlockReasons}

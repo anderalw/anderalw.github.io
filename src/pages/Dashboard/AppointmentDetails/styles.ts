@@ -87,12 +87,20 @@ export const RescheduleArea = styled.div`
   }
 `;
 
-export type AppointmentStatus = 'past' | 'ongoing' | 'upcoming';
+// pending: já terminou e ninguém registrou se foi atendido
+export type AppointmentStatus =
+  | 'upcoming'
+  | 'ongoing'
+  | 'pending'
+  | 'completed'
+  | 'no_show';
 
 const statusColors: Record<AppointmentStatus, string> = {
-  past: colors.textSubtle,
-  ongoing: colors.success,
   upcoming: colors.primary,
+  ongoing: '#4dabf7',
+  pending: '#fcc419',
+  completed: colors.success,
+  no_show: colors.danger,
 };
 
 export const StatusBadge = styled.span<{ status: AppointmentStatus }>`
@@ -297,13 +305,58 @@ export const ActionCard = styled.button<{ danger?: boolean }>`
   }
 `;
 
-// Aviso quando o atendimento já começou ou terminou
-export const Notice = styled.p`
-  padding: 14px 16px;
-  border-radius: 10px;
-  background: ${colors.sunken};
+// Situação do atendimento: atendido (verde) ou faltou (vermelho); a opção
+// registrada fica destacada
+export const AttendanceCard = styled(ActionCard)<{
+  tone: 'success' | 'danger';
+  selected: boolean;
+}>`
+  > svg {
+    background: ${props =>
+      props.tone === 'success' ? colors.successSoft : colors.dangerSoft};
+    color: ${props =>
+      props.tone === 'success' ? colors.success : colors.danger};
+  }
+
+  strong {
+    color: ${colors.text};
+  }
+
+  &:hover:not(:disabled) {
+    border-color: ${props =>
+      props.tone === 'success' ? colors.success : colors.danger};
+  }
+
+  &:disabled {
+    cursor: default;
+  }
+
+  ${props =>
+    props.selected &&
+    css`
+      border-color: ${props.tone === 'success'
+        ? colors.success
+        : colors.danger};
+      background: ${props.tone === 'success'
+        ? colors.successSoft
+        : colors.dangerSoft};
+    `}
+`;
+
+// Link discreto para desfazer o registro
+export const UndoButton = styled.button`
+  align-self: flex-start;
+  margin-top: 12px;
+  padding: 4px 0;
+  border: 0;
+  background: transparent;
   color: ${colors.textMuted};
-  line-height: 1.5;
+  font-size: 13px;
+  text-decoration: underline;
+
+  &:hover:not(:disabled) {
+    color: ${colors.text};
+  }
 `;
 
 // "Agendado em ...", no pé da coluna de dados

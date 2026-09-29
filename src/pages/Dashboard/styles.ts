@@ -249,6 +249,8 @@ export const DayOffLabel = styled.span`
 interface AppointmentCardProps {
   color: string;
   past: boolean;
+  // Situação registrada; 'pending' = já começou e ninguém registrou
+  attendance?: 'completed' | 'no_show' | 'pending' | null;
   // Horas baixas: esconde o telefone e junta horário e cliente
   compact: boolean;
 }
@@ -281,6 +283,48 @@ export const AppointmentCard = styled.button<AppointmentCardProps>`
       }
     `}
   transition: transform 0.1s, box-shadow 0.1s;
+
+  /* Atendido: ✓ antes do horário */
+  ${props =>
+    props.attendance === 'completed' &&
+    css`
+      time::before {
+        content: '✓ ';
+        color: ${colors.success};
+        font-weight: 700;
+      }
+    `}
+
+  /* Faltou: nome riscado e aviso no horário */
+  ${props =>
+    props.attendance === 'no_show' &&
+    css`
+      strong {
+        text-decoration: line-through;
+      }
+
+      time::after {
+        content: ' · faltou';
+        color: ${colors.danger};
+        font-weight: 600;
+      }
+    `}
+
+  /* A confirmar: bolinha no canto, para lembrar de registrar */
+  ${props =>
+    props.attendance === 'pending' &&
+    css`
+      &::after {
+        content: '';
+        position: absolute;
+        top: 6px;
+        right: 6px;
+        width: 7px;
+        height: 7px;
+        border-radius: 50%;
+        background: ${colors.primary};
+      }
+    `}
 
   &:hover {
     transform: scale(1.02);

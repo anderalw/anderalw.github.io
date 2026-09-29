@@ -728,6 +728,10 @@ const Dashboard: React.FC = () => {
                               color={color}
                               // Esmaece só depois de terminar
                               past={!isBefore(now, parsedEnd)}
+                              attendance={
+                                appointment.attendance ||
+                                (isBefore(now, parsedDate) ? null : 'pending')
+                              }
                               // Cards baixos (horas baixas ou serviços curtos)
                               // mostram só horário e cliente numa linha
                               compact={compact || height < COMPACT_CARD_HEIGHT}

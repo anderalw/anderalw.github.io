@@ -12,6 +12,8 @@ export interface AgendaProvider {
   schedule: { start_time: string; end_time: string } | null;
 }
 
+export type Attendance = 'completed' | 'no_show';
+
 export interface AgendaAppointment {
   id: string;
   date: string;
@@ -23,6 +25,8 @@ export interface AgendaAppointment {
   // null em agendamentos anteriores ao cadastro de serviços
   service: { id: string; name: string } | null;
   price_cents: number | null;
+  // Registrado depois do horário: atendido ou falta; null = a confirmar
+  attendance: Attendance | null;
   created_at: string;
   // email null: cliente cadastrado pelo barbeiro sem e-mail
   client: {

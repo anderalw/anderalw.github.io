@@ -3,6 +3,7 @@ import { differenceInMinutes, format, isBefore, parseISO } from 'date-fns';
 import ptBR from 'date-fns/locale/pt-BR';
 import {
   FiCalendar,
+  FiCheckCircle,
   FiClock,
   FiDollarSign,
   FiMail,
@@ -10,6 +11,7 @@ import {
   FiScissors,
   FiRepeat,
   FiTag,
+  FiUserX,
   FiX,
   FiXCircle,
 } from 'react-icons/fi';
@@ -33,7 +35,8 @@ import {
   Overlay,
   RescheduleArea,
   ActionCard,
-  Notice,
+  AttendanceCard,
+  UndoButton,
   CreatedAt,
   StatusBadge,
   AppointmentStatus,
@@ -52,6 +55,8 @@ export interface AppointmentDetailsData {
   parsedEnd: Date;
   service: { id: string; name: string } | null;
   price_cents: number | null;
+  // Registrado depois do horário; null = a confirmar
+  attendance: 'completed' | 'no_show' | null;
   created_at: string;
   client: {
     id: string;
@@ -76,9 +81,11 @@ interface AppointmentDetailsProps {
 type Mode = 'view' | 'reschedule' | 'confirm-cancel';
 
 const STATUS_LABELS: Record<AppointmentStatus, string> = {
-  past: 'Concluído',
-  ongoing: 'Em andamento',
   upcoming: 'Agendado',
+  ongoing: 'Em andamento',
+  pending: 'A confirmar',
+  completed: 'Atendido',
+  no_show: 'Cliente faltou',
 };
 
 function capitalize(text: string): string {
@@ -98,6 +105,7 @@ const AppointmentDetails: React.FC<AppointmentDetailsProps> = ({
   const { addToast } = useToast();
   const [mode, setMode] = useState<Mode>('view');
   const [canceling, setCanceling] = useState(false);
+  const [savingAttendance, setSavingAttendance] = useState(false);
 
   // Foco no botão de fechar ao abrir, e Esc fecha o painel
   useEffect(() => {
@@ -118,11 +126,16 @@ const AppointmentDetails: React.FC<AppointmentDetailsProps> = ({
   const end = appointment.parsedEnd;
   const durationMinutes = differenceInMinutes(end, start);
 
+  // Já começou: dá para registrar se foi atendido (e não dá mais para
+  // remarcar nem cancelar)
+  const started = !isBefore(now, start);
   let status: AppointmentStatus = 'upcoming';
 
-  if (!isBefore(now, end)) {
-    status = 'past';
-  } else if (!isBefore(now, start)) {
+  if (appointment.attendance) {
+    status = appointment.attendance;
+  } else if (!isBefore(now, end)) {
+    status = 'pending';
+  } else if (started) {
     status = 'ongoing';
   }
 
@@ -155,6 +168,37 @@ const AppointmentDetails: React.FC<AppointmentDetailsProps> = ({
       setCanceling(false);
     }
   }, [appointment.id, clientName, when, onChanged, addToast]);
+
+  const handleAttendance = useCallback(
+    async (attendance: 'completed' | 'no_show' | null) => {
+      setSavingAttendance(true);
+
+      try {
+        await api.patch(`/appointments/${appointment.id}/attendance`, {
+          attendance,
+        });
+
+        const titles = {
+          completed: 'Atendimento concluído',
+          no_show: 'Falta registrada',
+          none: 'Registro desfeito',
+        };
+
+        onChanged({
+          title: titles[attendance || 'none'],
+          description: `${clientName} em ${when}.`,
+        });
+      } catch (err) {
+        addToast({
+          type: 'error',
+          title: 'Não foi possível registrar',
+          description: getApiErrorMessage(err, 'Tente novamente.'),
+        });
+        setSavingAttendance(false);
+      }
+    },
+    [appointment.id, clientName, when, onChanged, addToast],
+  );
 
   return (
     <Overlay
@@ -286,11 +330,64 @@ const AppointmentDetails: React.FC<AppointmentDetailsProps> = ({
                     </ActionCard>
                   </>
                 ) : (
-                  <Notice>
-                    {status === 'past'
-                      ? 'Este atendimento já foi concluído e não pode mais ser alterado.'
-                      : 'Este atendimento está em andamento e não pode mais ser alterado.'}
-                  </Notice>
+                  <>
+                    <SectionTitle>Como foi o atendimento?</SectionTitle>
+                    <AttendanceCard
+                      type="button"
+                      tone="success"
+                      selected={appointment.attendance === 'completed'}
+                      aria-pressed={appointment.attendance === 'completed'}
+                      disabled={
+                        savingAttendance ||
+                        appointment.attendance === 'completed'
+                      }
+                      onClick={() => handleAttendance('completed')}
+                    >
+                      <FiCheckCircle />
+                      <span>
+                        <strong>Atendido</strong>
+                        <small>
+                          {appointment.price_cents !== null
+                            ? `Entra no faturamento (${formatPrice(
+                                appointment.price_cents,
+                              )}).`
+                            : 'Entra no faturamento.'}
+                        </small>
+                      </span>
+                    </AttendanceCard>
+                    <AttendanceCard
+                      type="button"
+                      tone="danger"
+                      selected={appointment.attendance === 'no_show'}
+                      aria-pressed={appointment.attendance === 'no_show'}
+                      disabled={
+                        savingAttendance || appointment.attendance === 'no_show'
+                      }
+                      onClick={() => handleAttendance('no_show')}
+                    >
+                      <FiUserX />
+                      <span>
+                        <strong>Cliente faltou</strong>
+                        <small>
+                          Fica registrado como falta, sem faturamento.
+                        </small>
+                      </span>
+                    </AttendanceCard>
+
+                    {/* Espaço reservado: o link aparece sem mexer no resto */}
+                    <UndoButton
+                      type="button"
+                      style={{
+                        visibility: appointment.attendance
+                          ? 'visible'
+                          : 'hidden',
+                      }}
+                      disabled={savingAttendance}
+                      onClick={() => handleAttendance(null)}
+                    >
+                      Desfazer registro
+                    </UndoButton>
+                  </>
                 )}
 
                 <PanelActions style={{ marginTop: 'auto' }}>

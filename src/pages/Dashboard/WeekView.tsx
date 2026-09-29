@@ -442,6 +442,10 @@ const WeekView: React.FC<WeekViewProps> = ({
                         aria-haspopup="dialog"
                         color={cardColor}
                         past={!isBefore(now, parsedEnd)}
+                        attendance={
+                          appointment.attendance ||
+                          (isBefore(now, parsedDate) ? null : 'pending')
+                        }
                         compact={
                           compact || lanes > 1 || height < COMPACT_CARD_HEIGHT
                         }
