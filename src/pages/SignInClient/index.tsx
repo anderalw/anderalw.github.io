@@ -11,6 +11,7 @@ import getApiErrorMessage from '../../utils/getApiErrorMessage';
 
 import AuthLayout from '../../components/AuthLayout';
 import FormField from '../../components/FormField';
+import GoogleSignIn from '../../components/GoogleSignIn';
 import { UIButton } from '../../components/ui';
 
 interface SignInClientFormData {
@@ -95,6 +96,8 @@ const SignInClient: React.FC = () => {
 
         <UIButton type="submit">Entrar</UIButton>
       </Form>
+
+      <GoogleSignIn />
     </AuthLayout>
   );
 };

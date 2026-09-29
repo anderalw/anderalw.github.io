@@ -44,8 +44,12 @@ interface AuthContextData {
   role?: Role;
   signIn(credentials: SigninCredentionals): Promise<void>;
   signInClient(credentials: SigninCredentionals): Promise<void>;
+  // Botão "Continuar com o Google" (credential = token do Google).
+  // created: a conta foi criada agora
+  signInClientWithGoogle(credential: string): Promise<{ created: boolean }>;
   signOut(): void;
   updateUser(user: User): void;
+  updateClient(client: Client): void;
 }
 
 const STORAGE_KEYS = [
@@ -117,6 +121,24 @@ export const AuthProvider: React.FC = ({ children }) => {
     setData({ token, role: 'client', client });
   }, []);
 
+  const signInClientWithGoogle = useCallback(async (credential: string) => {
+    const response = await api.post('clients/sessions/google', {
+      credential,
+    });
+
+    const { token, client, created } = response.data;
+
+    clearStorage();
+    localStorage.setItem('@GoBarber:token', token);
+    localStorage.setItem('@GoBarber:client', JSON.stringify(client));
+
+    api.defaults.headers.authorization = `Bearer ${token}`;
+
+    setData({ token, role: 'client', client });
+
+    return { created: !!created };
+  }, []);
+
   const signOut = useCallback(() => {
     clearStorage();
 
@@ -159,6 +181,15 @@ export const AuthProvider: React.FC = ({ children }) => {
     [setData, data.token],
   );
 
+  const updateClient = useCallback(
+    (client: Client) => {
+      localStorage.setItem('@GoBarber:client', JSON.stringify(client));
+
+      setData({ token: data.token, role: 'client', client });
+    },
+    [setData, data.token],
+  );
+
   // Mesmo objeto enquanto nada muda, para não re-renderizar quem usa o contexto
   const value = useMemo(
     () => ({
@@ -167,10 +198,20 @@ export const AuthProvider: React.FC = ({ children }) => {
       role: data.role,
       signIn,
       signInClient,
+      signInClientWithGoogle,
       signOut,
       updateUser,
+      updateClient,
     }),
-    [data, signIn, signInClient, signOut, updateUser],
+    [
+      data,
+      signIn,
+      signInClient,
+      signInClientWithGoogle,
+      signOut,
+      updateUser,
+      updateClient,
+    ],
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

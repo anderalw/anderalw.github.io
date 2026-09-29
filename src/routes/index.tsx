@@ -23,6 +23,7 @@ import ClientProfile from '../pages/ClientProfile';
 import CashRegister from '../pages/CashRegister';
 import Insights from '../pages/Insights';
 import Settings from '../pages/Settings';
+import CompleteProfile from '../pages/CompleteProfile';
 
 const Routes: React.FC = () => (
   <Switch>
@@ -57,6 +58,11 @@ const Routes: React.FC = () => (
     <Route path="/cliente/cadastro" component={SignUpClient} />
     {/* Link do e-mail da véspera: funciona com ou sem login */}
     <Route path="/confirmar-agendamento" component={ConfirmAppointment} />
+    <Route
+      path="/cliente/completar-cadastro"
+      component={CompleteProfile}
+      isClient
+    />
     <Route path="/agendar" component={CreateAppointment} isClient />
     <Route path="/meus-agendamentos" component={MyAppointments} isClient />
 

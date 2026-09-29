@@ -16,6 +16,9 @@ interface RouteProps extends ReactDOMRouteProps {
   component: React.ComponentType;
 }
 
+// Onde o cliente informa o telefone (login com Google não traz)
+export const COMPLETE_PROFILE = '/cliente/completar-cadastro';
+
 // Página inicial de cada tipo de sessão
 const homeByRole = {
   provider: '/dashboard',
@@ -29,7 +32,7 @@ const Route: React.FC<RouteProps> = ({
   component: Component,
   ...rest
 }) => {
-  const { role } = useAuth();
+  const { role, client } = useAuth();
 
   let allowed: boolean;
 
@@ -46,7 +49,16 @@ const Route: React.FC<RouteProps> = ({
 
   let redirectTo: string;
 
-  if (role) {
+  const mustComplete =
+    role === 'client' &&
+    isClient &&
+    !client?.phone &&
+    rest.path !== COMPLETE_PROFILE;
+
+  if (mustComplete) {
+    allowed = false;
+    redirectTo = COMPLETE_PROFILE;
+  } else if (role) {
     redirectTo = homeByRole[role];
   } else {
     redirectTo = isClient ? '/cliente/login' : '/';

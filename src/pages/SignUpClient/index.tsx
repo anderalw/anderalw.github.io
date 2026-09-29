@@ -12,6 +12,7 @@ import { maskPhone, onlyDigits } from '../../utils/phone';
 
 import AuthLayout from '../../components/AuthLayout';
 import FormField from '../../components/FormField';
+import GoogleSignIn from '../../components/GoogleSignIn';
 import { UIButton } from '../../components/ui';
 
 interface SignUpClientFormData {
@@ -123,6 +124,8 @@ const SignUpClient: React.FC = () => {
 
         <UIButton type="submit">Criar conta</UIButton>
       </Form>
+
+      <GoogleSignIn mode="signup" />
     </AuthLayout>
   );
 };
