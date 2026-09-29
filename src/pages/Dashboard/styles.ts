@@ -253,6 +253,8 @@ interface AppointmentCardProps {
   attendance?: 'completed' | 'no_show' | 'pending' | null;
   // Futuro e confirmado pelo cliente
   confirmed?: boolean;
+  // Cliente com faltas recentes (política de faltas)
+  alert?: boolean;
   // Horas baixas: esconde o telefone e junta horário e cliente
   compact: boolean;
 }
@@ -309,6 +311,16 @@ export const AppointmentCard = styled.button<AppointmentCardProps>`
         content: ' · faltou';
         color: ${colors.danger};
         font-weight: 600;
+      }
+    `}
+
+  /* Cliente com faltas recentes: aviso amarelo antes do nome */
+  ${props =>
+    props.alert &&
+    css`
+      strong::before {
+        content: '⚠ ';
+        color: #fcc419;
       }
     `}
 

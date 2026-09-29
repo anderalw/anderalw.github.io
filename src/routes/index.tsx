@@ -18,6 +18,8 @@ import ManageServices from '../pages/ManageServices';
 import ManageBlockReasons from '../pages/ManageBlockReasons';
 import Revenue from '../pages/Revenue';
 import ConfirmAppointment from '../pages/ConfirmAppointment';
+import Clients from '../pages/Clients';
+import ClientProfile from '../pages/ClientProfile';
 
 const Routes: React.FC = () => (
   <Switch>
@@ -30,6 +32,8 @@ const Routes: React.FC = () => (
     <Route path="/barbeiro/redefinir-senha" component={ResetPassword} />
     <Route path="/dashboard" component={Dashboard} isPrivate />
     <Route path="/perfil" component={Profile} isPrivate />
+    <Route path="/clientes" exact component={Clients} isPrivate />
+    <Route path="/clientes/:id" component={ClientProfile} isPrivate />
     <Route path="/admin/servicos" component={ManageServices} isPrivate />
     <Route path="/admin/barbeiros" component={ManageProviders} isPrivate />
     <Route path="/admin/faturamento" component={Revenue} isPrivate />

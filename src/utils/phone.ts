@@ -48,3 +48,15 @@ export function phoneHref(value: string): string {
 export function looksLikePhone(value: string): boolean {
   return /^[\d\s()+-]+$/.test(value.trim()) && /\d/.test(value);
 }
+
+// Conversa do WhatsApp (celulares brasileiros com DDD), com a mensagem
+// pronta se houver. null se o número não tiver DDD
+export function whatsappHref(phone: string, text?: string): string | null {
+  const digits = onlyDigits(phone);
+
+  if (digits.length !== 10 && digits.length !== 11) return null;
+
+  const message = text ? `?text=${encodeURIComponent(text)}` : '';
+
+  return `https://wa.me/55${digits}${message}`;
+}

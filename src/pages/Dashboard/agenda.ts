@@ -14,6 +14,21 @@ export interface AgendaProvider {
 
 export type Attendance = 'completed' | 'no_show';
 
+// Cliente do agendamento, com as observações e o resumo do histórico
+export interface AgendaClient {
+  id: string;
+  name: string;
+  email: string | null;
+  phone: string;
+  notes: string | null;
+  // Atendimentos concluídos e faltas
+  completed: number;
+  no_shows: number;
+  last_visit: string | null;
+  // Faltou além do limite da política de faltas
+  no_show_alert: boolean;
+}
+
 export interface AgendaAppointment {
   id: string;
   date: string;
@@ -36,12 +51,7 @@ export interface AgendaAppointment {
   confirmation_requested_at: string | null;
   created_at: string;
   // email null: cliente cadastrado pelo barbeiro sem e-mail
-  client: {
-    id: string;
-    name: string;
-    email: string | null;
-    phone: string;
-  } | null;
+  client: AgendaClient | null;
 }
 
 // Período em que o barbeiro não atende (almoço, consulta, férias). Pode

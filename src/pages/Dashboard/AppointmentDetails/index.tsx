@@ -1,11 +1,14 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
+import { Link } from 'react-router-dom';
 import { differenceInMinutes, format, isBefore, parseISO } from 'date-fns';
 import ptBR from 'date-fns/locale/pt-BR';
 import {
+  FiAlertTriangle,
   FiCalendar,
   FiCheckCircle,
   FiClock,
   FiDollarSign,
+  FiFileText,
   FiMail,
   FiPhone,
   FiScissors,
@@ -23,6 +26,8 @@ import { formatPrice } from '../../../utils/money';
 import RescheduleForm from '../../../components/RescheduleForm';
 import avatarFallback from '../../../utils/avatarFallback';
 import { formatPhone, phoneHref as toPhoneHref } from '../../../utils/phone';
+import { AgendaClient } from '../agenda';
+import { AlertTag } from '../../Clients/styles';
 
 import {
   WideDialog,
@@ -48,6 +53,9 @@ import {
   DangerButton,
   ConfirmText,
   SectionTitle,
+  HeaderBadges,
+  ClientMeta,
+  NotesText,
 } from './styles';
 
 export interface AppointmentDetailsData {
@@ -63,12 +71,7 @@ export interface AppointmentDetailsData {
   confirmed_by: { id: string; name: string } | null;
   confirmation_requested_at: string | null;
   created_at: string;
-  client: {
-    id: string;
-    name: string;
-    email: string | null;
-    phone: string;
-  } | null;
+  client: AgendaClient | null;
 }
 
 interface AppointmentDetailsProps {
@@ -93,6 +96,33 @@ const STATUS_LABELS: Record<AppointmentStatus, string> = {
   completed: 'Atendido',
   no_show: 'Cliente faltou',
 };
+
+// "12 atendimentos · 1 falta · última visita em 12/09"
+function clientHistoryText(client: AgendaClient): string {
+  if (client.completed === 0 && client.no_shows === 0) {
+    return 'Primeira visita';
+  }
+
+  const parts = [
+    `${client.completed} ${
+      client.completed === 1 ? 'atendimento' : 'atendimentos'
+    }`,
+  ];
+
+  if (client.no_shows > 0) {
+    parts.push(
+      `${client.no_shows} ${client.no_shows === 1 ? 'falta' : 'faltas'}`,
+    );
+  }
+
+  if (client.last_visit) {
+    parts.push(
+      `última visita em ${format(parseISO(client.last_visit), 'dd/MM')}`,
+    );
+  }
+
+  return parts.join(' · ');
+}
 
 function capitalize(text: string): string {
   return text.charAt(0).toUpperCase() + text.slice(1);
@@ -272,8 +302,22 @@ const AppointmentDetails: React.FC<AppointmentDetailsProps> = ({
       >
         <DialogHeader>
           <div>
-            <StatusBadge status={status}>{STATUS_LABELS[status]}</StatusBadge>
+            <HeaderBadges>
+              <StatusBadge status={status}>{STATUS_LABELS[status]}</StatusBadge>
+              {client?.no_show_alert && (
+                <AlertTag title="Cliente com faltas recentes (política de faltas)">
+                  <FiAlertTriangle />
+                  Faltas recentes
+                </AlertTag>
+              )}
+            </HeaderBadges>
             <h2 id="appointment-details-title">{clientName}</h2>
+            {client && (
+              <ClientMeta>
+                {clientHistoryText(client)} ·{' '}
+                <Link to={`/clientes/${client.id}`}>Ver ficha</Link>
+              </ClientMeta>
+            )}
           </div>
 
           <CloseButton
@@ -333,6 +377,13 @@ const AppointmentDetails: React.FC<AppointmentDetailsProps> = ({
                 <li>
                   <FiPhone />
                   <a href={phoneHref}>{formatPhone(phone)}</a>
+                </li>
+              )}
+
+              {client?.notes && (
+                <li>
+                  <FiFileText />
+                  <NotesText title={client.notes}>{client.notes}</NotesText>
                 </li>
               )}
 

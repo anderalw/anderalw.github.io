@@ -27,7 +27,7 @@ import { FaWhatsapp } from 'react-icons/fa';
 import api from '../../../services/api';
 import { useToast } from '../../../hooks/Toast';
 import getApiErrorMessage from '../../../utils/getApiErrorMessage';
-import { formatPhone, onlyDigits, phoneHref } from '../../../utils/phone';
+import { formatPhone, phoneHref, whatsappHref } from '../../../utils/phone';
 import { DetailsTarget } from '../WeekView';
 import {
   Agenda,
@@ -99,19 +99,17 @@ function requestStatus(appointment: ParsedAppointment, now: Date): string {
 }
 
 // Conversa do WhatsApp com a mensagem pronta (telefones com DDD)
-function whatsappHref(appointment: ParsedAppointment): string | null {
-  const digits = onlyDigits(appointment.client?.phone || '');
-
-  if (digits.length !== 10 && digits.length !== 11) return null;
-
+function whatsappFor(appointment: ParsedAppointment): string | null {
   const firstName = (appointment.client?.name || '').split(' ')[0];
   const service = appointment.service ? ` (${appointment.service.name})` : '';
-  const text = `Olá, ${firstName}! Passando para confirmar seu horário amanhã às ${format(
-    appointment.parsedDate,
-    'HH:mm',
-  )}${service}. Podemos confirmar?`;
 
-  return `https://wa.me/55${digits}?text=${encodeURIComponent(text)}`;
+  return whatsappHref(
+    appointment.client?.phone || '',
+    `Olá, ${firstName}! Passando para confirmar seu horário amanhã às ${format(
+      appointment.parsedDate,
+      'HH:mm',
+    )}${service}. Podemos confirmar?`,
+  );
 }
 
 // Contador na barra da agenda: agendamentos de amanhã que o cliente ainda
@@ -380,7 +378,7 @@ const PendingConfirmations: React.FC<PendingConfirmationsProps> = ({
                     item => item.id === appointment.provider_id,
                   );
                   const phone = appointment.client?.phone || '';
-                  const whatsapp = whatsappHref(appointment);
+                  const whatsapp = whatsappFor(appointment);
 
                   return (
                     <Item key={appointment.id}>
@@ -397,6 +395,14 @@ const PendingConfirmations: React.FC<PendingConfirmationsProps> = ({
                         <div>
                           <strong>
                             {appointment.client?.name || 'Cliente removido'}
+                            {appointment.client?.no_show_alert && (
+                              <span
+                                style={{ color: '#fcc419' }}
+                                title="Cliente com faltas recentes"
+                              >
+                                {' ⚠ faltas recentes'}
+                              </span>
+                            )}
                           </strong>
                           <small>
                             {[appointment.service?.name, provider?.name]

@@ -450,6 +450,7 @@ const WeekView: React.FC<WeekViewProps> = ({
                           !!appointment.confirmed_at &&
                           isBefore(now, parsedDate)
                         }
+                        alert={!!appointment.client?.no_show_alert}
                         compact={
                           compact || lanes > 1 || height < COMPACT_CARD_HEIGHT
                         }

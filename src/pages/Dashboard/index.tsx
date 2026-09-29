@@ -757,6 +757,7 @@ const Dashboard: React.FC = () => {
                                 !!appointment.confirmed_at &&
                                 isBefore(now, parsedDate)
                               }
+                              alert={!!appointment.client?.no_show_alert}
                               // Cards baixos (horas baixas ou serviços curtos)
                               // mostram só horário e cliente numa linha
                               compact={compact || height < COMPACT_CARD_HEIGHT}

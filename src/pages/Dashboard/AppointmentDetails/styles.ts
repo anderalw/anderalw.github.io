@@ -385,3 +385,39 @@ export const CreatedAt = styled.p`
   font-size: 12px;
   color: ${colors.textSubtle};
 `;
+
+// Selos do topo: situação e alerta de faltas
+export const HeaderBadges = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 8px;
+`;
+
+// Resumo do histórico do cliente, abaixo do nome, com o link para a ficha
+export const ClientMeta = styled.p`
+  margin-top: 4px;
+  font-size: 13px;
+  color: ${colors.textMuted};
+
+  a {
+    color: ${colors.primary};
+    font-weight: 500;
+    text-decoration: none;
+
+    &:hover {
+      text-decoration: underline;
+    }
+  }
+`;
+
+// Observações da ficha: até 3 linhas (o texto inteiro fica no título)
+export const NotesText = styled.span`
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  font-size: 13px;
+  line-height: 18px;
+  color: ${colors.text};
+  white-space: pre-line;
+`;
