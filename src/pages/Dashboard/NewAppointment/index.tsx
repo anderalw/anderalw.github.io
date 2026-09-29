@@ -8,6 +8,12 @@ import { useToast } from '../../../hooks/Toast';
 import getApiErrorMessage from '../../../utils/getApiErrorMessage';
 import avatarFallback from '../../../utils/avatarFallback';
 import { formatPrice } from '../../../utils/money';
+import {
+  formatPhone,
+  looksLikePhone,
+  maskPhone,
+  onlyDigits,
+} from '../../../utils/phone';
 
 import { Overlay, CloseButton } from '../AppointmentDetails/styles';
 import {
@@ -98,7 +104,9 @@ function prefillFromSearch(term: string): {
   const value = term.trim();
 
   if (value.includes('@')) return { name: '', phone: '', email: value };
-  if (/^[\d\s()+-]+$/.test(value)) return { name: '', phone: value, email: '' };
+  if (looksLikePhone(value)) {
+    return { name: '', phone: maskPhone(value), email: '' };
+  }
 
   return { name: value, phone: '', email: '' };
 }
@@ -179,7 +187,10 @@ const NewAppointment: React.FC<NewAppointmentProps> = ({
       setSearching(true);
 
       api
-        .get<ClientOption[]>('/clients', { params: { search: term } })
+        .get<ClientOption[]>('/clients', {
+          // Os telefones são gravados só com números
+          params: { search: looksLikePhone(term) ? onlyDigits(term) : term },
+        })
         .then(response => {
           if (!active) return;
 
@@ -216,7 +227,7 @@ const NewAppointment: React.FC<NewAppointmentProps> = ({
     try {
       const response = await api.post<ClientOption>('/clients/by-provider', {
         name: newClient.name.trim(),
-        phone: newClient.phone.trim(),
+        phone: onlyDigits(newClient.phone),
         email: newClient.email.trim() || null,
       });
 
@@ -399,7 +410,9 @@ const NewAppointment: React.FC<NewAppointmentProps> = ({
                   <>
                     <span>
                       {client.name}
-                      {client.phone && <small>{client.phone}</small>}
+                      {client.phone && (
+                        <small>{formatPhone(client.phone)}</small>
+                      )}
                     </span>
                     <button type="button" onClick={() => setStep('client')}>
                       Trocar
@@ -557,7 +570,10 @@ const NewAppointment: React.FC<NewAppointmentProps> = ({
                         >
                           <span>{option.name}</span>
                           <small>
-                            {[option.phone, option.email]
+                            {[
+                              option.phone && formatPhone(option.phone),
+                              option.email,
+                            ]
                               .filter(Boolean)
                               .join(' · ') || 'Sem contato'}
                           </small>
@@ -610,7 +626,7 @@ const NewAppointment: React.FC<NewAppointmentProps> = ({
                       onChange={event =>
                         setNewClient({
                           ...newClient,
-                          phone: event.target.value,
+                          phone: maskPhone(event.target.value),
                         })
                       }
                     />
@@ -677,7 +693,7 @@ const NewAppointment: React.FC<NewAppointmentProps> = ({
                 disabled={
                   registering ||
                   !newClient.name.trim() ||
-                  !newClient.phone.trim()
+                  onlyDigits(newClient.phone).length < 10
                 }
               >
                 {registering ? 'Cadastrando...' : 'Cadastrar e continuar'}

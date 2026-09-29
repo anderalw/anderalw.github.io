@@ -8,6 +8,7 @@ import api from '../../services/api';
 import { useToast } from '../../hooks/Toast';
 import getValidationErrors from '../../utils/getValidationErros';
 import getApiErrorMessage from '../../utils/getApiErrorMessage';
+import { maskPhone, onlyDigits } from '../../utils/phone';
 
 import AuthLayout from '../../components/AuthLayout';
 import FormField from '../../components/FormField';
@@ -36,13 +37,18 @@ const SignUpClient: React.FC = () => {
             .required('E-mail obrigatório')
             .email('Digite um e-mail válido'),
           password: Yup.string().min(6, 'No mínimo 6 caracteres'),
-          phone: Yup.string().required('Celular obrigatório'),
+          phone: Yup.string()
+            .required('Celular obrigatório')
+            .test('phone', 'Informe o DDD e o número', value =>
+              [10, 11].includes(onlyDigits(value || '').length),
+            ),
         });
 
         await schema.validate(data, { abortEarly: false });
 
         // Comunica com a nova rota de clientes no backend
-        await api.post('/clients', data);
+        // O telefone vai só com os números
+        await api.post('/clients', { ...data, phone: onlyDigits(data.phone) });
 
         addToast({
           type: 'success',
@@ -106,6 +112,7 @@ const SignUpClient: React.FC = () => {
           label="Celular"
           autoComplete="tel"
           placeholder="(11) 99999-0000"
+          mask={maskPhone}
         />
         <FormField
           name="password"

@@ -20,6 +20,7 @@ import getApiErrorMessage from '../../../utils/getApiErrorMessage';
 import { formatPrice } from '../../../utils/money';
 import RescheduleForm from '../../../components/RescheduleForm';
 import avatarFallback from '../../../utils/avatarFallback';
+import { formatPhone, phoneHref as toPhoneHref } from '../../../utils/phone';
 
 import {
   WideDialog,
@@ -128,8 +129,7 @@ const AppointmentDetails: React.FC<AppointmentDetailsProps> = ({
   const { client } = appointment;
   const clientName = client?.name || 'Cliente removido';
   const phone = client?.phone || null;
-  // tel: aceita só dígitos e o "+" do código do país
-  const phoneHref = phone ? `tel:${phone.replace(/[^\d+]/g, '')}` : null;
+  const phoneHref = phone ? toPhoneHref(phone) : null;
 
   const when = format(start, "dd/MM/yyyy 'às' HH:mm");
 
@@ -233,7 +233,7 @@ const AppointmentDetails: React.FC<AppointmentDetailsProps> = ({
               {phone && phoneHref && (
                 <li>
                   <FiPhone />
-                  <a href={phoneHref}>{phone}</a>
+                  <a href={phoneHref}>{formatPhone(phone)}</a>
                 </li>
               )}
 
