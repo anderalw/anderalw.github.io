@@ -1,6 +1,7 @@
 import React from 'react';
-import { FiScissors } from 'react-icons/fi';
 
+import { useBranding } from '../../hooks/Branding';
+import BrandMark, { BrandName } from '../BrandMark';
 import signInBackgroundImg from '../../assets/sign-in-background.png';
 import signUpBackgroundImg from '../../assets/sign-up-background.png';
 
@@ -42,37 +43,41 @@ const AuthLayout: React.FC<AuthLayoutProps> = ({
   wide = false,
   quote = 'O seu estilo nas mãos dos melhores especialistas.',
   children,
-}) => (
-  <Container>
-    <Panel wide={wide}>
-      <Brand to="/" title="GoBarber">
-        <span>
-          <FiScissors />
-        </span>
-        <strong>GoBarber</strong>
-      </Brand>
+}) => {
+  const { branding } = useBranding();
 
-      <Body wide={wide}>
-        <Heading wide={wide}>
-          <h1>{title}</h1>
-          {subtitle && <p>{subtitle}</p>}
-        </Heading>
+  return (
+    <Container>
+      <Panel wide={wide}>
+        <Brand to="/" title={branding.name}>
+          <BrandMark size={32} />
+          <BrandName>{branding.name}</BrandName>
+        </Brand>
 
-        {children}
+        <Body wide={wide}>
+          <Heading wide={wide}>
+            <h1>{title}</h1>
+            {subtitle && <p>{subtitle}</p>}
+          </Heading>
 
-        {footer && <Footer>{footer}</Footer>}
-      </Body>
+          {children}
 
-      <small>© {new Date().getFullYear()} GoBarber</small>
-    </Panel>
+          {footer && <Footer>{footer}</Footer>}
+        </Body>
 
-    <Photo image={images[image]}>
-      <blockquote>
-        {quote}
-        <cite>Agende online, sem fila e sem ligação.</cite>
-      </blockquote>
-    </Photo>
-  </Container>
-);
+        <small>
+          © {new Date().getFullYear()} {branding.name}
+        </small>
+      </Panel>
+
+      <Photo image={images[image]}>
+        <blockquote>
+          {quote}
+          <cite>Agende online, sem fila e sem ligação.</cite>
+        </blockquote>
+      </Photo>
+    </Container>
+  );
+};
 
 export default AuthLayout;

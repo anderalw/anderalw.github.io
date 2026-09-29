@@ -146,7 +146,7 @@ export const Cell = styled.div<{ value: number }>`
   color: ${props => (props.value > 0.55 ? colors.onPrimary : colors.textMuted)};
   background: ${props =>
     props.value > 0
-      ? `rgba(255, 144, 0, ${0.12 + props.value * 0.88})`
+      ? `rgba(${colors.primaryRgb}, ${0.12 + props.value * 0.88})`
       : colors.sunken};
 `;
 

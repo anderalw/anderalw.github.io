@@ -48,12 +48,12 @@ export const Trigger = styled.button<{ tone: Tone }>`
   ${props =>
     props.tone === 'pending' &&
     css`
-      border-color: rgba(255, 144, 0, 0.45);
+      border-color: rgba(${colors.primaryRgb}, 0.45);
       background: ${colors.primarySoft};
       color: ${colors.primary};
 
       &:hover {
-        background: rgba(255, 144, 0, 0.2);
+        background: rgba(${colors.primaryRgb}, 0.2);
       }
 
       &[aria-expanded='true'] {

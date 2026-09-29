@@ -15,6 +15,22 @@ html {
   color-scheme: dark;
 }
 
+/* Troca da cor da barbearia: sem animar (senão botões e menus passariam
+   pelo laranja, e em abas em segundo plano ficariam presos nele) */
+.branding-switch *,
+.branding-switch *::before,
+.branding-switch *::after {
+  transition: none !important;
+}
+
+/* Cor da barbearia: o laranja do GoBarber até carregar a configurada */
+:root {
+  --color-primary: #ff9000;
+  --color-primary-hover: #e88300;
+  --color-primary-rgb: 255, 144, 0;
+  --color-on-primary: #1b1a1f;
+}
+
 body {
   background: ${colors.background};
   color: ${colors.text};

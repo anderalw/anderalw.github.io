@@ -222,7 +222,7 @@ export const HourCell = styled.div<{ off: boolean; bookable?: boolean }>`
 
       &:hover,
       &:focus-visible {
-        background: rgba(255, 144, 0, 0.08);
+        background: rgba(${colors.primaryRgb}, 0.08);
         outline: none;
       }
     `}

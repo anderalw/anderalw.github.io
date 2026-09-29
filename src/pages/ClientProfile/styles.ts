@@ -202,7 +202,7 @@ export const StatusTag = styled.span<{ tone: HistoryTone }>`
     color: ${toneColors[props.tone]};
     background: ${props.tone === 'muted'
       ? colors.surfaceHover
-      : `${toneColors[props.tone]}1f`};
+      : `color-mix(in srgb, ${toneColors[props.tone]} 12%, transparent)`};
   `}
 
   &::before {

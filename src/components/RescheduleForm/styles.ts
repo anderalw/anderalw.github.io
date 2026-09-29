@@ -72,7 +72,7 @@ export const TimeButton = styled.button<{ selected: boolean }>`
       &,
       &:hover {
         background: ${colors.primary};
-        color: ${colors.sunken};
+        color: ${colors.onPrimary};
       }
     `}
 `;
@@ -97,7 +97,7 @@ export const PrimaryButton = styled.button`
   border: 0;
   border-radius: 8px;
   background: ${colors.primary};
-  color: ${colors.surface};
+  color: ${colors.onPrimary};
   font: inherit;
   font-weight: 500;
 
@@ -107,7 +107,7 @@ export const PrimaryButton = styled.button`
   }
 
   &:hover:not(:disabled) {
-    background: ${shade(0.2, colors.primary)};
+    background: ${colors.primaryHover};
   }
 `;
 

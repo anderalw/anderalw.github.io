@@ -14,11 +14,15 @@ export const colors = {
   textMuted: '#a9a4a1',
   textSubtle: '#6f6a70',
 
-  primary: '#ff9000',
-  primaryHover: '#e88300',
-  // Texto sobre o laranja
-  onPrimary: '#1b1a1f',
-  primarySoft: 'rgba(255, 144, 0, 0.12)',
+  // Cor da barbearia (configurável): variáveis CSS definidas em
+  // hooks/Branding, com o laranja do GoBarber como padrão (global.ts)
+  primary: 'var(--color-primary)',
+  primaryHover: 'var(--color-primary-hover)',
+  // Texto sobre a cor principal (escuro ou branco, conforme a cor)
+  onPrimary: 'var(--color-on-primary)',
+  primarySoft: 'rgba(var(--color-primary-rgb), 0.12)',
+  // "r, g, b" da cor principal, para transparências: rgba(${primaryRgb}, .2)
+  primaryRgb: 'var(--color-primary-rgb)',
 
   danger: '#f2555a',
   dangerSoft: 'rgba(242, 85, 90, 0.12)',

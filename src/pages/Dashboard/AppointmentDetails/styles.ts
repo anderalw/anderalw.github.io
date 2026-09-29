@@ -115,7 +115,11 @@ export const StatusBadge = styled.span<{ status: AppointmentStatus }>`
 
   ${props => css`
     color: ${statusColors[props.status]};
-    background: ${`${statusColors[props.status]}22`};
+    background: color-mix(
+      in srgb,
+      ${statusColors[props.status]} 13%,
+      transparent
+    );
   `}
 
   &::before {

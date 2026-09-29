@@ -14,10 +14,13 @@ import {
   FiUserCheck,
   FiInbox,
   FiBarChart2,
+  FiSettings,
 } from 'react-icons/fi';
 
 import { useAuth } from '../../hooks/Auth';
 import { useNotifications } from '../../hooks/Notifications';
+import { useBranding } from '../../hooks/Branding';
+import BrandMark, { BrandName } from '../BrandMark';
 import avatarFallback from '../../utils/avatarFallback';
 import NotificationsPanel from '../NotificationsPanel';
 
@@ -49,6 +52,7 @@ const AppLayout: React.FC<AppLayoutProps> = ({ sidebarExtra, children }) => {
   const { user, client, role, signOut } = useAuth();
   const isClient = role === 'client';
   const { unread } = useNotifications();
+  const { branding } = useBranding();
   const unreadLabel = unread > 99 ? '99+' : String(unread);
   // Botão que abriu o painel de notificações (null = fechado)
   const [panelAnchor, setPanelAnchor] = useState<HTMLElement | null>(null);
@@ -62,11 +66,9 @@ const AppLayout: React.FC<AppLayoutProps> = ({ sidebarExtra, children }) => {
   return (
     <Shell>
       <Sidebar>
-        <Brand to={isClient ? '/agendar' : '/dashboard'} title="GoBarber">
-          <span>
-            <FiScissors />
-          </span>
-          <strong>GoBarber</strong>
+        <Brand to={isClient ? '/agendar' : '/dashboard'} title={branding.name}>
+          <BrandMark size={30} />
+          <BrandName>{branding.name}</BrandName>
         </Brand>
 
         {isClient ? (
@@ -146,6 +148,10 @@ const AppLayout: React.FC<AppLayoutProps> = ({ sidebarExtra, children }) => {
                 >
                   <FiSlash />
                   <span>Motivos de bloqueio</span>
+                </NavLink>
+                <NavLink to="/admin/configuracoes" title="Configurações">
+                  <FiSettings />
+                  <span>Configurações</span>
                 </NavLink>
               </>
             )}
