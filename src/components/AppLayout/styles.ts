@@ -84,6 +84,7 @@ export const Nav = styled.nav`
   padding: 8px 12px;
 
   a {
+    position: relative;
     display: flex;
     align-items: center;
     gap: 12px;
@@ -123,6 +124,36 @@ export const Nav = styled.nav`
         display: none;
       }
     }
+  }
+`;
+
+// Contador de não lidas à direita do link; no menu recolhido, sobre o ícone
+export const NavBadge = styled.span`
+  margin-left: auto;
+  min-width: 20px;
+  height: 20px;
+  padding: 0 6px;
+  border-radius: 999px;
+  background: ${colors.primary};
+  color: ${colors.onPrimary};
+  font-size: 11px;
+  font-weight: 700;
+  line-height: 20px;
+  text-align: center;
+
+  @media ${SIDEBAR_COLLAPSE} {
+    && {
+      display: block;
+    }
+
+    position: absolute;
+    top: 2px;
+    right: 6px;
+    min-width: 16px;
+    height: 16px;
+    padding: 0 4px;
+    font-size: 10px;
+    line-height: 16px;
   }
 `;
 

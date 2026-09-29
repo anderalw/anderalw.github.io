@@ -1,6 +1,7 @@
 import React from 'react';
 import { NavLink } from 'react-router-dom';
 import {
+  FiBell,
   FiCalendar,
   FiScissors,
   FiSlash,
@@ -12,6 +13,7 @@ import {
 } from 'react-icons/fi';
 
 import { useAuth } from '../../hooks/Auth';
+import { useNotifications } from '../../hooks/Notifications';
 import avatarFallback from '../../utils/avatarFallback';
 
 import {
@@ -20,6 +22,7 @@ import {
   Brand,
   Nav,
   NavSection,
+  NavBadge,
   Extra,
   UserArea,
   UserInfo,
@@ -39,6 +42,8 @@ interface AppLayoutProps {
 const AppLayout: React.FC<AppLayoutProps> = ({ sidebarExtra, children }) => {
   const { user, client, role, signOut } = useAuth();
   const isClient = role === 'client';
+  const { unread } = useNotifications();
+  const unreadLabel = unread > 99 ? '99+' : String(unread);
 
   return (
     <Shell>
@@ -66,6 +71,22 @@ const AppLayout: React.FC<AppLayoutProps> = ({ sidebarExtra, children }) => {
             <NavLink to="/dashboard" title="Agenda">
               <FiCalendar />
               <span>Agenda</span>
+            </NavLink>
+            <NavLink
+              to="/notificacoes"
+              title={
+                unread > 0
+                  ? `Notificações (${unread} não lidas)`
+                  : 'Notificações'
+              }
+            >
+              <FiBell />
+              <span>Notificações</span>
+              {unread > 0 && (
+                <NavBadge aria-label={`${unread} não lidas`}>
+                  {unreadLabel}
+                </NavBadge>
+              )}
             </NavLink>
 
             {user.is_admin && (

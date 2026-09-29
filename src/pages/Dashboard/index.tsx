@@ -13,6 +13,7 @@ import {
   isSameMonth,
   isSameYear,
   isToday,
+  parseISO,
   startOfDay,
   startOfWeek,
 } from 'date-fns';
@@ -86,6 +87,17 @@ function savedView(): ViewMode {
   }
 }
 
+// Dia pedido no endereço (?data=yyyy-MM-dd), ex: ao abrir uma notificação
+function dateFromQuery(): Date | null {
+  const value = new URLSearchParams(window.location.search).get('data');
+
+  if (!value || !/^\d{4}-\d{2}-\d{2}$/.test(value)) return null;
+
+  const date = parseISO(value);
+
+  return Number.isNaN(date.getTime()) ? null : startOfDay(date);
+}
+
 // Serviços curtos (ex: 15 min) ainda precisam de um card clicável
 const MIN_CARD_HEIGHT = 18;
 // Abaixo desta altura o card mostra só horário e cliente, numa linha
@@ -115,8 +127,8 @@ function weekTitle(start: Date): string {
 const Dashboard: React.FC = () => {
   const { user } = useAuth();
   const { addToast } = useToast();
-  const [selectedDate, setSelectedDate] = useState(() =>
-    startOfDay(new Date()),
+  const [selectedDate, setSelectedDate] = useState(
+    () => dateFromQuery() || startOfDay(new Date()),
   );
   const [agenda, setAgenda] = useState<Agenda>({
     providers: [],
@@ -125,7 +137,10 @@ const Dashboard: React.FC = () => {
   });
   const [loading, setLoading] = useState(true);
   const [now, setNow] = useState(new Date());
-  const [view, setView] = useState<ViewMode>(savedView);
+  // Vindo de uma notificação (?data=), abre o dia
+  const [view, setView] = useState<ViewMode>(() =>
+    dateFromQuery() ? 'day' : savedView(),
+  );
   // Visão semanal: 'all' ou o id de um barbeiro
   const [providerFilter, setProviderFilter] = useState('all');
   const [weekCount, setWeekCount] = useState<number | null>(null);
