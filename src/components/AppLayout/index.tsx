@@ -13,6 +13,7 @@ import {
   FiList,
   FiUserCheck,
   FiInbox,
+  FiBarChart2,
 } from 'react-icons/fi';
 
 import { useAuth } from '../../hooks/Auth';
@@ -126,6 +127,10 @@ const AppLayout: React.FC<AppLayoutProps> = ({ sidebarExtra, children }) => {
                 <NavLink to="/admin/faturamento" title="Faturamento">
                   <FiDollarSign />
                   <span>Faturamento</span>
+                </NavLink>
+                <NavLink to="/admin/indicadores" title="Indicadores">
+                  <FiBarChart2 />
+                  <span>Indicadores</span>
                 </NavLink>
                 <NavLink to="/admin/servicos" title="Serviços">
                   <FiScissors />

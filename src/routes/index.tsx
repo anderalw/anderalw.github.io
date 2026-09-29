@@ -21,6 +21,7 @@ import ConfirmAppointment from '../pages/ConfirmAppointment';
 import Clients from '../pages/Clients';
 import ClientProfile from '../pages/ClientProfile';
 import CashRegister from '../pages/CashRegister';
+import Insights from '../pages/Insights';
 
 const Routes: React.FC = () => (
   <Switch>
@@ -39,6 +40,7 @@ const Routes: React.FC = () => (
     <Route path="/admin/servicos" component={ManageServices} isPrivate />
     <Route path="/admin/barbeiros" component={ManageProviders} isPrivate />
     <Route path="/admin/faturamento" component={Revenue} isPrivate />
+    <Route path="/admin/indicadores" component={Insights} isPrivate />
     <Route
       path="/admin/motivos-bloqueio"
       component={ManageBlockReasons}
