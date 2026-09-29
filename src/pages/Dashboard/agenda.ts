@@ -49,6 +49,8 @@ export interface AgendaAppointment {
   confirmed_by: { id: string; name: string } | null;
   // Quando o pedido de confirmação foi enviado (null = ainda não)
   confirmation_requested_at: string | null;
+  // Cliente fixo: repetição e quantos horários faltam, contando este
+  series: { id: string; interval_weeks: number; remaining: number } | null;
   created_at: string;
   // email null: cliente cadastrado pelo barbeiro sem e-mail
   client: AgendaClient | null;

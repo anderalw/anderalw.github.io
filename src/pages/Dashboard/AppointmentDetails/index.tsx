@@ -56,6 +56,8 @@ import {
   HeaderBadges,
   ClientMeta,
   NotesText,
+  ScopeOptions,
+  SeriesNote,
 } from './styles';
 
 export interface AppointmentDetailsData {
@@ -70,6 +72,7 @@ export interface AppointmentDetailsData {
   // Barbeiro que registrou a confirmação; null = o cliente, pelo link
   confirmed_by: { id: string; name: string } | null;
   confirmation_requested_at: string | null;
+  series: { id: string; interval_weeks: number; remaining: number } | null;
   created_at: string;
   client: AgendaClient | null;
 }
@@ -141,6 +144,10 @@ const AppointmentDetails: React.FC<AppointmentDetailsProps> = ({
   const { addToast } = useToast();
   const [mode, setMode] = useState<Mode>('view');
   const [canceling, setCanceling] = useState(false);
+  // Cliente fixo: cancelar só este horário ou este e os próximos
+  const [cancelScope, setCancelScope] = useState<'single' | 'following'>(
+    'single',
+  );
   const [savingAttendance, setSavingAttendance] = useState(false);
   const [savingConfirmation, setSavingConfirmation] = useState(false);
 
@@ -208,6 +215,18 @@ const AppointmentDetails: React.FC<AppointmentDetailsProps> = ({
     setCanceling(true);
 
     try {
+      if (cancelScope === 'following') {
+        const response = await api.patch<{ canceled: number }>(
+          `/appointments/${appointment.id}/cancel-series`,
+        );
+
+        onChanged({
+          title: `${response.data.canceled} horários cancelados`,
+          description: `Cliente fixo de ${clientName}, a partir de ${when}.`,
+        });
+        return;
+      }
+
       await api.patch(`/appointments/${appointment.id}/cancel`);
 
       onChanged({
@@ -225,7 +244,7 @@ const AppointmentDetails: React.FC<AppointmentDetailsProps> = ({
       });
       setCanceling(false);
     }
-  }, [appointment.id, clientName, when, onChanged, addToast]);
+  }, [appointment.id, cancelScope, clientName, when, onChanged, addToast]);
 
   // Cliente que confirmou por telefone ou WhatsApp: a barbearia registra
   // (e pode desfazer o próprio registro)
@@ -377,6 +396,26 @@ const AppointmentDetails: React.FC<AppointmentDetailsProps> = ({
                 <li>
                   <FiPhone />
                   <a href={phoneHref}>{formatPhone(phone)}</a>
+                </li>
+              )}
+
+              {appointment.series && (
+                <li>
+                  <FiRepeat />
+                  <span>
+                    {`Cliente fixo, ${
+                      appointment.series.interval_weeks === 1
+                        ? 'toda semana'
+                        : `a cada ${appointment.series.interval_weeks} semanas`
+                    }`}
+                    {appointment.series.remaining > 1 && (
+                      <SeriesNote>
+                        {`Mais ${
+                          appointment.series.remaining - 1
+                        } marcado(s) depois deste`}
+                      </SeriesNote>
+                    )}
+                  </span>
                 </li>
               )}
 
@@ -582,6 +621,41 @@ const AppointmentDetails: React.FC<AppointmentDetailsProps> = ({
                     histórico como cancelado.
                   </small>
                 </ConfirmText>
+
+                {appointment.series && appointment.series.remaining > 1 && (
+                  <ScopeOptions role="radiogroup" aria-label="O que cancelar">
+                    <label htmlFor="cancel-scope-single">
+                      <input
+                        id="cancel-scope-single"
+                        type="radio"
+                        name="cancel-scope"
+                        checked={cancelScope === 'single'}
+                        onChange={() => setCancelScope('single')}
+                      />
+                      <span>
+                        Só este horário
+                        <small>
+                          Os outros do cliente fixo continuam marcados.
+                        </small>
+                      </span>
+                    </label>
+                    <label htmlFor="cancel-scope-following">
+                      <input
+                        id="cancel-scope-following"
+                        type="radio"
+                        name="cancel-scope"
+                        checked={cancelScope === 'following'}
+                        onChange={() => setCancelScope('following')}
+                      />
+                      <span>
+                        {`Este e os próximos (${appointment.series.remaining} horários)`}
+                        <small>
+                          Encerra o cliente fixo a partir desta data.
+                        </small>
+                      </span>
+                    </label>
+                  </ScopeOptions>
+                )}
                 <PanelActions style={{ marginTop: 'auto' }}>
                   <SecondaryButton
                     type="button"

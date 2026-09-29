@@ -421,3 +421,48 @@ export const NotesText = styled.span`
   color: ${colors.text};
   white-space: pre-line;
 `;
+
+// Cliente fixo: cancelar só este horário ou este e os próximos
+export const ScopeOptions = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 16px;
+
+  label {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    padding: 12px 14px;
+    border: 1px solid ${colors.borderStrong};
+    border-radius: 10px;
+    background: ${colors.sunken};
+    color: ${colors.text};
+    font-size: 14px;
+    cursor: pointer;
+
+    &:has(input:checked) {
+      border-color: ${colors.danger};
+    }
+  }
+
+  input {
+    margin-top: 3px;
+    accent-color: ${colors.danger};
+  }
+
+  small {
+    display: block;
+    margin-top: 2px;
+    font-size: 12px;
+    color: ${colors.textMuted};
+  }
+`;
+
+// Linha de apoio do cliente fixo (quantos horários ainda estão marcados)
+export const SeriesNote = styled.small`
+  display: block;
+  margin: 2px 0 0 !important;
+  font-size: 12px;
+  color: ${colors.textMuted};
+`;

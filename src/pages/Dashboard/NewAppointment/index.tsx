@@ -1,7 +1,15 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { addMinutes, format } from 'date-fns';
 import ptBR from 'date-fns/locale/pt-BR';
-import { FiCalendar, FiScissors, FiUser, FiX } from 'react-icons/fi';
+import {
+  FiCalendar,
+  FiCheck,
+  FiRepeat,
+  FiScissors,
+  FiSlash,
+  FiUser,
+  FiX,
+} from 'react-icons/fi';
 
 import api from '../../../services/api';
 import { useToast } from '../../../hooks/Toast';
@@ -45,6 +53,10 @@ import {
   RegisterGrid,
   ServiceList,
   ServiceOption,
+  RepeatGrid,
+  OccurrenceGrid,
+  Occurrence,
+  RepeatNote,
 } from './styles';
 
 interface ClientOption {
@@ -89,7 +101,26 @@ interface NewAppointmentProps {
   onCreated(message: { title: string; description: string }): void;
 }
 
-type Step = 'client' | 'register' | 'service';
+type Step = 'client' | 'register' | 'service' | 'repeat';
+
+// Cliente fixo: horários da série e se cada um está livre
+interface SeriesOccurrence {
+  date: Date;
+  available: boolean;
+  reason: string | null;
+}
+
+type SeriesPreview =
+  | { status: 'loading' }
+  | { status: 'done'; occurrences: SeriesOccurrence[] }
+  | { status: 'error'; message: string };
+
+const INTERVALS = [1, 2, 3, 4];
+const COUNTS = [2, 3, 4, 5, 6, 8, 10, 12, 16, 20, 26];
+
+function intervalText(weeks: number): string {
+  return weeks === 1 ? 'Toda semana' : `A cada ${weeks} semanas`;
+}
 
 function capitalize(text: string): string {
   return text.charAt(0).toUpperCase() + text.slice(1);
@@ -145,6 +176,11 @@ const NewAppointment: React.FC<NewAppointmentProps> = ({
   // Muda quando o horário clicado só está livre com outro barbeiro
   const [chosenProvider, setChosenProvider] = useState(provider);
   const [saving, setSaving] = useState(false);
+
+  // Passo 3 (opcional): cliente fixo
+  const [intervalWeeks, setIntervalWeeks] = useState(2);
+  const [count, setCount] = useState(6);
+  const [preview, setPreview] = useState<SeriesPreview | null>(null);
 
   // Esc fecha o painel
   useEffect(() => {
@@ -345,6 +381,124 @@ const NewAppointment: React.FC<NewAppointmentProps> = ({
     }
   }, [client, service, chosenStart, chosenProvider, onCreated, addToast]);
 
+  // Prévia da série: quais horários estão livres (os ocupados são pulados)
+  useEffect(() => {
+    if (step !== 'repeat' || !client || !service || !chosenStart) {
+      return undefined;
+    }
+
+    let active = true;
+
+    setPreview({ status: 'loading' });
+
+    api
+      .post<{
+        occurrences: Array<{
+          date: string;
+          available: boolean;
+          reason: string | null;
+        }>;
+      }>('/appointments/series', {
+        provider_id: chosenProvider.id,
+        service_id: service.id,
+        client_id: client.id,
+        date: chosenStart,
+        interval_weeks: intervalWeeks,
+        count,
+        dry_run: true,
+      })
+      .then(response => {
+        if (!active) return;
+
+        setPreview({
+          status: 'done',
+          occurrences: response.data.occurrences.map(item => ({
+            ...item,
+            date: new Date(item.date),
+          })),
+        });
+      })
+      .catch(err => {
+        if (!active) return;
+
+        setPreview({
+          status: 'error',
+          message: getApiErrorMessage(
+            err,
+            'Não foi possível conferir os horários.',
+          ),
+        });
+      });
+
+    return () => {
+      active = false;
+    };
+  }, [
+    step,
+    client,
+    service,
+    chosenStart,
+    chosenProvider,
+    intervalWeeks,
+    count,
+  ]);
+
+  const freeCount =
+    preview?.status === 'done'
+      ? preview.occurrences.filter(item => item.available).length
+      : 0;
+
+  const handleConfirmSeries = useCallback(async () => {
+    if (!client || !service || !chosenStart) return;
+
+    setSaving(true);
+
+    try {
+      const response = await api.post<{
+        created: number;
+        occurrences: Array<{ available: boolean }>;
+      }>('/appointments/series', {
+        provider_id: chosenProvider.id,
+        service_id: service.id,
+        client_id: client.id,
+        date: chosenStart,
+        interval_weeks: intervalWeeks,
+        count,
+      });
+
+      const skipped = response.data.occurrences.length - response.data.created;
+
+      onCreated({
+        title: `Cliente fixo: ${response.data.created} horários marcados`,
+        description: `${client.name}: ${service.name} com ${
+          chosenProvider.name
+        }, ${intervalText(intervalWeeks).toLowerCase()} às ${format(
+          chosenStart,
+          'HH:mm',
+        )}.${skipped > 0 ? ` ${skipped} ocupado(s) ficaram de fora.` : ''}`,
+      });
+    } catch (err) {
+      setSaving(false);
+      addToast({
+        type: 'error',
+        title: 'Não foi possível agendar',
+        description: getApiErrorMessage(
+          err,
+          'Ocorreu um erro ao marcar os horários, tente novamente.',
+        ),
+      });
+    }
+  }, [
+    client,
+    service,
+    chosenStart,
+    chosenProvider,
+    intervalWeeks,
+    count,
+    onCreated,
+    addToast,
+  ]);
+
   const dayText = capitalize(
     format(start, "EEEE, d 'de' MMMM", { locale: ptBR }),
   );
@@ -380,11 +534,17 @@ const NewAppointment: React.FC<NewAppointmentProps> = ({
           <div>
             <h2 id="new-appointment-title">Novo agendamento</h2>
             <StepLabel>
-              {step === 'service' ? (
+              {step === 'repeat' && (
+                <>
+                  <strong>Cliente fixo</strong> · o mesmo horário se repete
+                </>
+              )}
+              {step === 'service' && (
                 <>
                   Passo <strong>2 de 2</strong> · Serviço
                 </>
-              ) : (
+              )}
+              {(step === 'client' || step === 'register') && (
                 <>
                   Passo <strong>1 de 2</strong> · Cliente
                 </>
@@ -406,7 +566,7 @@ const NewAppointment: React.FC<NewAppointmentProps> = ({
             <Summary>
               <li>
                 <FiUser />
-                {step === 'service' && client ? (
+                {(step === 'service' || step === 'repeat') && client ? (
                   <>
                     <span>
                       {client.name}
@@ -414,9 +574,11 @@ const NewAppointment: React.FC<NewAppointmentProps> = ({
                         <small>{formatPhone(client.phone)}</small>
                       )}
                     </span>
-                    <button type="button" onClick={() => setStep('client')}>
-                      Trocar
-                    </button>
+                    {step === 'service' && (
+                      <button type="button" onClick={() => setStep('client')}>
+                        Trocar
+                      </button>
+                    )}
                   </>
                 ) : (
                   <small>Cliente a definir</small>
@@ -446,6 +608,17 @@ const NewAppointment: React.FC<NewAppointmentProps> = ({
                   </small>
                 </span>
               </li>
+              {step === 'repeat' && (
+                <li>
+                  <FiRepeat />
+                  <span>
+                    {intervalText(intervalWeeks)}
+                    <small>{`${count} vezes${
+                      service ? ` · ${service.name}` : ''
+                    }`}</small>
+                  </span>
+                </li>
+              )}
             </Summary>
 
             <StatusArea aria-live="polite">
@@ -464,6 +637,9 @@ const NewAppointment: React.FC<NewAppointmentProps> = ({
 
               {step === 'register' &&
                 'Com o e-mail, o cliente pode depois criar a conta no site e ver seus agendamentos.'}
+
+              {step === 'repeat' &&
+                'Cada horário vira um agendamento comum: dá para remarcar ou cancelar um por um. O cliente recebe um e-mail só, com todas as datas.'}
 
               {step === 'service' && (
                 <>
@@ -649,6 +825,85 @@ const NewAppointment: React.FC<NewAppointmentProps> = ({
               </form>
             )}
 
+            {step === 'repeat' && (
+              <>
+                <RepeatGrid>
+                  <Field>
+                    <span>Repetir</span>
+                    <select
+                      value={intervalWeeks}
+                      onChange={event =>
+                        setIntervalWeeks(Number(event.target.value))
+                      }
+                    >
+                      {INTERVALS.map(weeks => (
+                        <option key={weeks} value={weeks}>
+                          {intervalText(weeks)}
+                        </option>
+                      ))}
+                    </select>
+                  </Field>
+                  <Field>
+                    <span>Quantas vezes</span>
+                    <select
+                      value={count}
+                      onChange={event => setCount(Number(event.target.value))}
+                    >
+                      {COUNTS.map(value => (
+                        <option key={value} value={value}>
+                          {`${value} horários`}
+                        </option>
+                      ))}
+                    </select>
+                  </Field>
+                </RepeatGrid>
+
+                <SectionLabel>Horários</SectionLabel>
+                <OccurrenceGrid aria-live="polite">
+                  {preview?.status === 'done'
+                    ? preview.occurrences.map(item => (
+                        <Occurrence
+                          key={item.date.getTime()}
+                          status={item.available ? 'free' : 'taken'}
+                          title={
+                            item.available
+                              ? 'Livre'
+                              : `Não será marcado: ${item.reason}`
+                          }
+                        >
+                          {item.available ? <FiCheck /> : <FiSlash />}
+                          {format(item.date, 'EEE dd/MM', { locale: ptBR })}
+                        </Occurrence>
+                      ))
+                    : Array.from({ length: count }, (_, index) => (
+                        <Occurrence key={index} status="loading">
+                          ...
+                        </Occurrence>
+                      ))}
+                </OccurrenceGrid>
+
+                <RepeatNote>
+                  {preview?.status === 'loading' && 'Conferindo a agenda...'}
+                  {preview?.status === 'error' && preview.message}
+                  {preview?.status === 'done' && (
+                    <>
+                      <strong>{`${freeCount} de ${count} livres.`}</strong>
+                      {freeCount < count &&
+                        ' Os ocupados (riscados) ficam de fora; passe o mouse para ver o motivo.'}
+                      {freeCount > 0 &&
+                        ` O último é ${format(
+                          preview.occurrences
+                            .filter(item => item.available)
+                            .slice(-1)[0].date,
+                          "dd 'de' MMMM",
+                          { locale: ptBR },
+                        )}.`}
+                    </>
+                  )}
+                </RepeatNote>
+              </>
+            )}
+
             {step === 'service' && (
               <>
                 <SectionLabel>Serviço</SectionLabel>
@@ -706,12 +961,45 @@ const NewAppointment: React.FC<NewAppointmentProps> = ({
               <SecondaryButton type="button" onClick={() => setStep('client')}>
                 Voltar
               </SecondaryButton>
+              <SecondaryButton
+                type="button"
+                onClick={() => setStep('repeat')}
+                disabled={!service || !chosenStart || saving}
+                title="Marcar o mesmo horário a cada semana ou a cada algumas semanas"
+              >
+                <FiRepeat /> Repetir (cliente fixo)
+              </SecondaryButton>
               <PrimaryButton
                 type="button"
                 onClick={handleConfirm}
                 disabled={!service || !chosenStart || saving}
               >
                 {saving ? 'Agendando...' : 'Confirmar agendamento'}
+              </PrimaryButton>
+            </>
+          )}
+
+          {step === 'repeat' && (
+            <>
+              <SecondaryButton
+                type="button"
+                onClick={() => setStep('service')}
+                disabled={saving}
+              >
+                Voltar
+              </SecondaryButton>
+              <PrimaryButton
+                type="button"
+                onClick={handleConfirmSeries}
+                disabled={
+                  saving || preview?.status !== 'done' || freeCount === 0
+                }
+              >
+                {saving
+                  ? 'Agendando...'
+                  : `Agendar ${
+                      preview?.status === 'done' ? freeCount : count
+                    } horários`}
               </PrimaryButton>
             </>
           )}

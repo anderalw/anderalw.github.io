@@ -271,3 +271,80 @@ export const ServiceOption = styled.button<{ selected: boolean }>`
       }
     `}
 `;
+
+// Cliente fixo: frequência e quantidade lado a lado
+export const RepeatGrid = styled.div`
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+  margin-bottom: 20px;
+`;
+
+// Prévia dos horários da série, em quatro colunas
+export const OccurrenceGrid = styled.ul`
+  list-style: none;
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 6px;
+`;
+
+export const Occurrence = styled.li<{ status: 'free' | 'taken' | 'loading' }>`
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  height: 32px;
+  padding: 0 8px;
+  border: 1px solid ${colors.borderStrong};
+  border-radius: ${radius.sm};
+  background: ${colors.sunken};
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+  color: ${colors.text};
+
+  svg {
+    flex-shrink: 0;
+    width: 14px;
+    height: 14px;
+  }
+
+  ${props =>
+    props.status === 'free' &&
+    css`
+      svg {
+        color: ${colors.success};
+      }
+    `}
+
+  ${props =>
+    props.status === 'taken' &&
+    css`
+      border-color: rgba(242, 85, 90, 0.4);
+      background: ${colors.dangerSoft};
+      color: ${colors.textMuted};
+      text-decoration: line-through;
+
+      svg {
+        color: ${colors.danger};
+      }
+    `}
+
+  ${props =>
+    props.status === 'loading' &&
+    css`
+      color: ${colors.textSubtle};
+    `}
+`;
+
+// Resumo da prévia (quantos livres), com a altura reservada
+export const RepeatNote = styled.p`
+  min-height: 40px;
+  margin-top: 14px;
+  font-size: 13px;
+  line-height: 20px;
+  color: ${colors.textMuted};
+
+  strong {
+    color: ${colors.text};
+  }
+`;
