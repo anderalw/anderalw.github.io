@@ -22,6 +22,7 @@ import getApiErrorMessage from '../../utils/getApiErrorMessage';
 
 import AppLayout from '../../components/AppLayout';
 import SiteSettings from './SiteSettings';
+import TerminalSettings from './TerminalSettings';
 import {
   Page,
   PageHeader,
@@ -372,6 +373,7 @@ const Settings: React.FC = () => {
             </Card>
 
             <SiteSettings />
+            <TerminalSettings />
           </div>
 
           <div>

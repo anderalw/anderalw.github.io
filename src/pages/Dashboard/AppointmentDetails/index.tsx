@@ -295,6 +295,19 @@ const AppointmentDetails: React.FC<AppointmentDetailsProps> = ({
   );
 
   // Atendido com a forma de pagamento; já concluído: só troca o pagamento
+  // A maquininha aprovou: o servidor já registrou o atendimento como pago
+  const handleTerminalPaid = useCallback(
+    (method: PaymentMethod, amountCents: number) => {
+      onChanged({
+        title: 'Pagamento aprovado na maquininha',
+        description: `${clientName} · ${PAYMENT_LABELS[method]} · ${formatPrice(
+          amountCents,
+        )}`,
+      });
+    },
+    [clientName, onChanged],
+  );
+
   const handlePayment = useCallback(
     async (method: PaymentMethod | null, paidCents: number | null) => {
       setSavingAttendance(true);
@@ -687,6 +700,8 @@ const AppointmentDetails: React.FC<AppointmentDetailsProps> = ({
 
             {mode === 'payment' && (
               <PaymentStep
+                appointmentId={appointment.id}
+                onTerminalPaid={handleTerminalPaid}
                 priceCents={appointment.price_cents}
                 initialMethod={appointment.payment_method}
                 initialPaidCents={appointment.paid_cents}

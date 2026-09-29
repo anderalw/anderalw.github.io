@@ -24,6 +24,7 @@ import CashRegister from '../pages/CashRegister';
 import Insights from '../pages/Insights';
 import Settings from '../pages/Settings';
 import CompleteProfile from '../pages/CompleteProfile';
+import VirtualTerminal from '../pages/VirtualTerminal';
 
 const Routes: React.FC = () => (
   <Switch>
@@ -39,6 +40,7 @@ const Routes: React.FC = () => (
     <Route path="/clientes" exact component={Clients} isPrivate />
     <Route path="/clientes/:id" component={ClientProfile} isPrivate />
     <Route path="/caixa" component={CashRegister} isPrivate />
+    <Route path="/maquininha-virtual" component={VirtualTerminal} isPrivate />
     <Route path="/admin/servicos" component={ManageServices} isPrivate />
     <Route path="/admin/barbeiros" component={ManageProviders} isPrivate />
     <Route path="/admin/faturamento" component={Revenue} isPrivate />
