@@ -50,6 +50,8 @@ interface TerminalSettingsData {
   provider_label: string | null;
   connected: boolean;
   available: ProviderOption[];
+  // Operadoras que ainda vão ser integradas
+  upcoming: Array<{ key: string; label: string }>;
   registered: RegisteredDevice[];
   // Segredos mascarados (••••1234)
   credentials: Record<string, string>;
@@ -388,7 +390,22 @@ const TerminalSettings: React.FC = () => {
                 {item.label}
               </option>
             ))}
+            {!!data?.upcoming.length && (
+              <optgroup label="Em breve">
+                {data.upcoming.map(item => (
+                  <option key={item.key} value={item.key} disabled>
+                    {item.label}
+                  </option>
+                ))}
+              </optgroup>
+            )}
           </Select>
+          {!!data?.upcoming.length && (
+            <small>
+              Em breve: {data.upcoming.map(item => item.label).join(', ')}.
+              Enquanto isso, use o simulador para conhecer o fluxo.
+            </small>
+          )}
         </Field>
 
         {option && data && (
