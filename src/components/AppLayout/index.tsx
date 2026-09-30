@@ -17,6 +17,7 @@ import {
   FiSettings,
   FiAward,
 } from 'react-icons/fi';
+import { FaWhatsapp } from 'react-icons/fa';
 
 import { useAuth } from '../../hooks/Auth';
 import { useNotifications } from '../../hooks/Notifications';
@@ -25,6 +26,7 @@ import BrandMark, { BrandName } from '../BrandMark';
 import ThemeToggle from '../ThemeToggle';
 import avatarFallback from '../../utils/avatarFallback';
 import NotificationsPanel from '../NotificationsPanel';
+import useWhatsAppCount from '../../hooks/useWhatsAppCount';
 
 import {
   Shell,
@@ -56,6 +58,8 @@ const AppLayout: React.FC<AppLayoutProps> = ({ sidebarExtra, children }) => {
   const { unread } = useNotifications();
   const { branding } = useBranding();
   const unreadLabel = unread > 99 ? '99+' : String(unread);
+  // Mensagens esperando o envio assistido
+  const whatsappPending = useWhatsAppCount(role === 'provider');
   // Botão que abriu o painel de notificações (null = fechado)
   const [panelAnchor, setPanelAnchor] = useState<HTMLElement | null>(null);
 
@@ -127,6 +131,22 @@ const AppLayout: React.FC<AppLayoutProps> = ({ sidebarExtra, children }) => {
             <NavLink to="/clube" title="Clube de assinatura">
               <FiAward />
               <span>Clube</span>
+            </NavLink>
+            <NavLink
+              to="/whatsapp"
+              title={
+                whatsappPending > 0
+                  ? `WhatsApp (${whatsappPending} para enviar)`
+                  : 'WhatsApp'
+              }
+            >
+              <FaWhatsapp />
+              <span>WhatsApp</span>
+              {whatsappPending > 0 && (
+                <NavBadge aria-label={`${whatsappPending} para enviar`}>
+                  {whatsappPending > 99 ? '99+' : whatsappPending}
+                </NavBadge>
+              )}
             </NavLink>
 
             {user.is_admin && (

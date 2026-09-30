@@ -64,7 +64,7 @@ interface PendingConfirmationsProps {
   onChanged(message: { title: string; description: string }): void;
 }
 
-// A contagem também se atualiza sozinha: clientes confirmam pelo e-mail
+// A contagem também se atualiza sozinha: clientes confirmam pelo link
 const REFRESH_MS = 2 * 60 * 1000;
 const PANEL_HEIGHT = 480;
 const GAP = 8;
@@ -72,16 +72,18 @@ const GAP = 8;
 const REQUEST_HOURS_BEFORE = 24;
 const MIN_NOTICE_HOURS = 12;
 
-// Situação do pedido de confirmação por e-mail
+// Situação do pedido de confirmação (e-mail e/ou WhatsApp)
 function requestStatus(appointment: ParsedAppointment, now: Date): string {
   if (appointment.confirmation_requested_at) {
-    return `E-mail enviado às ${format(
+    return `Pedido enviado às ${format(
       new Date(appointment.confirmation_requested_at),
       'HH:mm',
     )}, sem resposta`;
   }
 
-  if (!appointment.client?.email) return 'Sem e-mail cadastrado';
+  if (!appointment.client?.email && !appointment.client?.phone) {
+    return 'Sem e-mail nem telefone';
+  }
 
   const notice = differenceInHours(
     appointment.parsedDate,
@@ -89,14 +91,14 @@ function requestStatus(appointment: ParsedAppointment, now: Date): string {
   );
 
   if (notice < MIN_NOTICE_HOURS) {
-    return 'Marcado em cima da hora: sem e-mail de confirmação';
+    return 'Marcado em cima da hora: sem pedido de confirmação';
   }
 
   const sendAt = subHours(appointment.parsedDate, REQUEST_HOURS_BEFORE);
 
-  if (isBefore(sendAt, now)) return 'O e-mail de confirmação sai em instantes';
+  if (isBefore(sendAt, now)) return 'O pedido de confirmação sai em instantes';
 
-  return `O e-mail de confirmação sai hoje às ${format(sendAt, 'HH:mm')}`;
+  return `O pedido de confirmação sai hoje às ${format(sendAt, 'HH:mm')}`;
 }
 
 // Conversa do WhatsApp com a mensagem pronta (telefones com DDD)
@@ -451,9 +453,9 @@ const PendingConfirmations: React.FC<PendingConfirmationsProps> = ({
             </List>
 
             <Footnote>
-              Clientes com e-mail recebem o pedido de confirmação 24 horas
-              antes. Quem confirmou por telefone ou WhatsApp pode ser marcado no
-              ✓.
+              O pedido de confirmação sai 24 horas antes, por e-mail e pelo
+              WhatsApp (se ligado nas Configurações). Quem confirmou por
+              telefone pode ser marcado no ✓.
             </Footnote>
           </Panel>
         </Backdrop>

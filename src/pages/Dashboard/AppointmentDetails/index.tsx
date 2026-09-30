@@ -204,9 +204,9 @@ const AppointmentDetails: React.FC<AppointmentDetailsProps> = ({
 
     confirmationText = appointment.confirmed_by
       ? `Confirmação registrada por ${appointment.confirmed_by.name} em ${confirmedWhen}`
-      : `Confirmado pelo cliente (link do e-mail) em ${confirmedWhen}`;
+      : `Confirmado pelo cliente (link da mensagem) em ${confirmedWhen}`;
   } else if (!started && appointment.confirmation_requested_at) {
-    confirmationText = `Confirmação pedida por e-mail em ${format(
+    confirmationText = `Confirmação pedida em ${format(
       parseISO(appointment.confirmation_requested_at),
       "dd/MM 'às' HH:mm",
     )}; aguardando o cliente`;
@@ -592,7 +592,7 @@ const AppointmentDetails: React.FC<AppointmentDetailsProps> = ({
                           {appointment.confirmed_at &&
                             (appointment.confirmed_by
                               ? 'Registrado pela barbearia. Clique para desfazer.'
-                              : 'O cliente confirmou pelo link do e-mail.')}
+                              : 'O cliente confirmou pelo link (e-mail ou WhatsApp).')}
                         </small>
                       </span>
                     </AttendanceCard>

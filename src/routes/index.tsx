@@ -22,6 +22,7 @@ import Clients from '../pages/Clients';
 import ClientProfile from '../pages/ClientProfile';
 import CashRegister from '../pages/CashRegister';
 import Club from '../pages/Club';
+import WhatsApp from '../pages/WhatsApp';
 import Insights from '../pages/Insights';
 import Settings from '../pages/Settings';
 import CompleteProfile from '../pages/CompleteProfile';
@@ -42,6 +43,7 @@ const Routes: React.FC = () => (
     <Route path="/clientes/:id" component={ClientProfile} isPrivate />
     <Route path="/caixa" component={CashRegister} isPrivate />
     <Route path="/clube" component={Club} isPrivate />
+    <Route path="/whatsapp" component={WhatsApp} isPrivate />
     <Route path="/maquininha-virtual" component={VirtualTerminal} isPrivate />
     <Route path="/admin/servicos" component={ManageServices} isPrivate />
     <Route path="/admin/barbeiros" component={ManageProviders} isPrivate />
