@@ -24,6 +24,7 @@ import {
   CardBody,
   UIButton,
   TextInput,
+  Badge,
 } from '../../components/ui';
 import { SkeletonBar, EmptyText } from '../ManageServices/styles';
 import { StatCard } from '../Revenue/styles';
@@ -41,6 +42,7 @@ import {
   FieldLabel,
   FormError,
   CashCards,
+  LeftColumn,
 } from './styles';
 
 type TotalKey = PaymentMethod | 'unknown';
@@ -55,6 +57,16 @@ interface CashItem {
   paid_cents: number | null;
   received_cents: number;
   payment_method: PaymentMethod | null;
+}
+
+// Mensalidade do clube recebida no dia
+interface MembershipItem {
+  id: string;
+  paid_at: string;
+  client_name: string;
+  plan_name: string;
+  amount_cents: number;
+  payment_method: PaymentMethod;
 }
 
 interface Closing {
@@ -75,6 +87,7 @@ interface CashDay {
   received_cents: number;
   totals: Record<TotalKey, { count: number; cents: number }>;
   items: CashItem[];
+  memberships: MembershipItem[];
   pending: number;
   no_show: number;
   closing: Closing | null;
@@ -238,7 +251,10 @@ const CashRegister: React.FC = () => {
 
     const value = totals[key].count;
 
-    return `${value} ${value === 1 ? 'atendimento' : 'atendimentos'}`;
+    // Com mensalidades do clube, a contagem inclui os dois tipos
+    const word = key === 'unknown' ? 'atendimento' : 'pagamento';
+
+    return `${value} ${word}${value === 1 ? '' : 's'}`;
   };
 
   return (
@@ -275,7 +291,21 @@ const CashRegister: React.FC = () => {
           <StatCard tone="primary">
             <span>Total recebido</span>
             <strong>{data ? formatPrice(data.received_cents) : '–'}</strong>
-            <small>{data ? `${data.items.length} atendimentos` : ''}</small>
+            <small>
+              {data
+                ? [
+                    `${data.items.length} atendimentos`,
+                    data.memberships.length > 0 &&
+                      `${data.memberships.length} ${
+                        data.memberships.length === 1
+                          ? 'mensalidade'
+                          : 'mensalidades'
+                      }`,
+                  ]
+                    .filter(Boolean)
+                    .join(' · ')
+                : ''}
+            </small>
           </StatCard>
           {PAYMENT_METHODS.map(method => (
             <StatCard key={method} tone="neutral">
@@ -306,93 +336,134 @@ const CashRegister: React.FC = () => {
         )}
 
         <Layout>
-          <Card>
-            <CardHeader>
-              <div>
-                <h2>Atendimentos</h2>
-                <p>Complete a forma de pagamento dos que ficaram sem.</p>
-              </div>
-            </CardHeader>
+          <LeftColumn>
+            <Card>
+              <CardHeader>
+                <div>
+                  <h2>Atendimentos</h2>
+                  <p>Complete a forma de pagamento dos que ficaram sem.</p>
+                </div>
+              </CardHeader>
 
-            {data && data.items.length === 0 ? (
-              <EmptyText>Nenhum atendimento concluído neste dia.</EmptyText>
-            ) : (
-              <ItemsTable>
-                <thead>
-                  <tr>
-                    <th>Horário</th>
-                    <th>Cliente</th>
-                    <th>Barbeiro</th>
-                    <th className="num">Valor</th>
-                    <th>Pagamento</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {!data
-                    ? [1, 2, 3, 4].map(key => (
-                        <tr key={key}>
-                          <td>
-                            <SkeletonBar width={40} />
-                          </td>
-                          <td>
-                            <SkeletonBar width={140} />
-                          </td>
-                          <td>
-                            <SkeletonBar width={70} />
-                          </td>
-                          <td>
-                            <SkeletonBar width={60} />
-                          </td>
-                          <td>
-                            <SkeletonBar width={100} />
-                          </td>
-                        </tr>
-                      ))
-                    : data.items.map(item => (
-                        <tr key={item.id}>
-                          <td>{format(parseISO(item.date), 'HH:mm')}</td>
-                          <td>
-                            {item.client_name}
-                            <small>{item.service_name}</small>
-                          </td>
-                          <td>{item.provider_name}</td>
-                          <td className="num">
-                            {formatPrice(item.received_cents)}
-                            {item.price_cents !== null &&
-                              item.received_cents !== item.price_cents && (
-                                <small>
-                                  {`preço ${formatPrice(item.price_cents)}`}
-                                </small>
+              {data && data.items.length === 0 ? (
+                <EmptyText>Nenhum atendimento concluído neste dia.</EmptyText>
+              ) : (
+                <ItemsTable>
+                  <thead>
+                    <tr>
+                      <th>Horário</th>
+                      <th>Cliente</th>
+                      <th>Barbeiro</th>
+                      <th className="num">Valor</th>
+                      <th>Pagamento</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {!data
+                      ? [1, 2, 3, 4].map(key => (
+                          <tr key={key}>
+                            <td>
+                              <SkeletonBar width={40} />
+                            </td>
+                            <td>
+                              <SkeletonBar width={140} />
+                            </td>
+                            <td>
+                              <SkeletonBar width={70} />
+                            </td>
+                            <td>
+                              <SkeletonBar width={60} />
+                            </td>
+                            <td>
+                              <SkeletonBar width={100} />
+                            </td>
+                          </tr>
+                        ))
+                      : data.items.map(item => (
+                          <tr key={item.id}>
+                            <td>{format(parseISO(item.date), 'HH:mm')}</td>
+                            <td>
+                              {item.client_name}
+                              <small>{item.service_name}</small>
+                            </td>
+                            <td>{item.provider_name}</td>
+                            <td className="num">
+                              {formatPrice(item.received_cents)}
+                              {item.price_cents !== null &&
+                                item.received_cents !== item.price_cents && (
+                                  <small>
+                                    {`preço ${formatPrice(item.price_cents)}`}
+                                  </small>
+                                )}
+                            </td>
+                            <td>
+                              {item.payment_method === 'membership' ? (
+                                <Badge tone="primary">Incluso no plano</Badge>
+                              ) : (
+                                <MethodSelect
+                                  aria-label={`Pagamento de ${item.client_name}`}
+                                  missing={!item.payment_method}
+                                  value={item.payment_method || ''}
+                                  disabled={savingId === item.id}
+                                  onChange={event =>
+                                    changeMethod(
+                                      item,
+                                      (event.target.value ||
+                                        null) as PaymentMethod | null,
+                                    )
+                                  }
+                                >
+                                  <option value="">Não informado</option>
+                                  {PAYMENT_METHODS.map(method => (
+                                    <option key={method} value={method}>
+                                      {PAYMENT_LABELS[method]}
+                                    </option>
+                                  ))}
+                                </MethodSelect>
                               )}
-                          </td>
-                          <td>
-                            <MethodSelect
-                              aria-label={`Pagamento de ${item.client_name}`}
-                              missing={!item.payment_method}
-                              value={item.payment_method || ''}
-                              disabled={savingId === item.id}
-                              onChange={event =>
-                                changeMethod(
-                                  item,
-                                  (event.target.value ||
-                                    null) as PaymentMethod | null,
-                                )
-                              }
-                            >
-                              <option value="">Não informado</option>
-                              {PAYMENT_METHODS.map(method => (
-                                <option key={method} value={method}>
-                                  {PAYMENT_LABELS[method]}
-                                </option>
-                              ))}
-                            </MethodSelect>
-                          </td>
-                        </tr>
-                      ))}
-                </tbody>
-              </ItemsTable>
+                            </td>
+                          </tr>
+                        ))}
+                  </tbody>
+                </ItemsTable>
+              )}
+            </Card>
+
+            {data && data.memberships.length > 0 && (
+              <Card>
+                <CardHeader>
+                  <div>
+                    <h2>Mensalidades do clube</h2>
+                    <p>Entram nos totais de cada forma de pagamento.</p>
+                  </div>
+                </CardHeader>
+                <ItemsTable>
+                  <thead>
+                    <tr>
+                      <th>Horário</th>
+                      <th>Cliente</th>
+                      <th>Plano</th>
+                      <th className="num">Valor</th>
+                      <th>Pagamento</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {data.memberships.map(item => (
+                      <tr key={item.id}>
+                        <td>{format(parseISO(item.paid_at), 'HH:mm')}</td>
+                        <td>{item.client_name}</td>
+                        <td>{item.plan_name}</td>
+                        <td className="num">
+                          {formatPrice(item.amount_cents)}
+                        </td>
+                        <td>{PAYMENT_LABELS[item.payment_method]}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </ItemsTable>
+              </Card>
             )}
-          </Card>
+          </LeftColumn>
 
           <Card>
             <CardHeader>

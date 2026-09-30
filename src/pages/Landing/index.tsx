@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import {
   FiArrowRight,
   FiCalendar,
+  FiCheck,
   FiClock,
   FiInstagram,
   FiLock,
@@ -19,6 +20,8 @@ import { formatPhone, whatsappHref } from '../../utils/phone';
 import BrandMark from '../../components/BrandMark';
 import ThemeToggle from '../../components/ThemeToggle';
 import defaultCover from '../../assets/sign-in-background.png';
+import { WEEKDAYS } from '../../components/WeekdayPicker';
+import { Plan } from '../Club/types';
 
 import {
   Page,
@@ -36,6 +39,8 @@ import {
   SectionTitle,
   ServiceGrid,
   ServiceCard,
+  PlanGrid,
+  PlanCard,
   About,
   TeamGrid,
   Member,
@@ -114,6 +119,8 @@ const Landing: React.FC = () => {
   const { role } = useAuth();
   const { branding } = useBranding();
   const [site, setSite] = useState<Site | null>(null);
+  // Planos do clube à venda (vazio: a seção não aparece)
+  const [plans, setPlans] = useState<Plan[]>([]);
 
   useEffect(() => {
     api
@@ -121,6 +128,13 @@ const Landing: React.FC = () => {
       .then(response => setSite(response.data))
       .catch(() => {
         // Sem a API, a página mostra só o básico (nome e botões)
+      });
+
+    api
+      .get<Plan[]>('/memberships/plans/public')
+      .then(response => setPlans(response.data))
+      .catch(() => {
+        // Sem o clube, a página segue sem a seção
       });
   }, []);
 
@@ -151,6 +165,7 @@ const Landing: React.FC = () => {
 
           <Nav aria-label="Seções">
             <a href="#servicos">Serviços</a>
+            {plans.length > 0 && <a href="#clube">Clube</a>}
             {site && site.team.length > 0 && <a href="#equipe">Equipe</a>}
             <a href="#contato">Horários e contato</a>
           </Nav>
@@ -223,8 +238,69 @@ const Landing: React.FC = () => {
         </div>
       </Section>
 
+      {plans.length > 0 && (
+        <Section id="clube" alt>
+          <div>
+            <SectionTitle>
+              <span>Clube</span>
+              <h2>Assine e fique sempre em dia</h2>
+              <p>
+                Pague por mês e use os serviços do plano sem pagar a cada
+                visita.
+              </p>
+            </SectionTitle>
+
+            <PlanGrid>
+              {plans.map(plan => (
+                <PlanCard key={plan.id}>
+                  <strong>{plan.name}</strong>
+                  <b>
+                    {formatPrice(plan.price_cents)}
+                    <small>/mês</small>
+                  </b>
+                  {plan.description && <p>{plan.description}</p>}
+                  <ul>
+                    {plan.items.map(item => (
+                      <li key={item.service_id}>
+                        <FiCheck />
+                        {item.quantity === null
+                          ? `${item.service_name} à vontade`
+                          : `${item.quantity}× ${item.service_name} por mês`}
+                      </li>
+                    ))}
+                    {plan.discount_percent > 0 && (
+                      <li>
+                        <FiCheck />
+                        {`${plan.discount_percent}% de desconto nos outros serviços`}
+                      </li>
+                    )}
+                  </ul>
+                  {(plan.weekdays || plan.min_interval_days) && (
+                    <small>
+                      {[
+                        plan.weekdays &&
+                          `Vale ${plan.weekdays
+                            .map(day => WEEKDAYS[day].name.toLowerCase())
+                            .join(', ')}.`,
+                        plan.min_interval_days &&
+                          `Um uso a cada ${plan.min_interval_days} dias por serviço.`,
+                      ]
+                        .filter(Boolean)
+                        .join(' ')}
+                    </small>
+                  )}
+                  <PrimaryLink to={`/meus-agendamentos?assinar=${plan.id}`}>
+                    Quero assinar
+                  </PrimaryLink>
+                </PlanCard>
+              ))}
+            </PlanGrid>
+          </div>
+        </Section>
+      )}
+
       {site && site.about && (
-        <Section alt>
+        <Section alt={plans.length === 0}>
           <div>
             <SectionTitle>
               <span>Sobre nós</span>
@@ -236,7 +312,11 @@ const Landing: React.FC = () => {
       )}
 
       {site && site.team.length > 0 && (
-        <Section id="equipe" alt={!site.about}>
+        <Section
+          id="equipe"
+          // Alterna o fundo com a seção de cima
+          alt={site.about ? plans.length > 0 : plans.length === 0}
+        >
           <div>
             <SectionTitle>
               <span>Equipe</span>

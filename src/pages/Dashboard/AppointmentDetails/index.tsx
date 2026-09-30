@@ -69,6 +69,9 @@ export interface AppointmentDetailsData {
   parsedEnd: Date;
   service: { id: string; name: string } | null;
   price_cents: number | null;
+  // Clube: incluso no plano / preço normal quando houve benefício
+  membership_id: string | null;
+  list_price_cents: number | null;
   // Registrado depois do horário; null = a confirmar
   attendance: 'completed' | 'no_show' | null;
   payment_method: PaymentMethod | null;
@@ -213,12 +216,16 @@ const AppointmentDetails: React.FC<AppointmentDetailsProps> = ({
   const received = appointment.paid_cents ?? appointment.price_cents;
   let attendedText = 'Entra no faturamento.';
 
-  if (appointment.attendance === 'completed') {
+  if (appointment.payment_method === 'membership') {
+    attendedText = 'Incluso no plano do cliente.';
+  } else if (appointment.attendance === 'completed') {
     attendedText = `${
       appointment.payment_method
         ? PAYMENT_LABELS[appointment.payment_method]
         : 'Pagamento não informado'
     }${received !== null ? ` · ${formatPrice(received)}` : ''}`;
+  } else if (appointment.membership_id) {
+    attendedText = 'Incluso no plano: nada a cobrar.';
   } else if (appointment.price_cents !== null) {
     attendedText = `Entra no faturamento (${formatPrice(
       appointment.price_cents,
@@ -454,12 +461,27 @@ const AppointmentDetails: React.FC<AppointmentDetailsProps> = ({
                 {appointment.service?.name || 'Serviço não informado'}
               </li>
 
-              {appointment.price_cents !== null && (
+              {appointment.membership_id && (
                 <li>
                   <FiDollarSign />
-                  {formatPrice(appointment.price_cents)}
+                  Incluso no plano
+                  {appointment.list_price_cents !== null && (
+                    <small>
+                      {`(${formatPrice(appointment.list_price_cents)})`}
+                    </small>
+                  )}
                 </li>
               )}
+              {!appointment.membership_id &&
+                appointment.price_cents !== null && (
+                  <li>
+                    <FiDollarSign />
+                    {formatPrice(appointment.price_cents)}
+                    {appointment.list_price_cents !== null && (
+                      <small>desconto do plano</small>
+                    )}
+                  </li>
+                )}
 
               <li>
                 <FiScissors />
@@ -703,6 +725,8 @@ const AppointmentDetails: React.FC<AppointmentDetailsProps> = ({
                 appointmentId={appointment.id}
                 onTerminalPaid={handleTerminalPaid}
                 priceCents={appointment.price_cents}
+                included={!!appointment.membership_id}
+                listPriceCents={appointment.list_price_cents}
                 initialMethod={appointment.payment_method}
                 initialPaidCents={appointment.paid_cents}
                 editing={appointment.attendance === 'completed'}

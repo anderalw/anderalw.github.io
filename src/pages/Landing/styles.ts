@@ -324,6 +324,81 @@ export const ServiceCard = styled(Link)`
   }
 `;
 
+export const PlanGrid = styled.div`
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 16px;
+`;
+
+// Plano do clube: nome, preço, o que inclui e o botão de assinar
+export const PlanCard = styled.article`
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 24px;
+  border: 1px solid ${colors.border};
+  border-radius: ${radius.lg};
+  background: ${colors.background};
+  color: ${colors.text};
+
+  > strong {
+    font-size: 18px;
+    font-weight: 600;
+  }
+
+  > b {
+    font-size: 30px;
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+
+    small {
+      margin-left: 2px;
+      font-size: 14px;
+      font-weight: 500;
+      color: ${colors.textMuted};
+    }
+  }
+
+  > p {
+    font-size: 14px;
+    line-height: 1.6;
+    color: ${colors.textMuted};
+  }
+
+  ul {
+    flex: 1;
+    list-style: none;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    margin: 6px 0;
+
+    li {
+      display: flex;
+      align-items: flex-start;
+      gap: 8px;
+      font-size: 14px;
+    }
+
+    svg {
+      flex-shrink: 0;
+      margin-top: 2px;
+      width: 16px;
+      height: 16px;
+      color: ${colors.primary};
+    }
+  }
+
+  > small {
+    font-size: 12px;
+    color: ${colors.textSubtle};
+  }
+
+  > a {
+    margin-top: 6px;
+  }
+`;
+
 export const About = styled.p`
   max-width: 760px;
   font-size: 18px;

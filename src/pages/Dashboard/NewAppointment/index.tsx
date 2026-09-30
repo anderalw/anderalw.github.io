@@ -4,6 +4,7 @@ import ptBR from 'date-fns/locale/pt-BR';
 import {
   FiCalendar,
   FiCheck,
+  FiDollarSign,
   FiRepeat,
   FiScissors,
   FiSlash,
@@ -104,6 +105,15 @@ interface NewAppointmentProps {
 
 type Step = 'client' | 'register' | 'service' | 'repeat';
 
+// Prévia do clube para o cliente e o serviço escolhidos
+interface Benefit {
+  membership_id: string | null;
+  price_cents: number;
+  list_price_cents: number | null;
+  plan_name: string | null;
+  reason: string | null;
+}
+
 // Cliente fixo: horários da série e se cada um está livre
 interface SeriesOccurrence {
   date: Date;
@@ -184,6 +194,8 @@ const NewAppointment: React.FC<NewAppointmentProps> = ({
   const [intervalWeeks, setIntervalWeeks] = useState(2);
   const [count, setCount] = useState(6);
   const [preview, setPreview] = useState<SeriesPreview | null>(null);
+  // Clube: incluso no plano do cliente, com desconto ou preço normal
+  const [benefit, setBenefit] = useState<Benefit | null>(null);
 
   // Esc fecha o painel
   useEffect(() => {
@@ -517,6 +529,53 @@ const NewAppointment: React.FC<NewAppointmentProps> = ({
     addToast,
   ]);
 
+  const benefitTime = (chosenStart || start).getTime();
+
+  useEffect(() => {
+    setBenefit(null);
+
+    if (!client || !service) return undefined;
+
+    let active = true;
+
+    api
+      .get<Benefit>('/memberships/benefit', {
+        params: {
+          client_id: client.id,
+          service_id: service.id,
+          date: new Date(benefitTime).toISOString(),
+        },
+      })
+      .then(response => {
+        if (active) setBenefit(response.data);
+      })
+      .catch(() => {
+        // Sem a prévia: vale o preço do serviço
+      });
+
+    return () => {
+      active = false;
+    };
+  }, [client, service, benefitTime]);
+
+  let priceText = 'Valor a definir';
+  let priceNote = '';
+
+  if (service) {
+    priceText = formatPrice(
+      benefit ? benefit.price_cents : service.price_cents,
+    );
+
+    if (benefit?.membership_id) {
+      priceText = 'Incluso no plano';
+      priceNote = `${benefit.plan_name} · ${formatPrice(
+        service.price_cents,
+      )} no preço normal`;
+    } else if (benefit?.reason) {
+      priceNote = `${benefit.plan_name}: ${benefit.reason}`;
+    }
+  }
+
   const dayText = capitalize(
     format(start, "EEEE, d 'de' MMMM", { locale: ptBR }),
   );
@@ -624,6 +683,13 @@ const NewAppointment: React.FC<NewAppointmentProps> = ({
                     {format(shownStart, 'HH:mm')}
                     {shownEnd && ` até ${format(shownEnd, 'HH:mm')}`}
                   </small>
+                </span>
+              </li>
+              <li>
+                <FiDollarSign />
+                <span>
+                  {priceText}
+                  <small>{priceNote}</small>
                 </span>
               </li>
               {step === 'repeat' && (

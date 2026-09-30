@@ -32,6 +32,8 @@ export interface ClientHistoryItem {
   provider: { id: string; name: string } | null;
   service: { id: string; name: string } | null;
   price_cents: number | null;
+  // Clube: coberto pelo plano (preço 0)
+  included: boolean;
   attendance: 'completed' | 'no_show' | null;
   canceled_at: string | null;
   canceled_by: 'provider' | 'client' | null;

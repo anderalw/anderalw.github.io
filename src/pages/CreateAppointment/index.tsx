@@ -41,6 +41,7 @@ import {
   Summary,
   SummaryList,
   Total,
+  TotalNote,
   SummaryFooter,
   WaitlistBox,
 } from './styles';
@@ -97,6 +98,14 @@ const MONTHS = [
   'Dezembro',
 ];
 
+// Prévia do clube para o serviço e o horário escolhidos
+interface Benefit {
+  membership_id: string | null;
+  price_cents: number;
+  plan_name: string | null;
+  reason: string | null;
+}
+
 const CreateAppointment: React.FC = () => {
   const { addToast } = useToast();
 
@@ -118,6 +127,10 @@ const CreateAppointment: React.FC = () => {
   const [waitlist, setWaitlist] = useState<WaitlistRequest[]>([]);
   const [waitPeriod, setWaitPeriod] = useState<WaitlistPeriod>('any');
   const [joining, setJoining] = useState(false);
+  // Clube: o cliente tem plano (reserva a linha do benefício) e a prévia
+  // do preço para o serviço e o horário escolhidos
+  const [hasPlan, setHasPlan] = useState(false);
+  const [benefit, setBenefit] = useState<Benefit | null>(null);
 
   const loadWaitlist = useCallback(() => {
     api
@@ -205,6 +218,47 @@ const CreateAppointment: React.FC = () => {
     return date;
   }, [selectedDate, selectedTime]);
 
+  useEffect(() => {
+    api
+      .get<{ state: string } | null>('/memberships/me')
+      .then(response =>
+        setHasPlan(!!response.data && response.data.state !== 'pending'),
+      )
+      .catch(() => setHasPlan(false));
+  }, []);
+
+  // Sem horário ainda: a prévia usa o dia escolhido (ou hoje)
+  // (valor fixo por abertura da tela: "agora" mudaria a cada render)
+  const [openedAt] = useState(() => Date.now());
+  const benefitTime =
+    appointmentDate?.getTime() ?? selectedDate?.getTime() ?? openedAt;
+
+  useEffect(() => {
+    setBenefit(null);
+
+    if (!hasPlan || !selectedService) return undefined;
+
+    let active = true;
+
+    api
+      .get<Benefit>('/memberships/me/benefit', {
+        params: {
+          service_id: selectedService,
+          date: new Date(benefitTime).toISOString(),
+        },
+      })
+      .then(response => {
+        if (active) setBenefit(response.data);
+      })
+      .catch(() => {
+        // Sem a prévia: vale o preço do serviço
+      });
+
+    return () => {
+      active = false;
+    };
+  }, [hasPlan, selectedService, benefitTime]);
+
   const handleCreateAppointment = useCallback(async () => {
     if (!service || !providerChosen || !appointmentDate) return;
 
@@ -264,6 +318,23 @@ const CreateAppointment: React.FC = () => {
   ]);
 
   const canConfirm = !!(service && providerChosen && appointmentDate);
+
+  let totalText = service ? formatPrice(service.price_cents) : 'R$ –';
+  let totalNote = '';
+
+  if (service && benefit) {
+    if (benefit.membership_id) {
+      totalText = 'Incluso no plano';
+      totalNote = `${benefit.plan_name} · ${formatPrice(
+        service.price_cents,
+      )} no preço normal`;
+    } else {
+      totalText = formatPrice(benefit.price_cents);
+      totalNote = benefit.reason
+        ? `${benefit.plan_name}: ${benefit.reason}`
+        : '';
+    }
+  }
 
   const dateKey = selectedDate ? format(selectedDate, 'yyyy-MM-dd') : '';
   const waitingRequest = waitlist.find(item => item.date === dateKey);
@@ -599,10 +670,9 @@ const CreateAppointment: React.FC = () => {
 
                 <Total>
                   <span>Total</span>
-                  <strong>
-                    {service ? formatPrice(service.price_cents) : 'R$ –'}
-                  </strong>
+                  <strong>{totalText}</strong>
                 </Total>
+                {hasPlan && <TotalNote>{totalNote}</TotalNote>}
               </CardBody>
 
               <SummaryFooter>

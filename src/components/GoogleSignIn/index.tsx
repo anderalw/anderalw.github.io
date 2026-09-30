@@ -1,8 +1,9 @@
 import React, { useEffect, useRef, useState } from 'react';
 import styled from 'styled-components';
-import { useHistory } from 'react-router-dom';
+import { useHistory, useLocation } from 'react-router-dom';
 
 import api from '../../services/api';
+import clientHomeAfterLogin from '../../utils/clientHomeAfterLogin';
 import { useAuth } from '../../hooks/Auth';
 import { useTheme } from '../../hooks/Theme';
 import { useToast } from '../../hooks/Toast';
@@ -91,6 +92,7 @@ const GoogleSignIn: React.FC<GoogleSignInProps> = ({ mode = 'signin' }) => {
   const { theme } = useTheme();
   const { addToast } = useToast();
   const history = useHistory();
+  const location = useLocation();
   const buttonRef = useRef<HTMLDivElement>(null);
   const [clientId, setClientId] = useState<string | null | undefined>(
     undefined,
@@ -129,7 +131,7 @@ const GoogleSignIn: React.FC<GoogleSignInProps> = ({ mode = 'signin' }) => {
               });
 
               // Sem telefone, a rota leva para completar o cadastro
-              history.push('/agendar');
+              history.push(clientHomeAfterLogin(location.state));
             } catch (err) {
               addToast({
                 type: 'error',
@@ -160,7 +162,15 @@ const GoogleSignIn: React.FC<GoogleSignInProps> = ({ mode = 'signin' }) => {
     return () => {
       active = false;
     };
-  }, [clientId, theme, mode, signInClientWithGoogle, addToast, history]);
+  }, [
+    clientId,
+    theme,
+    mode,
+    signInClientWithGoogle,
+    addToast,
+    history,
+    location.state,
+  ]);
 
   // Sem configuração: nada (nem o divisor)
   if (clientId === null) return null;

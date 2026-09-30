@@ -20,6 +20,7 @@ import { formatPhone, phoneHref, whatsappHref } from '../../utils/phone';
 import avatarFallback from '../../utils/avatarFallback';
 
 import AppLayout from '../../components/AppLayout';
+import MembershipCard from './MembershipCard';
 import {
   Page,
   Card,
@@ -43,6 +44,7 @@ import {
   Header,
   Contacts,
   Layout,
+  SideColumn,
   NotesArea,
   NotesFooter,
   Filters,
@@ -354,36 +356,40 @@ const ClientProfile: React.FC = () => {
         </Cards>
 
         <Layout>
-          <Card>
-            <CardHeader>
-              <div>
-                <h2>Observações</h2>
-                <p>Preferências, alergias, estilo de corte...</p>
-              </div>
-            </CardHeader>
-            <CardBody>
-              <NotesArea
-                value={notes}
-                maxLength={MAX_NOTES}
-                disabled={!client}
-                placeholder="Ex: máquina 2 nas laterais, tesoura em cima. Alergia a pomada com álcool."
-                aria-label="Observações sobre o cliente"
-                onChange={event => setNotes(event.target.value)}
-              />
-              <NotesFooter>
-                <small>Aparecem ao abrir os agendamentos na agenda.</small>
-                <UIButton
-                  type="button"
-                  size="sm"
-                  disabled={!notesChanged || savingNotes}
-                  onClick={saveNotes}
-                >
-                  <FiSave />
-                  {savingNotes ? 'Salvando...' : 'Salvar'}
-                </UIButton>
-              </NotesFooter>
-            </CardBody>
-          </Card>
+          <SideColumn>
+            <Card>
+              <CardHeader>
+                <div>
+                  <h2>Observações</h2>
+                  <p>Preferências, alergias, estilo de corte...</p>
+                </div>
+              </CardHeader>
+              <CardBody>
+                <NotesArea
+                  value={notes}
+                  maxLength={MAX_NOTES}
+                  disabled={!client}
+                  placeholder="Ex: máquina 2 nas laterais, tesoura em cima. Alergia a pomada com álcool."
+                  aria-label="Observações sobre o cliente"
+                  onChange={event => setNotes(event.target.value)}
+                />
+                <NotesFooter>
+                  <small>Aparecem ao abrir os agendamentos na agenda.</small>
+                  <UIButton
+                    type="button"
+                    size="sm"
+                    disabled={!notesChanged || savingNotes}
+                    onClick={saveNotes}
+                  >
+                    <FiSave />
+                    {savingNotes ? 'Salvando...' : 'Salvar'}
+                  </UIButton>
+                </NotesFooter>
+              </CardBody>
+            </Card>
+
+            <MembershipCard clientId={id} clientName={client?.name || ''} />
+          </SideColumn>
 
           <Card>
             <CardHeader>
@@ -466,9 +472,11 @@ const ClientProfile: React.FC = () => {
                             <td>{item.service?.name || 'Não informado'}</td>
                             <td>{item.provider?.name || '–'}</td>
                             <td className="num">
-                              {item.price_cents !== null
-                                ? formatPrice(item.price_cents)
-                                : '–'}
+                              {item.included && 'Plano'}
+                              {!item.included &&
+                                (item.price_cents !== null
+                                  ? formatPrice(item.price_cents)
+                                  : '–')}
                             </td>
                             <td>
                               <StatusTag tone={status.tone}>

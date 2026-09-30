@@ -104,6 +104,14 @@ export const Layout = styled.div`
   }
 `;
 
+// Observações e o plano do clube, um embaixo do outro
+export const SideColumn = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  min-width: 0;
+`;
+
 export const NotesArea = styled.textarea`
   display: block;
   width: 100%;

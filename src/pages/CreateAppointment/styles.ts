@@ -329,6 +329,17 @@ export const Total = styled.div`
   }
 `;
 
+// Clube: por que ficou incluso ou não (altura reservada)
+export const TotalNote = styled.small`
+  display: block;
+  min-height: 34px;
+  margin-top: 6px;
+  font-size: 12px;
+  line-height: 1.4;
+  text-align: right;
+  color: ${colors.textMuted};
+`;
+
 export const SummaryFooter = styled.div`
   display: flex;
   flex-direction: column;

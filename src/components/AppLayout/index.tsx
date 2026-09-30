@@ -15,6 +15,7 @@ import {
   FiInbox,
   FiBarChart2,
   FiSettings,
+  FiAward,
 } from 'react-icons/fi';
 
 import { useAuth } from '../../hooks/Auth';
@@ -122,6 +123,10 @@ const AppLayout: React.FC<AppLayoutProps> = ({ sidebarExtra, children }) => {
             <NavLink to="/caixa" title="Caixa">
               <FiInbox />
               <span>Caixa</span>
+            </NavLink>
+            <NavLink to="/clube" title="Clube de assinatura">
+              <FiAward />
+              <span>Clube</span>
             </NavLink>
 
             {user.is_admin && (

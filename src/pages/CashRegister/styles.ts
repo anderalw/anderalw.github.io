@@ -25,6 +25,14 @@ export const Layout = styled.div`
   }
 `;
 
+// Atendimentos e, se houver, as mensalidades do clube
+export const LeftColumn = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  min-width: 0;
+`;
+
 // Aviso de atendimentos sem registro (amarelo)
 export const PendingNote = styled.p`
   display: flex;

@@ -2,12 +2,13 @@ import React, { useRef, useCallback } from 'react';
 import { FormHandles } from '@unform/core';
 import { Form } from '@unform/web';
 import * as Yup from 'yup';
-import { Link, useHistory } from 'react-router-dom';
+import { Link, useHistory, useLocation } from 'react-router-dom';
 
 import { useToast } from '../../hooks/Toast';
 import { useAuth } from '../../hooks/Auth';
 import getValidationErrors from '../../utils/getValidationErros';
 import getApiErrorMessage from '../../utils/getApiErrorMessage';
+import clientHomeAfterLogin from '../../utils/clientHomeAfterLogin';
 
 import AuthLayout from '../../components/AuthLayout';
 import FormField from '../../components/FormField';
@@ -24,6 +25,7 @@ const SignInClient: React.FC = () => {
   const { addToast } = useToast();
   const { signInClient } = useAuth();
   const history = useHistory();
+  const location = useLocation();
 
   const handleSubmit = useCallback(
     async (data: SignInClientFormData) => {
@@ -42,8 +44,8 @@ const SignInClient: React.FC = () => {
         // Faz o login na rota exclusiva de clientes e guarda a sessão
         await signInClient({ email: data.email, password: data.password });
 
-        // Redireciona para a página de agendamento
-        history.push('/agendar');
+        // Redireciona para o agendamento (ou para onde pediu login)
+        history.push(clientHomeAfterLogin(location.state));
       } catch (err) {
         if (err instanceof Yup.ValidationError) {
           const errors = getValidationErrors(err);
@@ -61,7 +63,7 @@ const SignInClient: React.FC = () => {
         });
       }
     },
-    [addToast, history, signInClient],
+    [addToast, history, signInClient, location.state],
   );
 
   return (

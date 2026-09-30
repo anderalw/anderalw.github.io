@@ -771,11 +771,18 @@ const Dashboard: React.FC = () => {
                               // mostram só horário e cliente numa linha
                               compact={compact || height < COMPACT_CARD_HEIGHT}
                               style={{ top: top + 2, height }}
-                              title={`${timeRange} · ${clientName} · ${serviceName} · ${provider.name}`}
+                              title={`${timeRange} · ${clientName} · ${serviceName}${
+                                appointment.membership_id
+                                  ? ' (incluso no plano)'
+                                  : ''
+                              } · ${provider.name}`}
                             >
                               <time>{timeRange}</time>
                               <strong>{clientName}</strong>
-                              <small>{serviceName}</small>
+                              <small>
+                                {serviceName}
+                                {appointment.membership_id && ' · Plano'}
+                              </small>
                             </AppointmentCard>
                           </React.Fragment>
                         );

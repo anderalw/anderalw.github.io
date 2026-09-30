@@ -10,6 +10,7 @@ import getApiErrorMessage from '../../utils/getApiErrorMessage';
 import { formatPrice } from '../../utils/money';
 import avatarFallback from '../../utils/avatarFallback';
 import RescheduleForm from '../../components/RescheduleForm';
+import ClubPanel from './ClubPanel';
 import AppLayout from '../../components/AppLayout';
 import { Page, PageHeader, UIButton } from '../../components/ui';
 
@@ -35,6 +36,9 @@ interface ClientAppointment {
   provider: { id: string; name: string; avatar_url: string | null };
   service: { id: string; name: string } | null;
   price_cents: number | null;
+  // Clube: coberto pelo plano (preço 0) / preço normal quando houve benefício
+  included: boolean;
+  list_price_cents: number | null;
   // Ainda dá tempo de o cliente cancelar ou remarcar sozinho
   can_change: boolean;
 }
@@ -151,6 +155,8 @@ const MyAppointments: React.FC = () => {
           {appointments.length > 0 && <div>{newAppointmentButton}</div>}
         </PageHeader>
 
+        <ClubPanel />
+
         {loading && (
           <List>
             <ItemSkeleton />
@@ -208,9 +214,11 @@ const MyAppointments: React.FC = () => {
                     </div>
                   </Info>
 
-                  {appointment.price_cents !== null && (
-                    <Price>{formatPrice(appointment.price_cents)}</Price>
-                  )}
+                  {appointment.included && <Price>Incluso no plano</Price>}
+                  {!appointment.included &&
+                    appointment.price_cents !== null && (
+                      <Price>{formatPrice(appointment.price_cents)}</Price>
+                    )}
 
                   {appointment.can_change ? (
                     <ItemActions>

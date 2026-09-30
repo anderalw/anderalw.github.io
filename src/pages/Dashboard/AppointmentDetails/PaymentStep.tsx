@@ -5,6 +5,7 @@ import {
   FiDollarSign,
   FiSmartphone,
   FiCheck,
+  FiAward,
 } from 'react-icons/fi';
 
 import { colors, radius } from '../../../styles/theme';
@@ -80,6 +81,9 @@ interface PaymentStepProps {
   appointmentId: string;
   // Preço marcado (sugestão do valor recebido)
   priceCents: number | null;
+  // Clube: incluso no plano do cliente e o preço normal do serviço
+  included: boolean;
+  listPriceCents: number | null;
   initialMethod: PaymentMethod | null;
   initialPaidCents: number | null;
   // Já concluído: só troca o pagamento
@@ -206,6 +210,51 @@ const SkipButton = styled.button`
   }
 `;
 
+// Incluso no plano: nada a cobrar
+const IncludedBox = styled.div`
+  display: flex;
+  gap: 12px;
+  padding: 16px;
+  border: 1px solid ${colors.primary};
+  border-radius: ${radius.md};
+  background: ${colors.primarySoft};
+
+  > svg {
+    flex-shrink: 0;
+    width: 22px;
+    height: 22px;
+    color: ${colors.primary};
+  }
+
+  strong {
+    display: block;
+    font-size: 15px;
+    color: ${colors.text};
+  }
+
+  p {
+    margin-top: 4px;
+    font-size: 13px;
+    line-height: 1.5;
+    color: ${colors.textMuted};
+  }
+`;
+
+const LinkButton = styled.button`
+  align-self: flex-start;
+  margin-top: 14px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: ${colors.textMuted};
+  font-size: 13px;
+  text-decoration: underline;
+
+  &:hover {
+    color: ${colors.text};
+  }
+`;
+
 const Hint = styled.p`
   margin: -6px 0 14px;
   font-size: 13px;
@@ -217,7 +266,9 @@ const Hint = styled.p`
 const PaymentStep: React.FC<PaymentStepProps> = ({
   appointmentId,
   onTerminalPaid,
-  priceCents,
+  priceCents: markedPriceCents,
+  included,
+  listPriceCents,
   initialMethod,
   initialPaidCents,
   editing,
@@ -225,7 +276,15 @@ const PaymentStep: React.FC<PaymentStepProps> = ({
   onBack,
   onConfirm,
 }) => {
-  const [method, setMethod] = useState<PaymentMethod | null>(initialMethod);
+  // Incluso no plano: só troca para uma cobrança normal se o barbeiro pedir
+  const [chargeNormally, setChargeNormally] = useState(false);
+  const planView = included && !chargeNormally;
+  // Cobrando normalmente um incluso: o preço normal do serviço
+  const priceCents =
+    included && listPriceCents !== null ? listPriceCents : markedPriceCents;
+  const [method, setMethod] = useState<PaymentMethod | null>(
+    initialMethod === 'membership' ? null : initialMethod,
+  );
   // Maquininhas ativas cadastradas (vazio: sem cobrança integrada)
   const [devices, setDevices] = useState<TerminalDevice[]>([]);
   const [deviceId, setDeviceId] = useState<string | null>(null);
@@ -277,6 +336,13 @@ const PaymentStep: React.FC<PaymentStepProps> = ({
     return cents !== null ? centsToInput(cents) : '';
   });
 
+  // O valor do campo segue o preço normal ao trocar para "cobrar normalmente"
+  useEffect(() => {
+    if (chargeNormally && listPriceCents !== null) {
+      setAmount(centsToInput(listPriceCents));
+    }
+  }, [chargeNormally, listPriceCents]);
+
   const parsed = amount.trim() ? parsePrice(amount) : null;
   const invalid = amount.trim() !== '' && parsed === null;
   const difference =
@@ -301,6 +367,46 @@ const PaymentStep: React.FC<PaymentStepProps> = ({
     onConfirm(chosen, parsed === null || parsed === priceCents ? null : parsed);
   };
 
+  if (planView) {
+    return (
+      <>
+        <SectionTitle>
+          {editing ? 'Alterar pagamento' : 'Pagamento'}
+        </SectionTitle>
+        <IncludedBox>
+          <FiAward />
+          <div>
+            <strong>Incluso no plano</strong>
+            <p>
+              O cliente é assinante do clube: este atendimento não é cobrado
+              {listPriceCents !== null &&
+                ` (no preço normal seria ${formatPrice(listPriceCents)})`}
+              .
+            </p>
+          </div>
+        </IncludedBox>
+        <LinkButton type="button" onClick={() => setChargeNormally(true)}>
+          Cobrar normalmente (o uso volta ao saldo do plano)
+        </LinkButton>
+
+        <PanelActions style={{ marginTop: 'auto', alignItems: 'center' }}>
+          <SecondaryButton type="button" onClick={onBack} disabled={saving}>
+            Voltar
+          </SecondaryButton>
+          <ConfirmButton
+            type="button"
+            disabled={saving}
+            onClick={() => onConfirm('membership', null)}
+          >
+            <FiCheck />
+            {saving && 'Salvando...'}
+            {!saving && (editing ? 'Salvar pagamento' : 'Concluir atendimento')}
+          </ConfirmButton>
+        </PanelActions>
+      </>
+    );
+  }
+
   if (charging && device) {
     return (
       <TerminalCharge
@@ -317,11 +423,15 @@ const PaymentStep: React.FC<PaymentStepProps> = ({
   return (
     <>
       <SectionTitle>{editing ? 'Alterar pagamento' : 'Pagamento'}</SectionTitle>
-      <Hint>Como o cliente pagou?</Hint>
+      <Hint>
+        {included
+          ? 'Cobrando normalmente: o atendimento sai do plano. Como o cliente pagou?'
+          : 'Como o cliente pagou?'}
+      </Hint>
 
       <Methods role="radiogroup" aria-label="Forma de pagamento">
         {PAYMENT_METHODS.map(option => {
-          const Icon = ICONS[option];
+          const Icon = ICONS[option as keyof typeof ICONS];
 
           return (
             <Method

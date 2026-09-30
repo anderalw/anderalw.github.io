@@ -42,6 +42,9 @@ export interface AgendaAppointment {
   // null em agendamentos anteriores ao cadastro de serviços
   service: { id: string; name: string } | null;
   price_cents: number | null;
+  // Clube: incluso no plano (preço 0) / preço normal quando houve benefício
+  membership_id: string | null;
+  list_price_cents: number | null;
   // Registrado depois do horário: atendido ou falta; null = a confirmar
   attendance: Attendance | null;
   // Pagamento do atendimento concluído (null = não informado / o preço)

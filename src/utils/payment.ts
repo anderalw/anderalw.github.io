@@ -1,6 +1,8 @@
-// Formas de pagamento registradas no atendimento (iguais às da API)
-export type PaymentMethod = 'pix' | 'credit' | 'debit' | 'cash';
+// Formas de pagamento registradas no atendimento (iguais às da API);
+// 'membership' = incluso no plano do clube (nada a receber)
+export type PaymentMethod = 'pix' | 'credit' | 'debit' | 'cash' | 'membership';
 
+// Formas de receber dinheiro (para escolher na tela)
 export const PAYMENT_METHODS: PaymentMethod[] = [
   'pix',
   'credit',
@@ -13,6 +15,7 @@ export const PAYMENT_LABELS: Record<PaymentMethod, string> = {
   credit: 'Crédito',
   debit: 'Débito',
   cash: 'Dinheiro',
+  membership: 'Incluso no plano',
 };
 
 // "4500" -> "45,00": valor para mostrar num campo de texto
