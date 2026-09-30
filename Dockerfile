@@ -1,4 +1,4 @@
-# Site do GoBarber: build do Vite servido pelo nginx, que também repassa
+# Site do Pontual: build do Vite servido pelo nginx, que também repassa
 # "/api" e "/files" para a API (tudo num endereço só)
 FROM node:22-alpine AS build
 

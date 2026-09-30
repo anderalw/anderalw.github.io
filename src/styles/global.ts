@@ -45,7 +45,7 @@ export default createGlobalStyle`
   --c-card-tint: 45%;
   --c-card-tint-past: 22%;
 
-  /* Cor da barbearia: o laranja do GoBarber até carregar a configurada */
+  /* Cor da barbearia: o laranja do Pontual até carregar a configurada */
   --color-primary: #ff9000;
   --color-primary-hover: #e88300;
   --color-primary-rgb: 255, 144, 0;

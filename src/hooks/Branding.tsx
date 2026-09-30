@@ -26,7 +26,7 @@ interface BrandingContextData {
 const STORAGE_KEY = '@GoBarber:branding';
 
 export const DEFAULT_BRANDING: Branding = {
-  name: 'GoBarber',
+  name: 'Pontual',
   primary_color: '#ff9000',
   on_primary_color: '#1b1a1f',
   logo_url: null,
