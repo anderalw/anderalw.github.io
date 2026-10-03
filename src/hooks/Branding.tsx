@@ -8,6 +8,9 @@ import React, {
 } from 'react';
 
 import api from '../services/api';
+import TenantUnavailable, {
+  TenantProblem,
+} from '../components/TenantUnavailable';
 
 export interface Branding {
   name: string;
@@ -166,11 +169,18 @@ export const BrandingProvider: React.FC = ({ children }) => {
     }
   }, []);
 
+  // Endereço sem barbearia, ou barbearia suspensa: nada do sistema abre
+  const [problem, setProblem] = useState<TenantProblem | null>(null);
+
   useEffect(() => {
     api
       .get<Branding>('/settings/branding')
       .then(response => setBranding(response.data))
-      .catch(() => {
+      .catch(error => {
+        const code = error?.response?.data?.code;
+
+        if (code === 'TENANT_NOT_FOUND') setProblem('not_found');
+        if (code === 'TENANT_SUSPENDED') setProblem('suspended');
         // Sem a API, fica a identidade guardada (ou a padrão)
       });
   }, [setBranding]);
@@ -179,6 +189,8 @@ export const BrandingProvider: React.FC = ({ children }) => {
     () => ({ branding, setBranding }),
     [branding, setBranding],
   );
+
+  if (problem) return <TenantUnavailable problem={problem} />;
 
   return (
     <BrandingContext.Provider value={value}>
