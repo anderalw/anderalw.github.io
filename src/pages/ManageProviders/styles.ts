@@ -14,8 +14,11 @@ export const Counter = styled.span`
 `;
 
 export const MemberRow = styled.tr<{ inactive: boolean }>`
+  /* Ocupa o espaço que sobrar e corta com reticências: as ações nunca
+     saem do cartão */
   td.schedule {
-    max-width: 360px;
+    width: 100%;
+    max-width: 0;
     color: ${colors.textMuted};
     white-space: nowrap;
     overflow: hidden;
@@ -36,10 +39,11 @@ export const MemberRow = styled.tr<{ inactive: boolean }>`
       margin-left: 4px;
     }
 
-    /* Desativar e Reativar com a mesma largura: o Editar não sai do lugar */
-    button:last-child {
-      width: 104px;
-      justify-content: flex-start;
+    /* Tela estreita: só o ícone (o nome fica no title) */
+    @media (max-width: 1200px) {
+      .label {
+        display: none;
+      }
     }
   }
 

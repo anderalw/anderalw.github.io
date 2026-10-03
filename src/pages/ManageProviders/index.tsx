@@ -232,7 +232,7 @@ const ManageProviders: React.FC = () => {
                             onClick={() => setModal({ member })}
                           >
                             <FiClock />
-                            Horários
+                            <span className="label">Horários</span>
                           </UIButton>
                           <UIButton
                             type="button"
@@ -242,7 +242,7 @@ const ManageProviders: React.FC = () => {
                             onClick={() => setConfirming(member)}
                           >
                             <FiUserMinus />
-                            Tirar da agenda
+                            <span className="label">Tirar da agenda</span>
                           </UIButton>
                         </td>
                       </MemberRow>

@@ -75,8 +75,16 @@ export const Row = styled.tr<{ inactive?: boolean }>`
     `}
 
   td.actions {
+    width: 1%;
     text-align: right;
     white-space: nowrap;
+
+    /* Tela estreita: só o ícone (o nome fica no title) */
+    @media (max-width: 1200px) {
+      .label {
+        display: none;
+      }
+    }
   }
 `;
 

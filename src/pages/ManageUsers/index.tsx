@@ -295,7 +295,7 @@ const ManageUsers: React.FC = () => {
                               onClick={() => setEditingUser(item)}
                             >
                               <FiEdit2 />
-                              Editar
+                              <span className="label">Editar</span>
                             </UIButton>
                             {item.active ? (
                               <UIButton
@@ -316,7 +316,7 @@ const ManageUsers: React.FC = () => {
                                 }
                               >
                                 <FiPower />
-                                Desativar
+                                <span className="label">Desativar</span>
                               </UIButton>
                             ) : (
                               <UIButton
@@ -324,10 +324,11 @@ const ManageUsers: React.FC = () => {
                                 variant="ghost"
                                 size="sm"
                                 disabled={busy}
+                                title={`Reativar ${item.name}`}
                                 onClick={() => setActive(item, true)}
                               >
                                 <FiRotateCcw />
-                                Reativar
+                                <span className="label">Reativar</span>
                               </UIButton>
                             )}
                           </td>
@@ -369,10 +370,15 @@ const ManageUsers: React.FC = () => {
                             type="button"
                             variant="ghost"
                             size="sm"
+                            title={`${role.is_admin ? 'Ver' : 'Editar'} ${
+                              role.name
+                            }`}
                             onClick={() => setEditingRole(role)}
                           >
                             <FiEdit2 />
-                            {role.is_admin ? 'Ver' : 'Editar'}
+                            <span className="label">
+                              {role.is_admin ? 'Ver' : 'Editar'}
+                            </span>
                           </UIButton>
                           {!role.is_admin && (
                             <UIButton
@@ -390,7 +396,7 @@ const ManageUsers: React.FC = () => {
                               }
                             >
                               <FiTrash2 />
-                              Excluir
+                              <span className="label">Excluir</span>
                             </UIButton>
                           )}
                         </td>
