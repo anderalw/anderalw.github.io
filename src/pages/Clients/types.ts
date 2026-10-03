@@ -18,6 +18,8 @@ export interface ClientProfile {
   email: string | null;
   phone: string;
   notes: string | null;
+  // 'yyyy-MM-dd'
+  birth_date?: string | null;
   // Criou a conta no site (entra com e-mail e senha)
   has_account: boolean;
   created_at: string;
@@ -63,3 +65,40 @@ export interface NoShowPolicy {
 
 // Quantos agendamentos entram na conta das faltas (igual à API)
 export const RECENT_APPOINTMENTS = 10;
+
+// Recortes da lista (iguais aos da API)
+export type ClientFilter =
+  | 'all'
+  | 'inactive'
+  | 'birthdays'
+  | 'no_shows'
+  | 'club'
+  | 'new';
+
+export type ClientSort =
+  | 'name'
+  | 'visits'
+  | 'no_shows'
+  | 'last_visit'
+  | 'next_appointment'
+  | 'total'
+  | 'birthday';
+
+export const FILTERS: { key: ClientFilter; label: string; hint: string }[] = [
+  { key: 'all', label: 'Todos', hint: '' },
+  {
+    key: 'inactive',
+    label: 'Sumidos',
+    hint: 'Já vieram, mas não voltam há um tempo e não têm horário marcado.',
+  },
+  {
+    key: 'birthdays',
+    label: 'Aniversariantes',
+    hint: 'Fazem aniversário no mês.',
+  },
+  { key: 'no_shows', label: 'Com faltas', hint: 'Já faltaram alguma vez.' },
+  { key: 'club', label: 'Do clube', hint: 'Com assinatura ativa no clube.' },
+  { key: 'new', label: 'Novos', hint: 'Cadastrados nos últimos 30 dias.' },
+];
+
+export const INACTIVE_OPTIONS = [30, 45, 60, 90, 180];
