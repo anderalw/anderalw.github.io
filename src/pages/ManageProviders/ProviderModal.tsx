@@ -1,17 +1,14 @@
-import React, { useCallback, useEffect, useRef, useState } from 'react';
-import { FormHandles } from '@unform/core';
-import * as Yup from 'yup';
+import React, { useCallback, useEffect, useState } from 'react';
+import { Link } from 'react-router-dom';
 import { FiCheck, FiPlus, FiTrash2, FiX } from 'react-icons/fi';
 
 import api from '../../services/api';
 import { useToast } from '../../hooks/Toast';
-import getValidationErrors from '../../utils/getValidationErros';
 import getApiErrorMessage from '../../utils/getApiErrorMessage';
 import { WeekSchedule } from '../../utils/scheduleSummary';
 import describeDays, { listDays } from '../../utils/describeDays';
 
-import FormField from '../../components/FormField';
-import { UIButton } from '../../components/ui';
+import { UIButton, Label, Select } from '../../components/ui';
 import TimeSelect from '../../components/TimeSelect';
 import WeekdayPicker from '../../components/WeekdayPicker';
 import { colors } from '../../styles/theme';
@@ -47,15 +44,17 @@ export interface TeamMember {
   schedules: WeekSchedule[];
 }
 
-interface ProviderFormData {
+// Usuário da equipe que ainda não é barbeiro
+export interface Candidate {
+  id: string;
   name: string;
   email: string;
-  password?: string;
 }
 
 interface ProviderModalProps {
-  // null = novo barbeiro
+  // null = adicionar um barbeiro (escolhendo um dos usuários)
   member: TeamMember | null;
+  candidates: Candidate[];
   onClose(): void;
   onSaved(): void;
 }
@@ -108,16 +107,19 @@ function toGroups(schedules: WeekSchedule[]): ScheduleGroup[] {
   return groups;
 }
 
-// Modal para cadastrar ou editar um barbeiro: dados de acesso à esquerda e
-// os horários da semana à direita, com tamanho fixo e sem rolagem
+// Modal para adicionar um barbeiro ou mudar os horários dele: quem é à
+// esquerda (um usuário da equipe) e os horários da semana à direita, com
+// tamanho fixo e sem rolagem
 const ProviderModal: React.FC<ProviderModalProps> = ({
   member,
+  candidates,
   onClose,
   onSaved,
 }) => {
-  const formRef = useRef<FormHandles>(null);
   const { addToast } = useToast();
   const isNew = !member;
+  // Usuário escolhido para virar barbeiro
+  const [userId, setUserId] = useState(candidates[0]?.id || '');
 
   // Um horário por dia de atendimento ('HH:mm')
   const [schedules, setSchedules] = useState<WeekSchedule[]>(() =>
@@ -191,94 +193,68 @@ const ProviderModal: React.FC<ProviderModalProps> = ({
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [onClose, saving]);
 
-  const handleSubmit = useCallback(
-    async (data: ProviderFormData) => {
-      try {
-        formRef.current?.setErrors({});
+  const handleSubmit = useCallback(async () => {
+    if (isNew && !userId) {
+      addToast({
+        type: 'error',
+        title: 'Escolha o usuário',
+        description:
+          'Cadastre a pessoa em Usuários antes de torná-la barbeiro.',
+      });
+      return;
+    }
 
-        const schema = Yup.object().shape({
-          name: Yup.string().trim().required('Nome obrigatório'),
-          email: Yup.string()
-            .trim()
-            .required('E-mail obrigatório')
-            .email('Digite um e-mail válido'),
-          password: isNew
-            ? Yup.string().required('Senha obrigatória')
-            : Yup.string(),
-        });
+    // Valida os horários antes de gravar qualquer coisa
+    const invalid = schedules.find(
+      ({ start_time, end_time }) =>
+        !start_time.endsWith(':00') ||
+        !end_time.endsWith(':00') ||
+        start_time >= end_time,
+    );
 
-        await schema.validate(data, { abortEarly: false });
+    if (invalid) {
+      addToast({
+        type: 'error',
+        title: 'Horário inválido',
+        description: `${
+          dayNames[invalid.day_of_week]
+        }: use horas cheias (ex: 09:00) e um início antes do fim.`,
+      });
+      return;
+    }
 
-        // Valida os horários antes de gravar qualquer coisa
-        const invalid = schedules.find(
-          ({ start_time, end_time }) =>
-            !start_time.endsWith(':00') ||
-            !end_time.endsWith(':00') ||
-            start_time >= end_time,
-        );
+    setSaving(true);
 
-        if (invalid) {
-          addToast({
-            type: 'error',
-            title: 'Horário inválido',
-            description: `${
-              dayNames[invalid.day_of_week]
-            }: use horas cheias (ex: 09:00) e um início antes do fim.`,
-          });
-          return;
-        }
+    try {
+      const providerId = member ? member.id : userId;
+      const name = member
+        ? member.name
+        : candidates.find(item => item.id === userId)?.name || '';
 
-        setSaving(true);
+      if (!member) await api.post('/barbers', { user_id: userId });
 
-        let providerId: string;
+      // Substitui todos os horários (sem dias marcados = sem atendimento)
+      await api.post(`/schedules/${providerId}`, { schedules });
 
-        if (member) {
-          await api.put(`/users/${member.id}`, {
-            name: data.name,
-            email: data.email,
-          });
-          providerId = member.id;
-        } else {
-          const response = await api.post('/users', {
-            name: data.name,
-            email: data.email,
-            password: data.password,
-          });
-          providerId = response.data.id;
-        }
+      addToast({
+        type: 'success',
+        title: isNew ? 'Barbeiro adicionado!' : 'Horários salvos',
+        description: isNew
+          ? `${name} já aparece na agenda e no site.`
+          : `Horários de ${name} atualizados.`,
+      });
 
-        // Substitui todos os horários (sem dias marcados = sem atendimento)
-        await api.post(`/schedules/${providerId}`, { schedules });
-
-        addToast({
-          type: 'success',
-          title: isNew ? 'Barbeiro cadastrado!' : 'Alterações salvas',
-          description: isNew
-            ? `${data.name.trim()} já aparece na agenda.`
-            : `Dados e horários de ${data.name.trim()} atualizados.`,
-        });
-
-        onSaved();
-      } catch (err) {
-        if (err instanceof Yup.ValidationError) {
-          formRef.current?.setErrors(getValidationErrors(err));
-          return;
-        }
-
-        addToast({
-          type: 'error',
-          title: 'Não foi possível salvar',
-          description: getApiErrorMessage(
-            err,
-            'Confira os dados do barbeiro e tente novamente.',
-          ),
-        });
-      } finally {
-        setSaving(false);
-      }
-    },
-    [isNew, member, schedules, addToast, onSaved],
-  );
+      onSaved();
+    } catch (err) {
+      addToast({
+        type: 'error',
+        title: 'Não foi possível salvar',
+        description: getApiErrorMessage(err, 'Tente novamente.'),
+      });
+    } finally {
+      setSaving(false);
+    }
+  }, [isNew, userId, member, candidates, schedules, addToast, onSaved]);
 
   return (
     <Overlay
@@ -295,12 +271,12 @@ const ProviderModal: React.FC<ProviderModalProps> = ({
         <DialogHeader>
           <div>
             <h2 id="provider-modal-title">
-              {isNew ? 'Novo barbeiro' : `Editar ${member?.name}`}
+              {isNew ? 'Adicionar barbeiro' : `Horários de ${member?.name}`}
             </h2>
             <ModalSubtitle>
               {isNew
-                ? 'Ele entra com o e-mail e a senha provisória.'
-                : 'A senha continua sendo a do barbeiro.'}
+                ? 'Escolha quem da equipe vai atender.'
+                : 'Os dias e horários em que ele atende.'}
             </ModalSubtitle>
           </div>
           <CloseButton
@@ -313,24 +289,44 @@ const ProviderModal: React.FC<ProviderModalProps> = ({
           </CloseButton>
         </DialogHeader>
 
-        <ModalForm
-          ref={formRef}
-          onSubmit={handleSubmit}
-          initialData={{ name: member?.name, email: member?.email }}
-        >
+        <ModalForm onSubmit={handleSubmit}>
           <FormColumns>
             <FormAside>
-              <SectionTitle>Dados de acesso</SectionTitle>
-              <FormField name="name" label="Nome completo" autoFocus />
-              <FormField name="email" type="email" label="E-mail" />
-              {isNew && (
-                <FormField
-                  name="password"
-                  type="password"
-                  label="Senha provisória"
-                  hint="Ele pode trocar depois, no perfil."
-                  autoComplete="new-password"
-                />
+              <SectionTitle>Barbeiro</SectionTitle>
+              {isNew ? (
+                <>
+                  <Label>
+                    Usuário
+                    <Select
+                      value={userId}
+                      disabled={candidates.length === 0}
+                      autoFocus
+                      onChange={event => setUserId(event.target.value)}
+                    >
+                      {candidates.length === 0 && (
+                        <option value="">Ninguém disponível</option>
+                      )}
+                      {candidates.map(item => (
+                        <option key={item.id} value={item.id}>
+                          {`${item.name} (${item.email})`}
+                        </option>
+                      ))}
+                    </Select>
+                  </Label>
+                  <ModalSubtitle>
+                    Não achou? Cadastre a pessoa em{' '}
+                    <Link to="/admin/usuarios">Usuários</Link> e volte aqui.
+                  </ModalSubtitle>
+                </>
+              ) : (
+                <>
+                  <strong>{member?.name}</strong>
+                  <ModalSubtitle>{member?.email}</ModalSubtitle>
+                  <ModalSubtitle>
+                    Nome, e-mail, senha e perfil de acesso ficam em{' '}
+                    <Link to="/admin/usuarios">Usuários</Link>.
+                  </ModalSubtitle>
+                </>
               )}
             </FormAside>
 
@@ -419,7 +415,7 @@ const ProviderModal: React.FC<ProviderModalProps> = ({
             <UIButton type="submit" disabled={saving}>
               <FiCheck />
               {saving && 'Salvando...'}
-              {!saving && (isNew ? 'Cadastrar barbeiro' : 'Salvar alterações')}
+              {!saving && (isNew ? 'Adicionar barbeiro' : 'Salvar horários')}
             </UIButton>
           </Footer>
         </ModalForm>

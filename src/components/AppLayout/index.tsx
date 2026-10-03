@@ -7,6 +7,7 @@ import {
   FiScissors,
   FiSlash,
   FiUsers,
+  FiShield,
   FiUser,
   FiLogOut,
   FiPlusCircle,
@@ -53,13 +54,21 @@ interface AppLayoutProps {
 // Estrutura das telas com sessão (barbeiro ou cliente): menu lateral fixo e
 // o conteúdo à direita
 const AppLayout: React.FC<AppLayoutProps> = ({ sidebarExtra, children }) => {
-  const { user, client, role, signOut } = useAuth();
+  const { user, client, role, signOut, can } = useAuth();
   const isClient = role === 'client';
   const { unread } = useNotifications();
   const { branding } = useBranding();
   const unreadLabel = unread > 99 ? '99+' : String(unread);
   // Mensagens esperando o envio assistido
-  const whatsappPending = useWhatsAppCount(role === 'provider');
+  const whatsappPending = useWhatsAppCount(
+    role === 'provider' && can('whatsapp'),
+  );
+  // Itens de gestão que a pessoa pode ver
+  const showReports = can('reports');
+  const showCatalog = can('catalog');
+  const showTeam = can('team');
+  const showSettings = can('settings');
+  const showManagement = showReports || showCatalog || showTeam || showSettings;
   // Botão que abriu o painel de notificações (null = fechado)
   const [panelAnchor, setPanelAnchor] = useState<HTMLElement | null>(null);
 
@@ -120,38 +129,46 @@ const AppLayout: React.FC<AppLayoutProps> = ({ sidebarExtra, children }) => {
               )}
             </NavButton>
 
-            <NavLink to="/clientes" title="Clientes">
-              <FiUserCheck />
-              <span>Clientes</span>
-            </NavLink>
-            <NavLink to="/caixa" title="Caixa">
-              <FiInbox />
-              <span>Caixa</span>
-            </NavLink>
-            <NavLink to="/clube" title="Clube de assinatura">
-              <FiAward />
-              <span>Clube</span>
-            </NavLink>
-            <NavLink
-              to="/whatsapp"
-              title={
-                whatsappPending > 0
-                  ? `WhatsApp (${whatsappPending} para enviar)`
-                  : 'WhatsApp'
-              }
-            >
-              <FaWhatsapp />
-              <span>WhatsApp</span>
-              {whatsappPending > 0 && (
-                <NavBadge aria-label={`${whatsappPending} para enviar`}>
-                  {whatsappPending > 99 ? '99+' : whatsappPending}
-                </NavBadge>
-              )}
-            </NavLink>
+            {can('clients') && (
+              <NavLink to="/clientes" title="Clientes">
+                <FiUserCheck />
+                <span>Clientes</span>
+              </NavLink>
+            )}
+            {(can('cash') || can('cash.close')) && (
+              <NavLink to="/caixa" title="Caixa">
+                <FiInbox />
+                <span>Caixa</span>
+              </NavLink>
+            )}
+            {can('club') && (
+              <NavLink to="/clube" title="Clube de assinatura">
+                <FiAward />
+                <span>Clube</span>
+              </NavLink>
+            )}
+            {can('whatsapp') && (
+              <NavLink
+                to="/whatsapp"
+                title={
+                  whatsappPending > 0
+                    ? `WhatsApp (${whatsappPending} para enviar)`
+                    : 'WhatsApp'
+                }
+              >
+                <FaWhatsapp />
+                <span>WhatsApp</span>
+                {whatsappPending > 0 && (
+                  <NavBadge aria-label={`${whatsappPending} para enviar`}>
+                    {whatsappPending > 99 ? '99+' : whatsappPending}
+                  </NavBadge>
+                )}
+              </NavLink>
+            )}
 
-            {user.is_admin && (
+            {showManagement && <NavSection>Administração</NavSection>}
+            {showReports && (
               <>
-                <NavSection>Administração</NavSection>
                 <NavLink to="/admin/faturamento" title="Faturamento">
                   <FiDollarSign />
                   <span>Faturamento</span>
@@ -160,26 +177,37 @@ const AppLayout: React.FC<AppLayoutProps> = ({ sidebarExtra, children }) => {
                   <FiBarChart2 />
                   <span>Indicadores</span>
                 </NavLink>
-                <NavLink to="/admin/servicos" title="Serviços">
-                  <FiScissors />
-                  <span>Serviços</span>
+              </>
+            )}
+            {showCatalog && (
+              <NavLink to="/admin/servicos" title="Serviços">
+                <FiScissors />
+                <span>Serviços</span>
+              </NavLink>
+            )}
+            {showTeam && (
+              <>
+                <NavLink to="/admin/usuarios" title="Usuários e perfis">
+                  <FiShield />
+                  <span>Usuários</span>
                 </NavLink>
                 <NavLink to="/admin/barbeiros" title="Barbeiros">
                   <FiUsers />
                   <span>Barbeiros</span>
                 </NavLink>
-                <NavLink
-                  to="/admin/motivos-bloqueio"
-                  title="Motivos de bloqueio"
-                >
-                  <FiSlash />
-                  <span>Motivos de bloqueio</span>
-                </NavLink>
-                <NavLink to="/admin/configuracoes" title="Configurações">
-                  <FiSettings />
-                  <span>Configurações</span>
-                </NavLink>
               </>
+            )}
+            {showCatalog && (
+              <NavLink to="/admin/motivos-bloqueio" title="Motivos de bloqueio">
+                <FiSlash />
+                <span>Motivos de bloqueio</span>
+              </NavLink>
+            )}
+            {showSettings && (
+              <NavLink to="/admin/configuracoes" title="Configurações">
+                <FiSettings />
+                <span>Configurações</span>
+              </NavLink>
             )}
           </Nav>
         )}

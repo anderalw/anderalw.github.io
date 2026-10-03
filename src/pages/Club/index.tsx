@@ -79,7 +79,7 @@ function describeRules(plan: Plan): string {
 
 // Clube de assinatura: assinantes, pedidos do site, mensalidades e planos
 const Club: React.FC = () => {
-  const { user } = useAuth();
+  const { can } = useAuth();
   const { addToast } = useToast();
 
   const [overview, setOverview] = useState<ClubOverview | null>(null);
@@ -178,7 +178,7 @@ const Club: React.FC = () => {
               barbearia, abra a ficha dele.
             </p>
           </div>
-          {user.is_admin && (
+          {can('catalog') && (
             <div>
               <UIButton type="button" onClick={() => setEditingPlan(null)}>
                 <FiPlus />
@@ -351,7 +351,7 @@ const Club: React.FC = () => {
 
             {plans && plans.length === 0 ? (
               <EmptyText>
-                {user.is_admin
+                {can('catalog')
                   ? 'Nenhum plano. Crie o primeiro em "Novo plano".'
                   : 'Nenhum plano criado pelo administrador.'}
               </EmptyText>
@@ -417,7 +417,7 @@ const Club: React.FC = () => {
                           </div>
                         </Numbers>
                       )}
-                      {user.is_admin && (
+                      {can('catalog') && (
                         <footer>
                           <UIButton
                             type="button"

@@ -71,7 +71,7 @@ const HEX = /^#[0-9a-f]{6}$/i;
 // Configurações da barbearia (admin): nome, cor e logo, com prévia antes
 // de salvar, e atalhos para as outras configurações
 const Settings: React.FC = () => {
-  const { user } = useAuth();
+  const { can } = useAuth();
   const { addToast } = useToast();
   const { branding, setBranding } = useBranding();
   const fileRef = useRef<HTMLInputElement>(null);
@@ -206,7 +206,7 @@ const Settings: React.FC = () => {
     }
   }, [setBranding, addToast]);
 
-  if (!user.is_admin) {
+  if (!can('settings')) {
     return <Redirect to="/dashboard" />;
   }
 

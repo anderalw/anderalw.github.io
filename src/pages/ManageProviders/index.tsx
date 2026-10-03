@@ -1,12 +1,6 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import { Redirect } from 'react-router-dom';
-import {
-  FiEdit2,
-  FiPlus,
-  FiPower,
-  FiRotateCcw,
-  FiAlertTriangle,
-} from 'react-icons/fi';
+import { FiClock, FiPlus, FiUserMinus, FiAlertTriangle } from 'react-icons/fi';
 
 import api from '../../services/api';
 import { useAuth } from '../../hooks/Auth';
@@ -26,7 +20,7 @@ import {
   Badge,
 } from '../../components/ui';
 
-import ProviderModal, { TeamMember } from './ProviderModal';
+import ProviderModal, { Candidate, TeamMember } from './ProviderModal';
 import {
   MemberRow,
   MemberCell,
@@ -36,22 +30,32 @@ import {
   ConfirmBox,
 } from './styles';
 
-// Modal aberto: novo barbeiro (null) ou edição de um existente
+// Modal aberto: adicionar barbeiro (null) ou os horários de um existente
 type ModalState = { member: TeamMember | null } | null;
 
 const ManageProviders: React.FC = () => {
-  const { user } = useAuth();
+  const { user, can } = useAuth();
   const { addToast } = useToast();
+  const allowed = can('team');
 
   const [team, setTeam] = useState<TeamMember[] | null>(null);
+  // Usuários ativos que ainda não atendem (para adicionar)
+  const [candidates, setCandidates] = useState<Candidate[]>([]);
   const [modal, setModal] = useState<ModalState>(null);
   const [confirming, setConfirming] = useState<TeamMember | null>(null);
   const [changingId, setChangingId] = useState<string | null>(null);
 
   const loadTeam = useCallback(async () => {
     try {
-      const response = await api.get<TeamMember[]>('/users');
-      setTeam(response.data);
+      const [barbers, users] = await Promise.all([
+        api.get<TeamMember[]>('/barbers'),
+        api.get<Array<Candidate & { active: boolean; is_barber: boolean }>>(
+          '/users',
+        ),
+      ]);
+
+      setTeam(barbers.data);
+      setCandidates(users.data.filter(item => item.active && !item.is_barber));
     } catch (err) {
       setTeam(current => current || []);
       addToast({
@@ -66,27 +70,25 @@ const ManageProviders: React.FC = () => {
   }, [addToast]);
 
   useEffect(() => {
-    if (user.is_admin) loadTeam();
-  }, [user.is_admin, loadTeam]);
+    if (allowed) loadTeam();
+  }, [allowed, loadTeam]);
 
   const handleSaved = useCallback(() => {
     setModal(null);
     loadTeam();
   }, [loadTeam]);
 
-  const setActive = useCallback(
-    async (member: TeamMember, active: boolean) => {
+  const removeBarber = useCallback(
+    async (member: TeamMember) => {
       setChangingId(member.id);
 
       try {
-        await api.patch(`/users/${member.id}/active`, { active });
+        await api.delete(`/barbers/${member.id}`);
 
         addToast({
           type: 'success',
-          title: active ? 'Barbeiro reativado' : 'Barbeiro desativado',
-          description: active
-            ? `${member.name} volta a aparecer na agenda e para os clientes.`
-            : `${member.name} não aparece mais para os clientes e não consegue entrar.`,
+          title: 'Saiu da agenda',
+          description: `${member.name} continua com acesso ao sistema, mas não atende mais.`,
         });
 
         setConfirming(null);
@@ -95,9 +97,7 @@ const ManageProviders: React.FC = () => {
         setConfirming(null);
         addToast({
           type: 'error',
-          title: active
-            ? 'Não foi possível reativar'
-            : 'Não foi possível desativar',
+          title: 'Não foi possível tirar da agenda',
           description: getApiErrorMessage(err, 'Tente novamente.'),
         });
       } finally {
@@ -120,8 +120,8 @@ const ManageProviders: React.FC = () => {
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [confirming, changingId]);
 
-  // Só administradores gerenciam a equipe (a API também valida)
-  if (!user.is_admin) {
+  // Só quem gerencia a equipe (a API também valida)
+  if (!allowed) {
     return <Redirect to="/dashboard" />;
   }
 
@@ -133,19 +133,23 @@ const ManageProviders: React.FC = () => {
         <PageHeader>
           <div>
             <h1>Barbeiros</h1>
-            <p>A equipe da barbearia e os dias e horários de atendimento.</p>
+            <p>Quem atende na barbearia e os dias e horários de cada um.</p>
           </div>
           <div>
-            <UIButton type="button" onClick={() => setModal({ member: null })}>
+            <UIButton
+              type="button"
+              disabled={!team}
+              onClick={() => setModal({ member: null })}
+            >
               <FiPlus />
-              Novo barbeiro
+              Adicionar barbeiro
             </UIButton>
           </div>
         </PageHeader>
 
         <Card>
           <CardHeader>
-            <h2>Equipe</h2>
+            <h2>Na agenda</h2>
             <Counter>
               {team
                 ? `${activeCount} ${activeCount === 1 ? 'ativo' : 'ativos'}`
@@ -224,40 +228,22 @@ const ManageProviders: React.FC = () => {
                             type="button"
                             variant="ghost"
                             size="sm"
-                            title={`Editar ${member.name}`}
+                            title={`Horários de ${member.name}`}
                             onClick={() => setModal({ member })}
                           >
-                            <FiEdit2 />
-                            Editar
+                            <FiClock />
+                            Horários
                           </UIButton>
-                          {member.active ? (
-                            <UIButton
-                              type="button"
-                              variant="ghost"
-                              size="sm"
-                              disabled={isYou}
-                              title={
-                                isYou
-                                  ? 'Você não pode desativar a sua própria conta'
-                                  : `Desativar ${member.name}`
-                              }
-                              onClick={() => setConfirming(member)}
-                            >
-                              <FiPower />
-                              Desativar
-                            </UIButton>
-                          ) : (
-                            <UIButton
-                              type="button"
-                              variant="ghost"
-                              size="sm"
-                              disabled={changingId === member.id}
-                              onClick={() => setActive(member, true)}
-                            >
-                              <FiRotateCcw />
-                              Reativar
-                            </UIButton>
-                          )}
+                          <UIButton
+                            type="button"
+                            variant="ghost"
+                            size="sm"
+                            title={`Tirar ${member.name} da agenda`}
+                            onClick={() => setConfirming(member)}
+                          >
+                            <FiUserMinus />
+                            Tirar da agenda
+                          </UIButton>
                         </td>
                       </MemberRow>
                     );
@@ -270,6 +256,7 @@ const ManageProviders: React.FC = () => {
       {modal && (
         <ProviderModal
           member={modal.member}
+          candidates={candidates}
           onClose={() => setModal(null)}
           onSaved={handleSaved}
         />
@@ -291,11 +278,11 @@ const ManageProviders: React.FC = () => {
             <span className="icon">
               <FiAlertTriangle />
             </span>
-            <h2 id="confirm-title">{`Desativar ${confirming.name}?`}</h2>
+            <h2 id="confirm-title">{`Tirar ${confirming.name} da agenda?`}</h2>
             <p>
-              Ele deixa de aparecer para os clientes e na agenda e não consegue
-              mais entrar no sistema. Os horários ficam guardados e você pode
-              reativar quando quiser.
+              Ele deixa de aparecer na agenda e para os clientes, mas continua
+              entrando no sistema com o perfil dele. Os horários ficam guardados
+              se ele voltar a atender.
             </p>
             <p className="note">
               Se ele tiver agendamentos futuros, remarque ou cancele antes.
@@ -313,11 +300,11 @@ const ManageProviders: React.FC = () => {
               <UIButton
                 type="button"
                 variant="danger"
-                onClick={() => setActive(confirming, false)}
+                onClick={() => removeBarber(confirming)}
                 disabled={!!changingId}
               >
-                <FiPower />
-                {changingId ? 'Desativando...' : 'Desativar'}
+                <FiUserMinus />
+                {changingId ? 'Tirando...' : 'Tirar da agenda'}
               </UIButton>
             </footer>
           </ConfirmBox>

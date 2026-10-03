@@ -30,7 +30,9 @@ type ModalState = { reason: BlockReason | null } | null;
 
 // Cadastro dos motivos que aparecem ao bloquear um horário na agenda
 const ManageBlockReasons: React.FC = () => {
-  const { user } = useAuth();
+  const { can } = useAuth();
+  // A tela é de quem tem a permissão (a API também confere)
+  const allowed = can('catalog');
   const { addToast } = useToast();
 
   const [reasons, setReasons] = useState<BlockReason[]>([]);
@@ -46,7 +48,7 @@ const ManageBlockReasons: React.FC = () => {
   }, []);
 
   useEffect(() => {
-    if (!user.is_admin) return;
+    if (!allowed) return;
 
     loadReasons()
       .catch(err =>
@@ -57,7 +59,7 @@ const ManageBlockReasons: React.FC = () => {
         }),
       )
       .finally(() => setLoading(false));
-  }, [user.is_admin, loadReasons, addToast]);
+  }, [allowed, loadReasons, addToast]);
 
   const handleSaved = useCallback(() => {
     setModal(null);
@@ -92,7 +94,7 @@ const ManageBlockReasons: React.FC = () => {
   );
 
   // Só administradores cadastram motivos (a API também valida)
-  if (!user.is_admin) {
+  if (!allowed) {
     return <Redirect to="/dashboard" />;
   }
 

@@ -116,7 +116,9 @@ const plural = (count: number, one: string, many: string): string =>
 // atendimentos a confirmar e o previsto, no total, por dia, por barbeiro e
 // por serviço. Só para administradores
 const Revenue: React.FC = () => {
-  const { user } = useAuth();
+  const { can } = useAuth();
+  // A tela é de quem tem a permissão (a API também confere)
+  const allowed = can('reports');
   const { addToast } = useToast();
 
   const [range, setRange] = useState(() => presetRange('month'));
@@ -130,7 +132,7 @@ const Revenue: React.FC = () => {
   })?.value;
 
   useEffect(() => {
-    if (!user.is_admin || !range.start || !range.end) return undefined;
+    if (!allowed || !range.start || !range.end) return undefined;
 
     let active = true;
 
@@ -157,14 +159,14 @@ const Revenue: React.FC = () => {
     return () => {
       active = false;
     };
-  }, [range, user.is_admin, addToast]);
+  }, [range, allowed, addToast]);
 
   const maxDay = useMemo(
     () => Math.max(0, ...(report?.days || []).map(day => day.revenue_cents)),
     [report],
   );
 
-  if (!user.is_admin) {
+  if (!allowed) {
     return <Redirect to="/dashboard" />;
   }
 

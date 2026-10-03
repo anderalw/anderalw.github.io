@@ -3,17 +3,37 @@ import React, {
   useCallback,
   useState,
   useContext,
+  useEffect,
   useLayoutEffect,
   useMemo,
 } from 'react';
 import api from '../services/api';
+
+// Permissões da equipe (as mesmas chaves da API)
+export type Permission =
+  | 'agenda.all'
+  | 'agenda.manage'
+  | 'clients'
+  | 'cash'
+  | 'cash.close'
+  | 'club'
+  | 'whatsapp'
+  | 'reports'
+  | 'catalog'
+  | 'settings'
+  | 'team';
 
 interface User {
   id: string;
   name: string;
   email: string;
   avatar_url: string;
+  // Perfil Administrador (pode tudo)
   is_admin: boolean;
+  // Atende clientes: tem coluna na agenda
+  is_barber: boolean;
+  role: { id: string; name: string } | null;
+  permissions: Permission[];
 }
 
 interface Client {
@@ -49,6 +69,8 @@ interface AuthContextData {
   signInClientWithGoogle(credential: string): Promise<{ created: boolean }>;
   signOut(): void;
   updateUser(user: User): void;
+  // O usuário da equipe tem a permissão? (cliente: nunca)
+  can(permission: Permission): boolean;
   updateClient(client: Client): void;
 }
 
@@ -190,6 +212,33 @@ export const AuthProvider: React.FC = ({ children }) => {
     [setData, data.token],
   );
 
+  // Perfil e permissões atualizados a cada abertura do sistema (o
+  // administrador pode ter mudado o perfil desde o login)
+  useEffect(() => {
+    if (data.role !== 'provider' || !data.token) return;
+
+    api
+      .get<User>('/profile')
+      .then(response => {
+        localStorage.setItem('@GoBarber:user', JSON.stringify(response.data));
+        setData(current =>
+          current.token === data.token
+            ? { ...current, user: response.data }
+            : current,
+        );
+      })
+      .catch(() => {
+        // Sem a API, fica o que estava guardado
+      });
+  }, [data.role, data.token]);
+
+  const can = useCallback(
+    (permission: Permission) =>
+      data.role === 'provider' &&
+      !!data.user?.permissions?.includes(permission),
+    [data.role, data.user],
+  );
+
   // Mesmo objeto enquanto nada muda, para não re-renderizar quem usa o contexto
   const value = useMemo(
     () => ({
@@ -202,9 +251,11 @@ export const AuthProvider: React.FC = ({ children }) => {
       signOut,
       updateUser,
       updateClient,
+      can,
     }),
     [
       data,
+      can,
       signIn,
       signInClient,
       signInClientWithGoogle,

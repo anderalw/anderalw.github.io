@@ -45,7 +45,7 @@ type View = 'pending' | 'history';
 // Mensagens de WhatsApp para os clientes: no envio assistido, a fila para
 // enviar com um clique; e o histórico do que saiu
 const WhatsApp: React.FC = () => {
-  const { user } = useAuth();
+  const { can } = useAuth();
   const { addToast } = useToast();
   const [view, setView] = useState<View>('pending');
   const [status, setStatus] = useState<Status | null>(null);
@@ -118,7 +118,7 @@ const WhatsApp: React.FC = () => {
     modeNote = (
       <ModeNote warning>
         O WhatsApp está desligado: nenhuma mensagem nova entra aqui.{' '}
-        {user.is_admin ? (
+        {can('settings') ? (
           <>
             Ligue em <Link to="/admin/configuracoes">Configurações</Link>.
           </>

@@ -40,7 +40,9 @@ type ModalState = { service: Service | null } | null;
 const BUFFER_OPTIONS = [0, 5, 10, 15, 20, 30, 45, 60];
 
 const ManageServices: React.FC = () => {
-  const { user } = useAuth();
+  const { can } = useAuth();
+  // A tela é de quem tem a permissão (a API também confere)
+  const allowed = can('catalog');
   const { addToast } = useToast();
 
   const [services, setServices] = useState<Service[]>([]);
@@ -66,7 +68,7 @@ const ManageServices: React.FC = () => {
   }, []);
 
   useEffect(() => {
-    if (!user.is_admin) return;
+    if (!allowed) return;
 
     Promise.all([
       loadServices(),
@@ -82,7 +84,7 @@ const ManageServices: React.FC = () => {
         ),
       )
       .finally(() => setLoading(false));
-  }, [user.is_admin, loadServices, showError]);
+  }, [allowed, loadServices, showError]);
 
   const handleSaveBuffer = useCallback(async () => {
     try {
@@ -126,7 +128,7 @@ const ManageServices: React.FC = () => {
   );
 
   // Só administradores gerenciam serviços (a API também valida)
-  if (!user.is_admin) {
+  if (!allowed) {
     return <Redirect to="/dashboard" />;
   }
 

@@ -181,7 +181,9 @@ function change(
 // Painel de indicadores (admin): ocupação da agenda, faltas, serviços mais
 // pedidos, horários mais cheios e clientes que sumiram
 const Insights: React.FC = () => {
-  const { user } = useAuth();
+  const { can } = useAuth();
+  // A tela é de quem tem a permissão (a API também confere)
+  const allowed = can('reports');
   const { addToast } = useToast();
 
   const [preset, setPreset] = useState<Preset>('last30');
@@ -192,7 +194,7 @@ const Insights: React.FC = () => {
   const range = useMemo(() => presetRange(preset), [preset]);
 
   useEffect(() => {
-    if (!user.is_admin) return undefined;
+    if (!allowed) return undefined;
 
     let active = true;
 
@@ -216,10 +218,10 @@ const Insights: React.FC = () => {
     return () => {
       active = false;
     };
-  }, [range, user.is_admin, addToast]);
+  }, [range, allowed, addToast]);
 
   useEffect(() => {
-    if (!user.is_admin) return undefined;
+    if (!allowed) return undefined;
 
     let active = true;
 
@@ -239,14 +241,14 @@ const Insights: React.FC = () => {
     return () => {
       active = false;
     };
-  }, [lostDays, user.is_admin]);
+  }, [lostDays, allowed]);
 
   const heatMax = useMemo(
     () => (data ? Math.max(1, ...data.heatmap.days.flat()) : 1),
     [data],
   );
 
-  if (!user.is_admin) {
+  if (!allowed) {
     return <Redirect to="/dashboard" />;
   }
 

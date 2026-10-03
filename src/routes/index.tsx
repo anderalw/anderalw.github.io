@@ -14,6 +14,7 @@ import MyAppointments from '../pages/MyAppointments';
 import SignInClient from '../pages/SignInClient';
 import SignUpClient from '../pages/SignUpClient';
 import ManageProviders from '../pages/ManageProviders';
+import ManageUsers from '../pages/ManageUsers';
 import ManageServices from '../pages/ManageServices';
 import ManageBlockReasons from '../pages/ManageBlockReasons';
 import Revenue from '../pages/Revenue';
@@ -46,6 +47,7 @@ const Routes: React.FC = () => (
     <Route path="/whatsapp" component={WhatsApp} isPrivate />
     <Route path="/maquininha-virtual" component={VirtualTerminal} isPrivate />
     <Route path="/admin/servicos" component={ManageServices} isPrivate />
+    <Route path="/admin/usuarios" component={ManageUsers} isPrivate />
     <Route path="/admin/barbeiros" component={ManageProviders} isPrivate />
     <Route path="/admin/faturamento" component={Revenue} isPrivate />
     <Route path="/admin/indicadores" component={Insights} isPrivate />

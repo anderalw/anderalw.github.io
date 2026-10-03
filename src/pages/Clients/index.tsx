@@ -47,7 +47,7 @@ const shortDate = (value: string | null): string =>
 // Lista de clientes da barbearia com o resumo de cada um. Clicar abre a ficha
 const Clients: React.FC = () => {
   const history = useHistory();
-  const { user } = useAuth();
+  const { can } = useAuth();
   const { addToast } = useToast();
 
   const [search, setSearch] = useState('');
@@ -125,7 +125,7 @@ const Clients: React.FC = () => {
             <h1>Clientes</h1>
             <p>Histórico, observações e faltas de cada cliente.</p>
           </div>
-          {user.is_admin && (
+          {can('settings') && (
             <div>
               <UIButton
                 type="button"
