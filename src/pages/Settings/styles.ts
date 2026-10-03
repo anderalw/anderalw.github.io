@@ -303,3 +303,35 @@ export const SectionColumn = styled.div`
   gap: 24px;
   max-width: 880px;
 `;
+
+// Subabas (dentro de uma aba): botões menores, como um seletor
+export const SubTabs = styled.nav`
+  display: inline-flex;
+  gap: 4px;
+  margin-bottom: 20px;
+  padding: 4px;
+  border: 1px solid ${colors.border};
+  border-radius: ${radius.md};
+  background: ${colors.surface};
+`;
+
+export const SubTab = styled(NavLink)`
+  display: inline-flex;
+  align-items: center;
+  height: 32px;
+  padding: 0 14px;
+  border-radius: 6px;
+  color: ${colors.textMuted};
+  font-size: 14px;
+  font-weight: 500;
+  text-decoration: none;
+
+  &:hover {
+    color: ${colors.text};
+  }
+
+  &.active {
+    background: ${colors.surfaceHover};
+    color: ${colors.text};
+  }
+`;

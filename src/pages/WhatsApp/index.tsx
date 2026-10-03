@@ -121,7 +121,10 @@ const WhatsApp: React.FC = () => {
         {can('settings') ? (
           <>
             Ligue em{' '}
-            <Link to="/admin/configuracoes/integracoes">Configurações</Link>.
+            <Link to="/admin/configuracoes/integracoes/whatsapp">
+              Configurações
+            </Link>
+            .
           </>
         ) : (
           'Peça para o administrador ligar nas Configurações.'

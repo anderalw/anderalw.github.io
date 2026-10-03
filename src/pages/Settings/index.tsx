@@ -39,6 +39,8 @@ import {
 import {
   SectionTabs,
   SectionTab,
+  SubTabs,
+  SubTab,
   SectionColumn,
   Layout,
   Field,
@@ -80,6 +82,12 @@ const SECTIONS = [
   { key: 'site', label: 'Site' },
   { key: 'cadastros', label: 'Cadastros' },
   { key: 'integracoes', label: 'Integrações' },
+];
+
+// Subabas de Integrações
+const INTEGRATIONS = [
+  { key: 'whatsapp', label: 'WhatsApp' },
+  { key: 'maquininha', label: 'Maquininha' },
 ];
 
 const Settings: React.FC = () => {
@@ -221,6 +229,8 @@ const Settings: React.FC = () => {
   const location = useLocation();
   // /admin/configuracoes/<aba>
   const section = location.pathname.split('/')[3] || '';
+  // Integrações: /integracoes/whatsapp ou /integracoes/maquininha
+  const integration = location.pathname.split('/')[4] || 'whatsapp';
 
   if (!can('settings')) {
     return <Redirect to="/dashboard" />;
@@ -228,6 +238,13 @@ const Settings: React.FC = () => {
 
   if (!SECTIONS.some(item => item.key === section)) {
     return <Redirect to="/admin/configuracoes" />;
+  }
+
+  if (
+    section === 'integracoes' &&
+    !INTEGRATIONS.some(item => item.key === integration)
+  ) {
+    return <Redirect to="/admin/configuracoes/integracoes" />;
   }
 
   const previewName = name.trim() || branding.name;
@@ -247,7 +264,7 @@ const Settings: React.FC = () => {
             <SectionTab
               key={item.key}
               to={`/admin/configuracoes${item.key ? `/${item.key}` : ''}`}
-              exact
+              isActive={() => section === item.key}
             >
               {item.label}
             </SectionTab>
@@ -268,8 +285,21 @@ const Settings: React.FC = () => {
 
         {section === 'integracoes' && (
           <SectionColumn>
-            <WhatsAppSettings />
-            <TerminalSettings />
+            <div>
+              <SubTabs aria-label="Integrações">
+                {INTEGRATIONS.map(item => (
+                  <SubTab
+                    key={item.key}
+                    to={`/admin/configuracoes/integracoes/${item.key}`}
+                    isActive={() => integration === item.key}
+                  >
+                    {item.label}
+                  </SubTab>
+                ))}
+              </SubTabs>
+              {integration === 'whatsapp' && <WhatsAppSettings />}
+              {integration === 'maquininha' && <TerminalSettings />}
+            </div>
           </SectionColumn>
         )}
 
