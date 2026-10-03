@@ -248,3 +248,129 @@ export const CashCards = styled.div`
     grid-template-columns: repeat(3, minmax(0, 1fr));
   }
 `;
+
+// Tabela larga (muitos botões): rola de lado em telas estreitas
+export const TableScroll = styled.div`
+  overflow-x: auto;
+
+  input[type='checkbox'] {
+    width: 16px;
+    height: 16px;
+    accent-color: ${colors.primary};
+    cursor: pointer;
+  }
+`;
+
+// Ações em lote: sempre visível (só habilita com seleção), para a tabela
+// não pular quando marca o primeiro
+export const BulkBar = styled.div<{ active: boolean }>`
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px 16px;
+  min-height: 52px;
+  padding: 8px 20px;
+  border-bottom: 1px solid ${colors.border};
+  background: ${props => (props.active ? colors.primarySoft : 'transparent')};
+  transition: background-color 0.15s;
+
+  label {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 13px;
+    color: ${props => (props.active ? colors.text : colors.textMuted)};
+    cursor: pointer;
+  }
+
+  input[type='checkbox'] {
+    width: 16px;
+    height: 16px;
+    accent-color: ${colors.primary};
+  }
+`;
+
+export const QuickActions = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 6px;
+
+  small {
+    margin-right: 2px;
+    font-size: 12px;
+    color: ${colors.textMuted};
+  }
+`;
+
+// Botão pequeno de registro rápido (forma de pagamento ou falta)
+export const QuickButton = styled.button<{ tone?: 'primary' | 'danger' }>`
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 30px;
+  padding: 0 10px;
+  border: 1px solid ${colors.borderStrong};
+  border-radius: ${radius.sm};
+  background: transparent;
+  color: ${colors.text};
+  font-size: 13px;
+  font-weight: 500;
+  white-space: nowrap;
+  transition: background-color 0.15s, border-color 0.15s, color 0.15s;
+
+  svg {
+    width: 14px;
+    height: 14px;
+  }
+
+  &:hover:not(:disabled) {
+    border-color: ${colors.primary};
+    background: ${colors.primarySoft};
+  }
+
+  ${props =>
+    props.tone === 'primary' &&
+    css`
+      border-color: ${colors.primary};
+      color: ${colors.primary};
+    `}
+
+  ${props =>
+    props.tone === 'danger' &&
+    css`
+      color: ${colors.danger};
+
+      &:hover:not(:disabled) {
+        border-color: ${colors.danger};
+        background: ${colors.dangerSoft};
+      }
+    `}
+
+  &:disabled {
+    opacity: 0.45;
+    cursor: default;
+  }
+`;
+
+// Dias anteriores com pendências: botões que levam ao dia
+export const PendingDays = styled.div`
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-left: 4px;
+
+  button {
+    padding: 2px 8px;
+    border: 1px solid color-mix(in srgb, ${colors.warning} 45%, transparent);
+    border-radius: 999px;
+    background: transparent;
+    color: ${colors.text};
+    font-size: 12px;
+    font-variant-numeric: tabular-nums;
+
+    &:hover {
+      background: color-mix(in srgb, ${colors.warning} 18%, transparent);
+    }
+  }
+`;

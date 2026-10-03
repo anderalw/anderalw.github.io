@@ -1,5 +1,4 @@
 import React, { useCallback, useEffect, useState } from 'react';
-import { Link } from 'react-router-dom';
 import { format, parseISO } from 'date-fns';
 import ptBR from 'date-fns/locale/pt-BR';
 import { FiAlertTriangle, FiLock, FiRefreshCw } from 'react-icons/fi';
@@ -28,6 +27,7 @@ import {
 } from '../../components/ui';
 import { SkeletonBar, EmptyText } from '../ManageServices/styles';
 import { StatCard } from '../Revenue/styles';
+import PendingCard, { PendingItem } from './PendingCard';
 import {
   DateBar,
   Layout,
@@ -43,6 +43,7 @@ import {
   FormError,
   CashCards,
   LeftColumn,
+  PendingDays,
 } from './styles';
 
 type TotalKey = PaymentMethod | 'unknown';
@@ -89,6 +90,10 @@ interface CashDay {
   items: CashItem[];
   memberships: MembershipItem[];
   pending: number;
+  // Já passaram e ninguém registrou (neste dia)
+  pending_items: PendingItem[];
+  // Dias anteriores com pendências, do mais recente
+  pending_days: { date: string; count: number }[];
   no_show: number;
   closing: Closing | null;
 }
@@ -323,16 +328,30 @@ const CashRegister: React.FC = () => {
           </StatCard>
         </CashCards>
 
-        {data && data.pending > 0 && (
+        {data && data.pending_days.length > 0 && (
           <PendingNote>
             <FiAlertTriangle />
-            {`${data.pending} ${
-              data.pending === 1
-                ? 'atendimento já passou e não foi registrado'
-                : 'atendimentos já passaram e não foram registrados'
-            }: eles só entram no caixa depois de marcados como atendidos.`}
-            <Link to={`/dashboard?data=${date}`}>Ver na agenda</Link>
+            <span>Também há atendimentos sem registro em</span>
+            <PendingDays>
+              {data.pending_days.slice(0, 8).map(day => (
+                <button
+                  key={day.date}
+                  type="button"
+                  title="Abrir o caixa deste dia"
+                  onClick={() => setDate(day.date)}
+                >
+                  {`${format(parseISO(day.date), 'dd/MM')} (${day.count})`}
+                </button>
+              ))}
+              {data.pending_days.length > 8 && (
+                <span>{`+${data.pending_days.length - 8} dias`}</span>
+              )}
+            </PendingDays>
           </PendingNote>
+        )}
+
+        {data && data.pending_items.length > 0 && (
+          <PendingCard items={data.pending_items} onRegistered={load} />
         )}
 
         <Layout>
