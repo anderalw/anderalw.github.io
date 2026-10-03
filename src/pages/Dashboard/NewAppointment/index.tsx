@@ -60,6 +60,12 @@ import {
   Occurrence,
   RepeatNote,
 } from './styles';
+import ProfileExtraFields from '../../../components/ProfileExtraFields';
+import {
+  ExtraValues,
+  extraPayload,
+  useProfileFields,
+} from '../../../utils/profileFields';
 
 interface ClientOption {
   id: string;
@@ -172,6 +178,15 @@ const NewAppointment: React.FC<NewAppointmentProps> = ({
   const [searching, setSearching] = useState(false);
   const [searchedTerm, setSearchedTerm] = useState('');
   const [client, setClient] = useState<ClientOption | null>(null);
+  // Regras do cadastro pela barbearia: aqui só os obrigatórios (o resto
+  // se completa na ficha do cliente)
+  const counterRules = useProfileFields('client_counter');
+  const requiredRules = counterRules
+    ? Object.fromEntries(
+        Object.entries(counterRules).filter(([, rule]) => rule?.required),
+      )
+    : undefined;
+  const [newExtras, setNewExtras] = useState<ExtraValues>({});
   const [newClient, setNewClient] = useState({
     name: '',
     phone: '',
@@ -295,6 +310,7 @@ const NewAppointment: React.FC<NewAppointmentProps> = ({
         name: newClient.name.trim(),
         phone: onlyDigits(newClient.phone),
         email: newClient.email.trim() || null,
+        ...extraPayload(requiredRules, newExtras),
       });
 
       setRegistering(false);
@@ -310,7 +326,7 @@ const NewAppointment: React.FC<NewAppointmentProps> = ({
         ),
       });
     }
-  }, [newClient, selectClient, addToast]);
+  }, [newClient, newExtras, requiredRules, selectClient, addToast]);
 
   // Ao escolher o serviço, confere se ele cabe no horário clicado; se não
   // couber, sugere os horários livres mais próximos (antes e depois) e os
@@ -928,21 +944,34 @@ const NewAppointment: React.FC<NewAppointmentProps> = ({
                       }
                     />
                   </Field>
-                  <Field>
-                    <span>E-mail (opcional)</span>
-                    <input
-                      type="email"
-                      value={newClient.email}
-                      maxLength={100}
-                      onChange={event =>
-                        setNewClient({
-                          ...newClient,
-                          email: event.target.value,
-                        })
-                      }
-                    />
-                  </Field>
+                  {counterRules?.email?.show !== false && (
+                    <Field>
+                      <span>
+                        {counterRules?.email?.required
+                          ? 'E-mail'
+                          : 'E-mail (opcional)'}
+                      </span>
+                      <input
+                        type="email"
+                        value={newClient.email}
+                        maxLength={100}
+                        onChange={event =>
+                          setNewClient({
+                            ...newClient,
+                            email: event.target.value,
+                          })
+                        }
+                      />
+                    </Field>
+                  )}
                 </RegisterGrid>
+                <div style={{ marginTop: 12 }}>
+                  <ProfileExtraFields
+                    rules={requiredRules}
+                    values={newExtras}
+                    onChange={setNewExtras}
+                  />
+                </div>
               </form>
             )}
 

@@ -14,6 +14,10 @@ export interface StaffUser {
   permissions: Permission[];
   // Ainda com a senha provisória (o e-mail)
   must_change_password: boolean;
+  phone: string | null;
+  cpf: string | null;
+  birth_date: string | null;
+  address: import('../../utils/profileFields').Address | null;
 }
 
 export interface RoleItem {

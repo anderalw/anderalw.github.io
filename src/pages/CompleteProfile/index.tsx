@@ -11,6 +11,12 @@ import { colors } from '../../styles/theme';
 
 import AuthLayout from '../../components/AuthLayout';
 import { UIButton, TextInput } from '../../components/ui';
+import ProfileExtraFields from '../../components/ProfileExtraFields';
+import {
+  ExtraValues,
+  extraPayload,
+  useProfileFields,
+} from '../../utils/profileFields';
 
 const Form = styled.form`
   display: flex;
@@ -46,6 +52,9 @@ const CompleteProfile: React.FC = () => {
     client?.phone ? maskPhone(client.phone) : '',
   );
   const [error, setError] = useState('');
+  const rules = useProfileFields('client_site');
+  const [extras, setExtras] = useState<ExtraValues>({});
+  const asksMore = !!rules && Object.values(rules).some(rule => rule?.show);
   const [saving, setSaving] = useState(false);
 
   const handleSubmit = useCallback(
@@ -68,6 +77,7 @@ const CompleteProfile: React.FC = () => {
         const response = await api.put('/clients/me', {
           name: name.trim(),
           phone: onlyDigits(phone),
+          ...extraPayload(rules, extras),
         });
 
         updateClient(response.data);
@@ -82,12 +92,12 @@ const CompleteProfile: React.FC = () => {
         setSaving(false);
       }
     },
-    [name, phone, updateClient, addToast, history],
+    [name, phone, rules, extras, updateClient, addToast, history],
   );
 
   return (
     <AuthLayout
-      title="Falta só o telefone"
+      title={asksMore ? 'Complete o seu cadastro' : 'Falta só o telefone'}
       subtitle="A barbearia usa o telefone para avisar sobre o seu horário, se precisar."
       footer={
         <p>
@@ -137,6 +147,14 @@ const CompleteProfile: React.FC = () => {
             }}
           />
         </FieldLabel>
+        <ProfileExtraFields
+          rules={rules}
+          values={extras}
+          onChange={values => {
+            setExtras(values);
+            setError('');
+          }}
+        />
         <small role="alert">{error}</small>
         <UIButton type="submit" disabled={saving}>
           {saving ? 'Salvando...' : 'Continuar'}

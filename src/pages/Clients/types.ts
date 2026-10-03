@@ -41,6 +41,9 @@ export interface ClientHistoryItem {
 }
 
 export interface ClientDetails extends ClientProfile {
+  cpf?: string | null;
+  birth_date?: string | null;
+  address?: import('../../utils/profileFields').Address | null;
   appointments: ClientHistoryItem[];
 }
 

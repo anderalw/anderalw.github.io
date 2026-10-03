@@ -20,6 +20,13 @@ import {
   FieldRow,
 } from '../ManageServices/styles';
 import { ClientDetails } from '../Clients/types';
+import ProfileExtraFields from '../../components/ProfileExtraFields';
+import {
+  ExtraValues,
+  extraPayload,
+  toAddress,
+  useProfileFields,
+} from '../../utils/profileFields';
 
 interface EditClientModalProps {
   client: ClientDetails;
@@ -29,8 +36,10 @@ interface EditClientModalProps {
 
 type Field = 'name' | 'phone' | 'email' | 'form';
 
-const EditDialog = styled(CompactDialog)`
-  height: min(400px, 100%);
+// Mais alto quando a barbearia pede CPF, nascimento ou endereço
+const EditDialog = styled(CompactDialog)<{ tall: boolean }>`
+  max-width: ${props => (props.tall ? '600px' : undefined)};
+  height: min(${props => (props.tall ? '780px' : '400px')}, 100%);
 `;
 
 // Corrigir nome, telefone e e-mail do cliente
@@ -46,6 +55,16 @@ const EditClientModal: React.FC<EditClientModalProps> = ({
   const [email, setEmail] = useState(client.email || '');
   const [errors, setErrors] = useState<Partial<Record<Field, string>>>({});
   const [saving, setSaving] = useState(false);
+  const rules = useProfileFields('client_counter');
+  const [extras, setExtras] = useState<ExtraValues>({
+    cpf: client.cpf || '',
+    birth_date: client.birth_date?.slice(0, 10) || '',
+    address: toAddress(client.address),
+  });
+  const tall =
+    !!rules &&
+    ['cpf', 'birth_date', 'address'].some(field => rules[field as 'cpf']?.show);
+  const showEmail = rules?.email?.show !== false;
 
   useEffect(() => {
     function handleKeyDown(event: KeyboardEvent): void {
@@ -84,8 +103,9 @@ const EditClientModal: React.FC<EditClientModalProps> = ({
         const response = await api.put<ClientDetails>(`/clients/${client.id}`, {
           name: name.trim(),
           phone: onlyDigits(phone),
-          email: email.trim() || null,
+          ...(showEmail && { email: email.trim() || null }),
           notes: client.notes,
+          ...extraPayload(rules, extras),
         });
 
         addToast({
@@ -105,7 +125,7 @@ const EditClientModal: React.FC<EditClientModalProps> = ({
         });
       }
     },
-    [name, phone, email, client, addToast, onSaved],
+    [name, phone, email, showEmail, rules, extras, client, addToast, onSaved],
   );
 
   return (
@@ -115,6 +135,7 @@ const EditClientModal: React.FC<EditClientModalProps> = ({
       }}
     >
       <EditDialog
+        tall={tall}
         color={colors.primary}
         role="dialog"
         aria-modal="true"
@@ -172,21 +193,37 @@ const EditClientModal: React.FC<EditClientModalProps> = ({
                 <FieldError>{errors.phone}</FieldError>
               </ModalField>
 
-              <ModalField hasError={!!errors.email}>
-                <span>E-mail {!client.has_account && '(opcional)'}</span>
-                <TextInput
-                  type="email"
-                  value={email}
-                  maxLength={100}
-                  aria-invalid={!!errors.email}
-                  onChange={event => {
-                    setEmail(event.target.value);
-                    setErrors({});
-                  }}
-                />
-                <FieldError>{errors.email}</FieldError>
-              </ModalField>
+              {showEmail && (
+                <ModalField hasError={!!errors.email}>
+                  <span>
+                    E-mail{' '}
+                    {!client.has_account &&
+                      !rules?.email?.required &&
+                      '(opcional)'}
+                  </span>
+                  <TextInput
+                    type="email"
+                    value={email}
+                    maxLength={100}
+                    aria-invalid={!!errors.email}
+                    onChange={event => {
+                      setEmail(event.target.value);
+                      setErrors({});
+                    }}
+                  />
+                  <FieldError>{errors.email}</FieldError>
+                </ModalField>
+              )}
             </FieldRow>
+
+            <ProfileExtraFields
+              rules={rules}
+              values={extras}
+              onChange={values => {
+                setExtras(values);
+                setErrors({});
+              }}
+            />
 
             <FieldError role="alert">{errors.form}</FieldError>
           </Main>

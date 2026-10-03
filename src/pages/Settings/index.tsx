@@ -24,6 +24,7 @@ import AppLayout from '../../components/AppLayout';
 import SiteSettings from './SiteSettings';
 import TerminalSettings from './TerminalSettings';
 import WhatsAppSettings from './WhatsAppSettings';
+import ProfileFieldsSettings from './ProfileFieldsSettings';
 import {
   Page,
   PageHeader,
@@ -374,6 +375,7 @@ const Settings: React.FC = () => {
             </Card>
 
             <SiteSettings />
+            <ProfileFieldsSettings />
             <WhatsAppSettings />
             <TerminalSettings />
           </div>

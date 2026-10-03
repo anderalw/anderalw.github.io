@@ -1,4 +1,4 @@
-import React, { useCallback, useRef } from 'react';
+import React, { useCallback, useRef, useState } from 'react';
 import { FormHandles } from '@unform/core';
 import { Form } from '@unform/web';
 import * as Yup from 'yup';
@@ -14,6 +14,12 @@ import AuthLayout from '../../components/AuthLayout';
 import FormField from '../../components/FormField';
 import GoogleSignIn from '../../components/GoogleSignIn';
 import { UIButton } from '../../components/ui';
+import ProfileExtraFields from '../../components/ProfileExtraFields';
+import {
+  ExtraValues,
+  extraPayload,
+  useProfileFields,
+} from '../../utils/profileFields';
 
 interface SignUpClientFormData {
   name: string;
@@ -26,6 +32,9 @@ const SignUpClient: React.FC = () => {
   const formRef = useRef<FormHandles>(null);
   const { addToast } = useToast();
   const history = useHistory();
+  // Campos que a barbearia pede no cadastro pelo site
+  const rules = useProfileFields('client_site');
+  const [extras, setExtras] = useState<ExtraValues>({});
 
   const handleSubmit = useCallback(
     async (data: SignUpClientFormData) => {
@@ -49,7 +58,11 @@ const SignUpClient: React.FC = () => {
 
         // Comunica com a nova rota de clientes no backend
         // O telefone vai só com os números
-        await api.post('/clients', { ...data, phone: onlyDigits(data.phone) });
+        await api.post('/clients', {
+          ...data,
+          phone: onlyDigits(data.phone),
+          ...extraPayload(rules, extras),
+        });
 
         addToast({
           type: 'success',
@@ -75,7 +88,7 @@ const SignUpClient: React.FC = () => {
         });
       }
     },
-    [addToast, history],
+    [addToast, history, rules, extras],
   );
 
   return (
@@ -121,6 +134,13 @@ const SignUpClient: React.FC = () => {
           label="Senha"
           autoComplete="new-password"
         />
+        <div style={{ marginBottom: 16 }}>
+          <ProfileExtraFields
+            rules={rules}
+            values={extras}
+            onChange={setExtras}
+          />
+        </div>
 
         <UIButton type="submit">Criar conta</UIButton>
       </Form>

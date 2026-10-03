@@ -34,6 +34,14 @@ import {
 } from '../../components/ui';
 
 import { PermissionItem, RoleItem, StaffUser } from './types';
+import ProfileExtraFields from '../../components/ProfileExtraFields';
+import {
+  ExtraValues,
+  extraPayload,
+  toAddress,
+  useProfileFields,
+} from '../../utils/profileFields';
+
 import {
   Hint,
   FieldRow,
@@ -63,6 +71,10 @@ const UserPage: React.FC = () => {
   // Dados
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
+  // Telefone, CPF, nascimento e endereço (conforme as regras da barbearia)
+  const staffRules = useProfileFields('staff');
+  const [extras, setExtras] = useState<ExtraValues>({});
+  const [savedExtras, setSavedExtras] = useState('');
   // Acesso ('' = sem perfil)
   const [roleId, setRoleId] = useState('');
   const [own, setOwn] = useState<Permission[]>([]);
@@ -74,6 +86,16 @@ const UserPage: React.FC = () => {
     setUser(data);
     setName(data.name);
     setEmail(data.email);
+
+    const loaded: ExtraValues = {
+      phone: data.phone || '',
+      cpf: data.cpf || '',
+      birth_date: data.birth_date?.slice(0, 10) || '',
+      address: toAddress(data.address),
+    };
+
+    setExtras(loaded);
+    setSavedExtras(JSON.stringify(loaded));
     setRoleId(data.role?.id || '');
     setOwn(data.own_permissions);
   }, []);
@@ -122,7 +144,10 @@ const UserPage: React.FC = () => {
         .sort()
         .join() !== user.own_permissions.slice().sort().join());
   const dataChanged =
-    !!user && (name.trim() !== user.name || email.trim() !== user.email);
+    !!user &&
+    (name.trim() !== user.name ||
+      email.trim() !== user.email ||
+      JSON.stringify(extras) !== savedExtras);
 
   // A API recebe tudo junto; cada cartão salva a sua parte
   const save = async (part: 'data' | 'access'): Promise<void> => {
@@ -139,6 +164,7 @@ const UserPage: React.FC = () => {
           part === 'access'
             ? own.filter(item => !fromRole.includes(item))
             : user.own_permissions,
+        ...(part === 'data' ? extraPayload(staffRules, extras) : {}),
       });
 
       receive(response.data);
@@ -293,6 +319,13 @@ const UserPage: React.FC = () => {
                       />
                     </Label>
                   </FieldRow>
+                  <div style={{ marginTop: 14 }}>
+                    <ProfileExtraFields
+                      rules={staffRules}
+                      values={extras}
+                      onChange={setExtras}
+                    />
+                  </div>
                   <CardActions>
                     <UIButton
                       type="submit"
