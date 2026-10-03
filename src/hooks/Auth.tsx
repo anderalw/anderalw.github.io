@@ -33,7 +33,10 @@ interface User {
   // Atende clientes: tem coluna na agenda
   is_barber: boolean;
   role: { id: string; name: string } | null;
+  // Tudo o que pode (perfil + as próprias)
   permissions: Permission[];
+  // Ainda com a senha provisória (o e-mail): troca antes de usar o sistema
+  must_change_password: boolean;
 }
 
 interface Client {
@@ -69,6 +72,8 @@ interface AuthContextData {
   signInClientWithGoogle(credential: string): Promise<{ created: boolean }>;
   signOut(): void;
   updateUser(user: User): void;
+  // Troca a senha provisória; a API devolve um token novo, sem restrição
+  changeFirstPassword(password: string, confirmation: string): Promise<void>;
   // O usuário da equipe tem a permissão? (cliente: nunca)
   can(permission: Permission): boolean;
   updateClient(client: Client): void;
@@ -212,6 +217,24 @@ export const AuthProvider: React.FC = ({ children }) => {
     [setData, data.token],
   );
 
+  const changeFirstPassword = useCallback(
+    async (password: string, confirmation: string) => {
+      const response = await api.put<{ token: string; user: User }>(
+        '/profile/password',
+        { password, password_confirmation: confirmation },
+      );
+      const { token, user } = response.data;
+
+      localStorage.setItem('@GoBarber:token', token);
+      localStorage.setItem('@GoBarber:user', JSON.stringify(user));
+
+      api.defaults.headers.authorization = `Bearer ${token}`;
+
+      setData({ token, role: 'provider', user });
+    },
+    [],
+  );
+
   // Perfil e permissões atualizados a cada abertura do sistema (o
   // administrador pode ter mudado o perfil desde o login)
   useEffect(() => {
@@ -252,10 +275,12 @@ export const AuthProvider: React.FC = ({ children }) => {
       updateUser,
       updateClient,
       can,
+      changeFirstPassword,
     }),
     [
       data,
       can,
+      changeFirstPassword,
       signIn,
       signInClient,
       signInClientWithGoogle,

@@ -263,12 +263,16 @@ const ManageUsers: React.FC = () => {
                                   {item.name}
                                   {isYou && <Badge tone="primary">Você</Badge>}
                                 </strong>
-                                <small>{item.email}</small>
+                                <small>
+                                  {item.email}
+                                  {item.must_change_password &&
+                                    ' · senha provisória'}
+                                </small>
                               </div>
                             </Person>
                           </td>
                           <td>
-                            {item.role ? (
+                            {item.role && (
                               <Badge
                                 tone={
                                   item.role.is_admin ? 'primary' : 'neutral'
@@ -276,8 +280,21 @@ const ManageUsers: React.FC = () => {
                               >
                                 {item.role.name}
                               </Badge>
-                            ) : (
-                              <Muted>Sem perfil</Muted>
+                            )}
+                            {!item.role &&
+                              item.own_permissions.length === 0 && (
+                                <Muted>Sem permissões</Muted>
+                              )}
+                            {item.own_permissions.length > 0 && (
+                              <Muted>
+                                {item.role
+                                  ? ` +${item.own_permissions.length}`
+                                  : `${item.own_permissions.length} ${
+                                      item.own_permissions.length === 1
+                                        ? 'permissão'
+                                        : 'permissões'
+                                    }`}
+                              </Muted>
                             )}
                           </td>
                           <td>{item.is_barber ? 'Sim' : <Muted>Não</Muted>}</td>
@@ -412,6 +429,7 @@ const ManageUsers: React.FC = () => {
         <UserModal
           user={editingUser}
           roles={roles}
+          catalog={catalog}
           isYou={editingUser?.id === me.id}
           onClose={() => setEditingUser(undefined)}
           onSaved={() => {

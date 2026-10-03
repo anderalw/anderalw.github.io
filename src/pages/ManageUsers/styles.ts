@@ -110,6 +110,18 @@ export const DialogBody = styled.div`
   overflow-y: auto;
 `;
 
+// Dois campos lado a lado
+export const FieldRow = styled.div`
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px 16px;
+  align-items: end;
+
+  @media (max-width: 600px) {
+    grid-template-columns: 1fr;
+  }
+`;
+
 export const Hint = styled.p`
   margin: 0;
   color: ${colors.textMuted};

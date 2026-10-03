@@ -15,6 +15,7 @@ import SignInClient from '../pages/SignInClient';
 import SignUpClient from '../pages/SignUpClient';
 import ManageProviders from '../pages/ManageProviders';
 import ManageUsers from '../pages/ManageUsers';
+import ChangePassword from '../pages/ChangePassword';
 import ManageServices from '../pages/ManageServices';
 import ManageBlockReasons from '../pages/ManageBlockReasons';
 import Revenue from '../pages/Revenue';
@@ -38,6 +39,8 @@ const Routes: React.FC = () => (
     <Route path="/barbeiro/esqueci-senha" component={ForgotPassword} />
     {/* Link enviado no e-mail de recuperação (backend) */}
     <Route path="/barbeiro/redefinir-senha" component={ResetPassword} />
+    {/* Primeiro acesso: troca da senha provisória */}
+    <Route path="/trocar-senha" component={ChangePassword} isPrivate />
     <Route path="/dashboard" component={Dashboard} isPrivate />
     <Route path="/perfil" component={Profile} isPrivate />
     <Route path="/clientes" exact component={Clients} isPrivate />
