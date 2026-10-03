@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useState } from 'react';
-import { Redirect } from 'react-router-dom';
+import { Redirect, useHistory } from 'react-router-dom';
 import {
   FiAlertTriangle,
   FiEdit2,
@@ -45,15 +45,15 @@ type Confirming =
 const ManageUsers: React.FC = () => {
   const { user: me, can } = useAuth();
   const { addToast } = useToast();
+  const history = useHistory();
   const allowed = can('team');
 
   const [view, setView] = useState<View>('users');
   const [users, setUsers] = useState<StaffUser[] | null>(null);
   const [roles, setRoles] = useState<RoleItem[] | null>(null);
   const [catalog, setCatalog] = useState<PermissionItem[]>([]);
-  const [editingUser, setEditingUser] = useState<StaffUser | null | undefined>(
-    undefined,
-  );
+  // Cadastro de usuário (só nome e e-mail; o resto fica na página dele)
+  const [creatingUser, setCreatingUser] = useState(false);
   const [editingRole, setEditingRole] = useState<RoleItem | null | undefined>(
     undefined,
   );
@@ -190,7 +190,7 @@ const ManageUsers: React.FC = () => {
               <UIButton
                 type="button"
                 disabled={!roles}
-                onClick={() => setEditingUser(null)}
+                onClick={() => setCreatingUser(true)}
               >
                 <FiPlus />
                 Novo usuário
@@ -309,7 +309,9 @@ const ManageUsers: React.FC = () => {
                               variant="ghost"
                               size="sm"
                               title={`Editar ${item.name}`}
-                              onClick={() => setEditingUser(item)}
+                              onClick={() =>
+                                history.push(`/admin/usuarios/${item.id}`)
+                              }
                             >
                               <FiEdit2 />
                               <span className="label">Editar</span>
@@ -425,17 +427,10 @@ const ManageUsers: React.FC = () => {
         </Card>
       </Page>
 
-      {editingUser !== undefined && roles && (
+      {creatingUser && (
         <UserModal
-          user={editingUser}
-          roles={roles}
-          catalog={catalog}
-          isYou={editingUser?.id === me.id}
-          onClose={() => setEditingUser(undefined)}
-          onSaved={() => {
-            setEditingUser(undefined);
-            load();
-          }}
+          onClose={() => setCreatingUser(false)}
+          onCreated={created => history.push(`/admin/usuarios/${created.id}`)}
         />
       )}
 

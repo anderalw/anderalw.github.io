@@ -1,4 +1,5 @@
 import styled, { css } from 'styled-components';
+import { Link } from 'react-router-dom';
 
 import { colors, radius } from '../../styles/theme';
 import { FixedDialog } from '../Dashboard/AppointmentDetails/styles';
@@ -180,4 +181,74 @@ export const PermissionGroup = styled.fieldset`
   input:disabled + span {
     color: ${colors.textMuted};
   }
+`;
+
+// --- Página do usuário -------------------------------------------------------
+
+export const BackLink = styled(Link)`
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 16px;
+  color: ${colors.textMuted};
+  font-size: 14px;
+  text-decoration: none;
+
+  &:hover {
+    color: ${colors.text};
+  }
+`;
+
+export const PageTop = styled.div`
+  margin-bottom: 20px;
+
+  img {
+    width: 48px;
+    height: 48px;
+  }
+
+  h1 {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px;
+    margin: 0;
+    font-size: 24px;
+    font-weight: 600;
+    color: ${colors.text};
+  }
+`;
+
+export const CardGrid = styled.div`
+  display: grid;
+  grid-template-columns: minmax(0, 2fr) minmax(0, 1fr);
+  gap: 20px;
+  margin-bottom: 20px;
+
+  @media (max-width: 900px) {
+    grid-template-columns: 1fr;
+  }
+
+  /* Os dois cartões com a mesma altura */
+  > * {
+    display: flex;
+    flex-direction: column;
+  }
+
+  > * > div:last-child {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+  }
+`;
+
+// Botões no pé do cartão
+export const CardActions = styled.div`
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 8px;
+  margin-top: auto;
+  padding-top: 16px;
 `;

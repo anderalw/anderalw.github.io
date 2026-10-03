@@ -15,6 +15,7 @@ import SignInClient from '../pages/SignInClient';
 import SignUpClient from '../pages/SignUpClient';
 import ManageProviders from '../pages/ManageProviders';
 import ManageUsers from '../pages/ManageUsers';
+import UserPage from '../pages/ManageUsers/UserPage';
 import ChangePassword from '../pages/ChangePassword';
 import ManageServices from '../pages/ManageServices';
 import ManageBlockReasons from '../pages/ManageBlockReasons';
@@ -50,7 +51,8 @@ const Routes: React.FC = () => (
     <Route path="/whatsapp" component={WhatsApp} isPrivate />
     <Route path="/maquininha-virtual" component={VirtualTerminal} isPrivate />
     <Route path="/admin/servicos" component={ManageServices} isPrivate />
-    <Route path="/admin/usuarios" component={ManageUsers} isPrivate />
+    <Route path="/admin/usuarios" exact component={ManageUsers} isPrivate />
+    <Route path="/admin/usuarios/:id" component={UserPage} isPrivate />
     <Route path="/admin/barbeiros" component={ManageProviders} isPrivate />
     <Route path="/admin/faturamento" component={Revenue} isPrivate />
     <Route path="/admin/indicadores" component={Insights} isPrivate />
