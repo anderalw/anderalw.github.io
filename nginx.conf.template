@@ -9,6 +9,11 @@ server {
   # Envio de fotos (logo, capa, avatar)
   client_max_body_size 10m;
 
+  # Rotas da plataforma (painel do SaaS): só de dentro do Docker
+  location /api/internal/ {
+    return 404;
+  }
+
   # API: /api/sessions -> http://api:3333/sessions
   location /api/ {
     proxy_pass ${API_UPSTREAM}/;
