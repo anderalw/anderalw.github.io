@@ -1,4 +1,5 @@
 import styled, { css } from 'styled-components';
+import { NavLink } from 'react-router-dom';
 
 import { colors, radius } from '../../styles/theme';
 
@@ -264,3 +265,41 @@ export const Links = styled.ul`
 
 // Rótulo do campo (acima do controle)
 export const FieldLabel = styled.label``;
+
+// Abas das configurações (cada uma com endereço próprio)
+export const SectionTabs = styled.nav`
+  display: flex;
+  gap: 4px;
+  margin-bottom: 24px;
+  border-bottom: 1px solid ${colors.border};
+  overflow-x: auto;
+`;
+
+export const SectionTab = styled(NavLink)`
+  flex-shrink: 0;
+  margin-bottom: -1px;
+  padding: 10px 14px;
+  border-bottom: 2px solid transparent;
+  color: ${colors.textMuted};
+  font-size: 14px;
+  font-weight: 500;
+  text-decoration: none;
+  transition: color 0.15s, border-color 0.15s;
+
+  &:hover {
+    color: ${colors.text};
+  }
+
+  &.active {
+    border-bottom-color: ${colors.primary};
+    color: ${colors.text};
+  }
+`;
+
+// Abas de uma coluna só: os cartões um embaixo do outro
+export const SectionColumn = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  max-width: 880px;
+`;

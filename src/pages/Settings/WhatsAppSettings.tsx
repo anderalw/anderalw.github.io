@@ -186,7 +186,7 @@ const WhatsAppSettings: React.FC = () => {
   }, [provider, values, groups, receive, addToast]);
 
   return (
-    <Card style={{ marginTop: 24 }}>
+    <Card>
       <CardHeader>
         <div>
           <h2>WhatsApp</h2>

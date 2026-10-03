@@ -54,7 +54,9 @@ const TwoColumns = styled.div`
     grid-template-columns: minmax(0, 1fr);
   }
 
-  > div + div {
+  /* Lado a lado: sem o espaço de campos empilhados (o && vence a regra
+     do Field) */
+  && > div + div {
     margin-top: 0;
   }
 `;
@@ -247,7 +249,7 @@ const SiteSettings: React.FC = () => {
   }, [addToast]);
 
   return (
-    <Card as="form" onSubmit={handleSave} style={{ marginTop: 24 }}>
+    <Card as="form" onSubmit={handleSave}>
       <CardHeader>
         <div>
           <h2>Página da barbearia</h2>

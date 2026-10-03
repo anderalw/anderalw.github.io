@@ -359,7 +359,7 @@ const TerminalSettings: React.FC = () => {
   );
 
   return (
-    <Card style={{ marginTop: 24 }}>
+    <Card>
       <CardHeader>
         <div>
           <h2>Maquininha de cartão</h2>

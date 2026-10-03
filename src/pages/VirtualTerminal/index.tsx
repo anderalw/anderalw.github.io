@@ -219,7 +219,7 @@ const VirtualTerminal: React.FC = () => {
   return (
     <Page>
       <header>
-        <Link to="/admin/configuracoes">
+        <Link to="/admin/configuracoes/integracoes">
           <FiArrowLeft />
           Configurações
         </Link>

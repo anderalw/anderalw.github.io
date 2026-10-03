@@ -120,7 +120,8 @@ const WhatsApp: React.FC = () => {
         O WhatsApp está desligado: nenhuma mensagem nova entra aqui.{' '}
         {can('settings') ? (
           <>
-            Ligue em <Link to="/admin/configuracoes">Configurações</Link>.
+            Ligue em{' '}
+            <Link to="/admin/configuracoes/integracoes">Configurações</Link>.
           </>
         ) : (
           'Peça para o administrador ligar nas Configurações.'
