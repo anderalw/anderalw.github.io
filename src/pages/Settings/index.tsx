@@ -83,6 +83,7 @@ const SECTIONS = [
   { key: '', label: 'Geral' },
   { key: 'site', label: 'Site' },
   { key: 'cadastros', label: 'Cadastros' },
+  { key: 'recursos', label: 'Recursos' },
   { key: 'integracoes', label: 'Integrações' },
 ];
 
@@ -287,6 +288,13 @@ const Settings: React.FC = () => {
           </SectionColumn>
         )}
 
+        {section === 'recursos' && (
+          <SectionColumn>
+            <FeaturesSettings />
+            <ResourceSettings />
+          </SectionColumn>
+        )}
+
         {section === 'integracoes' && (
           <SectionColumn>
             <div>
@@ -463,9 +471,6 @@ const Settings: React.FC = () => {
                   </UIButton>
                 </CardFooter>
               </Card>
-
-              <FeaturesSettings />
-              <ResourceSettings />
             </div>
 
             <div>

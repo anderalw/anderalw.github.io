@@ -102,7 +102,7 @@ const FeaturesSettings: React.FC = () => {
   };
 
   return (
-    <Card style={{ marginTop: 24 }}>
+    <Card>
       <CardHeader>
         <div>
           <h2>Recursos</h2>

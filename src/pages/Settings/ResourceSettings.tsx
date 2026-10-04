@@ -79,7 +79,7 @@ const DepositSettings: React.FC = () => {
   };
 
   return (
-    <Card as="form" onSubmit={save} style={{ marginTop: 24 }}>
+    <Card as="form" onSubmit={save}>
       <CardHeader>
         <div>
           <h2>Sinal</h2>
@@ -162,7 +162,7 @@ const ConsentSettings: React.FC = () => {
   };
 
   return (
-    <Card as="form" onSubmit={save} style={{ marginTop: 24 }}>
+    <Card as="form" onSubmit={save}>
       <CardHeader>
         <div>
           <h2>Termo de consentimento</h2>
