@@ -24,7 +24,7 @@ import {
 } from '../../components/ui';
 import defaultCover from '../../assets/sign-in-background.png';
 import { Field, FieldLabel, LogoActions, SaveError } from './styles';
-import { useVocabulary } from '../../hooks/Vocabulary';
+import { useVocabulary, useSegmentExamples } from '../../hooks/Vocabulary';
 
 interface SiteContent {
   tagline: string;
@@ -112,6 +112,7 @@ const Counter = styled.small`
 // Conteúdo da página inicial (o site da barbearia): frase da capa, texto
 // "sobre", contatos e a foto da capa
 const SiteSettings: React.FC = () => {
+  const examples = useSegmentExamples();
   const terms = useVocabulary();
   const { addToast } = useToast();
   const fileRef = useRef<HTMLInputElement>(null);
@@ -304,8 +305,7 @@ const SiteSettings: React.FC = () => {
                 )}
               </div>
               <small>
-                Foto horizontal, de preferência do seu espaço ou de um corte.
-                Até 5 MB. O texto fica sobre a parte esquerda.
+                {`Foto horizontal, de preferência ${examples.coverHint}. Até 5 MB. O texto fica sobre a parte esquerda.`}
               </small>
             </LogoActions>
             <input

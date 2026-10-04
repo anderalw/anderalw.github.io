@@ -423,8 +423,8 @@ const Settings: React.FC = () => {
                         </div>
                         <small>
                           PNG, JPG, WEBP ou SVG, até 2 MB. De preferência
-                          quadrada e com fundo transparente. Sem logo, aparece a
-                          tesoura.
+                          quadrada e com fundo transparente. Sem logo, aparece o
+                          ícone do ramo do negócio.
                         </small>
                       </LogoActions>
                       <input

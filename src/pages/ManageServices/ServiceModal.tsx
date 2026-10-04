@@ -21,6 +21,7 @@ import {
   FieldError,
   Hint,
 } from './styles';
+import { useSegmentExamples } from '../../hooks/Vocabulary';
 
 export interface Service {
   id: string;
@@ -50,6 +51,7 @@ const ServiceModal: React.FC<ServiceModalProps> = ({
   onClose,
   onSaved,
 }) => {
+  const examples = useSegmentExamples();
   const { addToast } = useToast();
   const isNew = !service;
 
@@ -184,7 +186,7 @@ const ServiceModal: React.FC<ServiceModalProps> = ({
               <TextInput
                 value={name}
                 onChange={event => setName(event.target.value)}
-                placeholder="Ex: Cabelo e barba"
+                placeholder={`Ex: ${examples.service}`}
                 maxLength={60}
                 autoFocus
                 aria-invalid={!!errors.name}

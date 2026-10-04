@@ -20,6 +20,7 @@ import {
   FieldRow,
 } from '../ManageServices/styles';
 import { Plan } from './types';
+import { useSegmentExamples } from '../../hooks/Vocabulary';
 
 interface CatalogService {
   id: string;
@@ -119,6 +120,7 @@ const Check = styled.label`
 
 // Criar ou editar um plano do clube
 const PlanModal: React.FC<PlanModalProps> = ({ plan, onClose, onSaved }) => {
+  const examples = useSegmentExamples();
   const [services, setServices] = useState<CatalogService[] | null>(null);
   const [name, setName] = useState(plan?.name || '');
   const [price, setPrice] = useState(
@@ -286,7 +288,7 @@ const PlanModal: React.FC<PlanModalProps> = ({ plan, onClose, onSaved }) => {
                   value={name}
                   maxLength={60}
                   autoFocus
-                  placeholder="Ex: Corte ilimitado"
+                  placeholder={`Ex: ${examples.plan}`}
                   onChange={event => {
                     setName(event.target.value);
                     setErrors({});
@@ -315,7 +317,7 @@ const PlanModal: React.FC<PlanModalProps> = ({ plan, onClose, onSaved }) => {
               <TextInput
                 value={description}
                 maxLength={300}
-                placeholder="Ex: Corte sempre em dia, sem pagar a cada visita."
+                placeholder={`Ex: ${examples.planDescription}`}
                 onChange={event => setDescription(event.target.value)}
               />
               <FieldError />

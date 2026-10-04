@@ -52,7 +52,7 @@ import {
   Footer,
   Skeleton,
 } from './styles';
-import { useVocabulary } from '../../hooks/Vocabulary';
+import { useVocabulary, useSegmentExamples } from '../../hooks/Vocabulary';
 
 interface Site {
   tagline: string;
@@ -117,6 +117,7 @@ function todayStatus(
 // Site da barbearia: capa, serviços, equipe, horários e contato, com o
 // que o admin configura e os dados do próprio sistema
 const Landing: React.FC = () => {
+  const examples = useSegmentExamples();
   const terms = useVocabulary();
   const { role } = useAuth();
   const { branding } = useBranding();
@@ -492,7 +493,7 @@ const Landing: React.FC = () => {
       <Closing>
         <div>
           <div>
-            <h2>Pronto para o próximo corte?</h2>
+            <h2>{examples.cta}</h2>
             <p>Escolha o horário que funciona para você, em poucos cliques.</p>
           </div>
           <PrimaryLink to={bookTo} $large>

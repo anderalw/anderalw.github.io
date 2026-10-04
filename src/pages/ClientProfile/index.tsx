@@ -58,7 +58,7 @@ import {
   HistoryRow,
   HistoryTable,
 } from './styles';
-import { useVocabulary } from '../../hooks/Vocabulary';
+import { useVocabulary, useSegmentExamples } from '../../hooks/Vocabulary';
 
 type Filter = 'all' | 'completed' | 'no_show' | 'canceled';
 
@@ -151,6 +151,7 @@ function clientSince(createdAt: string): string {
 
 // Ficha do cliente: contatos, resumo, observações e todo o histórico
 const ClientProfile: React.FC = () => {
+  const examples = useSegmentExamples();
   const terms = useVocabulary();
   const { id } = useParams<{ id: string }>();
   const history = useHistory();
@@ -441,7 +442,7 @@ const ClientProfile: React.FC = () => {
               <CardHeader>
                 <div>
                   <h2>Observações</h2>
-                  <p>Preferências, alergias, estilo de corte...</p>
+                  <p>{examples.notesHint}</p>
                 </div>
               </CardHeader>
               <CardBody>
@@ -449,7 +450,7 @@ const ClientProfile: React.FC = () => {
                   value={notes}
                   maxLength={MAX_NOTES}
                   disabled={!client}
-                  placeholder="Ex: máquina 2 nas laterais, tesoura em cima. Alergia a pomada com álcool."
+                  placeholder={examples.notesPlaceholder}
                   aria-label="Observações sobre o cliente"
                   onChange={event => setNotes(event.target.value)}
                 />
