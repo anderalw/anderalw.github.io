@@ -21,7 +21,7 @@ import ptBR from 'date-fns/locale/pt-BR';
 import { useLocation } from 'react-router-dom';
 import DayPicker from 'react-day-picker';
 import 'react-day-picker/lib/style.css';
-import { FiChevronLeft, FiChevronRight } from 'react-icons/fi';
+import { FiChevronLeft, FiChevronRight, FiZap } from 'react-icons/fi';
 import {
   COMPACT_HOUR_HEIGHT,
   AgendaArea,
@@ -43,6 +43,8 @@ import {
   EmptyState,
   ViewSwitch,
   ProviderFilter,
+  DragGhost,
+  WalkInButton,
 } from './styles';
 import { useAuth } from '../../hooks/Auth';
 import { useToast } from '../../hooks/Toast';
@@ -67,8 +69,13 @@ import AgendaBlockCard from './AgendaBlockCard';
 import PendingConfirmations from './PendingConfirmations';
 import WaitlistPanel from './WaitlistPanel';
 import useHourHeight from './useHourHeight';
+import useAppointmentDrag, { DropTarget } from './useAppointmentDrag';
+import MoveConfirm from './MoveConfirm';
+import WalkInMenu from './WalkInMenu';
 import {
   Agenda,
+  AgendaProvider,
+  ParsedAppointment,
   MONTHS,
   parseAppointments,
   parseBlocks,
@@ -128,7 +135,7 @@ function weekTitle(start: Date): string {
 }
 
 const Dashboard: React.FC = () => {
-  const { user } = useAuth();
+  const { user, can } = useAuth();
   const location = useLocation();
   const { addToast } = useToast();
   const [selectedDate, setSelectedDate] = useState(
@@ -174,6 +181,11 @@ const Dashboard: React.FC = () => {
     null,
   );
   const [removingBlock, setRemovingBlock] = useState(false);
+  // Card solto em outro horário/barbeiro: falta confirmar
+  const [move, setMove] = useState<DropTarget | null>(null);
+  // Menu "Encaixe" aberto (canto do botão)
+  const [walkIn, setWalkIn] = useState<{ x: number; y: number } | null>(null);
+  const gridBodyRef = useRef<HTMLDivElement>(null);
 
   const openSlotMenu = useCallback((slot: NewSlot, point: ClickPoint) => {
     setSlotMenu({ ...slot, ...point });
@@ -220,6 +232,7 @@ const Dashboard: React.FC = () => {
       setNewSlot(null);
       setBlockSlot(null);
       setBlockMenu(null);
+      setMove(null);
       setRefreshKey(key => key + 1);
       addToast({ type: 'success', ...message });
     },
@@ -260,7 +273,13 @@ const Dashboard: React.FC = () => {
   // andam um dia (ou uma semana) e D/S trocam a visão. Ficam desligados com
   // um painel aberto ou digitando
   const panelOpen =
-    !!details || !!newSlot || !!slotMenu || !!blockSlot || !!blockMenu;
+    !!details ||
+    !!newSlot ||
+    !!slotMenu ||
+    !!blockSlot ||
+    !!blockMenu ||
+    !!move ||
+    !!walkIn;
   const step = view === 'week' ? 7 : 1;
 
   useEffect(() => {
@@ -406,6 +425,38 @@ const Dashboard: React.FC = () => {
     [agenda.providers],
   );
 
+  // Quem pode mexer na agenda de cada barbeiro (a API confere de novo)
+  const canManage = useCallback(
+    (provider: AgendaProvider) =>
+      provider.id === user.id || can('agenda.manage'),
+    [user.id, can],
+  );
+
+  // Arrasta só o que ainda não começou, para um barbeiro ativo
+  const canDrag = useCallback(
+    (appointment: ParsedAppointment, provider: AgendaProvider) =>
+      !appointment.attendance &&
+      isBefore(now, appointment.parsedDate) &&
+      canManage(provider),
+    [now, canManage],
+  );
+
+  const drag = useAppointmentDrag({
+    day: selectedDate,
+    startHour,
+    endHour,
+    hourHeight,
+    providers: activeProviders.filter(canManage),
+    gridRef: gridBodyRef,
+    onDrop: setMove,
+  });
+
+  // Encaixe: barbeiros ativos em que a pessoa pode marcar
+  const walkInProviders = useMemo(
+    () => activeProviders.filter(canManage),
+    [activeProviders, canManage],
+  );
+
   const countText = useMemo(() => {
     const count = view === 'week' ? weekCount : appointments.length;
     const suffix = view === 'week' ? ' na semana' : '';
@@ -514,6 +565,23 @@ const Dashboard: React.FC = () => {
             </ProviderFilter>
           )}
 
+          {view === 'day' && isToday(selectedDate) && (
+            <WalkInButton
+              type="button"
+              title="Encaixe: cliente sem horário, veja quem está livre agora"
+              aria-label="Encaixe"
+              aria-haspopup="menu"
+              onClick={event => {
+                const rect = event.currentTarget.getBoundingClientRect();
+
+                setWalkIn({ x: rect.right, y: rect.bottom + 6 });
+              }}
+            >
+              <FiZap />
+              <span>Encaixe</span>
+            </WalkInButton>
+          )}
+
           <ViewSwitch role="group" aria-label="Visão da agenda">
             <button
               type="button"
@@ -589,7 +657,7 @@ const Dashboard: React.FC = () => {
               ))}
             </GridHeader>
 
-            <GridBody columns={agenda.providers.length}>
+            <GridBody ref={gridBodyRef} columns={agenda.providers.length}>
               <TimeColumn>
                 {hours.map(hour => (
                   <span key={hour}>{`${String(hour).padStart(
@@ -609,7 +677,10 @@ const Dashboard: React.FC = () => {
                   : null;
 
                 return (
-                  <ProviderColumn key={provider.id}>
+                  <ProviderColumn
+                    key={provider.id}
+                    data-provider-id={provider.id}
+                  >
                     {hours.map(hour => {
                       const off =
                         workStart === null ||
@@ -743,7 +814,19 @@ const Dashboard: React.FC = () => {
                             )}
                             <AppointmentCard
                               type="button"
+                              movable={canDrag(appointment, provider)}
+                              dragging={
+                                drag.preview?.appointment.id === appointment.id
+                              }
+                              onPointerDown={event => {
+                                if (canDrag(appointment, provider)) {
+                                  drag.startDrag(event, appointment, provider);
+                                }
+                              }}
+                              // O arraste nativo do navegador atrapalharia
+                              onDragStart={event => event.preventDefault()}
                               onClick={event =>
+                                !drag.wasDragging() &&
                                 openDetails(
                                   {
                                     appointment,
@@ -787,6 +870,39 @@ const Dashboard: React.FC = () => {
                           </React.Fragment>
                         );
                       })}
+
+                    {drag.preview &&
+                      drag.preview.provider_id === provider.id && (
+                        <DragGhost
+                          color={color}
+                          style={{
+                            top:
+                              (drag.preview.start.getHours() +
+                                drag.preview.start.getMinutes() / 60 -
+                                startHour) *
+                                hourHeight +
+                              2,
+                            height: Math.max(
+                              ((drag.preview.end.getTime() -
+                                drag.preview.start.getTime()) /
+                                (60 * 60 * 1000)) *
+                                hourHeight -
+                                4,
+                              MIN_CARD_HEIGHT,
+                            ),
+                          }}
+                        >
+                          <strong>
+                            {`${format(drag.preview.start, 'HH:mm')} – ${format(
+                              drag.preview.end,
+                              'HH:mm',
+                            )}`}
+                          </strong>
+                          <small>
+                            {drag.preview.appointment.client?.name || 'Cliente'}
+                          </small>
+                        </DragGhost>
+                      )}
                   </ProviderColumn>
                 );
               })}
@@ -854,6 +970,31 @@ const Dashboard: React.FC = () => {
           }
           onClose={() => setBlockSlot(null)}
           onCreated={handleAppointmentChanged}
+        />
+      )}
+
+      {move && (
+        <MoveConfirm
+          move={move}
+          onClose={() => setMove(null)}
+          onMoved={handleAppointmentChanged}
+        />
+      )}
+
+      {walkIn && (
+        <WalkInMenu
+          x={walkIn.x}
+          y={walkIn.y}
+          now={now}
+          providers={walkInProviders}
+          allProviders={agenda.providers}
+          appointments={appointments}
+          blocks={blocks}
+          onClose={() => setWalkIn(null)}
+          onPick={(provider, start, color) => {
+            setWalkIn(null);
+            setNewSlot({ provider, start, color });
+          }}
         />
       )}
 

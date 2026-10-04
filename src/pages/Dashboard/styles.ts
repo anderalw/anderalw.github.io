@@ -37,6 +37,8 @@ export const Toolbar = styled.div`
     font-weight: 600;
     letter-spacing: -0.01em;
     color: ${colors.text};
+    /* Uma linha só: com mais botões na barra, o título não quebra */
+    white-space: nowrap;
 
     &::first-letter {
       text-transform: uppercase;
@@ -47,6 +49,7 @@ export const Toolbar = styled.div`
     margin-left: auto;
     color: ${colors.textMuted};
     font-size: 13px;
+    white-space: nowrap;
   }
 `;
 
@@ -257,10 +260,26 @@ interface AppointmentCardProps {
   alert?: boolean;
   // Horas baixas: esconde o telefone e junta horário e cliente
   compact: boolean;
+  // Pode ser arrastado para outro horário ou barbeiro
+  movable?: boolean;
+  // Sendo arrastado: o original fica apagado no lugar
+  dragging?: boolean;
 }
 
 // Botão: abre os detalhes do agendamento (clique ou Enter pelo teclado)
 export const AppointmentCard = styled.button<AppointmentCardProps>`
+  ${props =>
+    props.movable &&
+    css`
+      cursor: grab;
+    `}
+
+  ${props =>
+    props.dragging &&
+    css`
+      opacity: 0.35;
+    `}
+
   position: absolute;
   left: 4px;
   right: 4px;
@@ -711,4 +730,134 @@ export const DangerMenuItem = styled(MenuItem)`
   svg {
     color: ${colors.danger};
   }
+`;
+
+// Card de agendamento sendo arrastado
+export const DragGhost = styled.div<{ color: string }>`
+  position: absolute;
+  left: 4px;
+  right: 4px;
+  z-index: 3;
+  padding: 4px 8px;
+  border: 2px dashed ${props => props.color};
+  border-radius: 6px;
+  background: ${props =>
+    `color-mix(in srgb, ${props.color} 30%, var(--c-card-base))`};
+  box-shadow: ${shadow.popover};
+  color: ${colors.text};
+  font-size: 12px;
+  pointer-events: none;
+
+  strong {
+    display: block;
+    font-weight: 600;
+    font-variant-numeric: tabular-nums;
+  }
+
+  small {
+    display: block;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    color: ${colors.textMuted};
+  }
+`;
+
+// Confirmação da remarcação por arraste (embaixo, no centro)
+export const MoveBar = styled.div`
+  position: fixed;
+  left: 50%;
+  bottom: 24px;
+  z-index: 20;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: min(640px, calc(100vw - 32px));
+  padding: 14px 16px;
+  border: 1px solid ${colors.borderStrong};
+  border-radius: ${radius.lg};
+  background: ${colors.surface};
+  box-shadow: ${shadow.popover};
+  transform: translateX(-50%);
+
+  > svg {
+    flex-shrink: 0;
+    width: 18px;
+    height: 18px;
+    color: ${colors.primary};
+  }
+
+  p {
+    flex: 1;
+    min-width: 0;
+    font-size: 14px;
+    color: ${colors.text};
+  }
+
+  small {
+    display: block;
+    margin-top: 2px;
+    font-size: 12px;
+    color: ${colors.textMuted};
+  }
+`;
+
+// Botão "Encaixe" na barra da agenda
+export const WalkInButton = styled(TodayButton)`
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-right: 0;
+
+  svg {
+    width: 14px;
+    height: 14px;
+    color: ${colors.primary};
+  }
+
+  /* Telas menores: só o ícone (o título do botão explica) */
+  @media (max-width: 1500px) {
+    padding: 0 9px;
+
+    span {
+      display: none;
+    }
+  }
+`;
+
+// Barbeiro no menu de encaixe: nome e quando fica livre
+export const WalkInItem = styled.button<{ color: string }>`
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 2px;
+  width: 100%;
+  min-width: 260px;
+  padding: 8px 10px 8px 12px;
+  border: 0;
+  border-left: 3px solid ${props => props.color};
+  border-radius: 6px;
+  background: transparent;
+  color: ${colors.text};
+  font-size: 14px;
+  text-align: left;
+
+  & + & {
+    margin-top: 2px;
+  }
+
+  &:hover:not(:disabled),
+  &:focus-visible {
+    background: ${colors.surfaceHover};
+  }
+
+  &:disabled {
+    opacity: 0.5;
+    cursor: default;
+  }
+`;
+
+export const WalkInStatus = styled.small<{ free?: boolean }>`
+  font-size: 12px;
+  color: ${props => (props.free ? colors.success : colors.textMuted)};
 `;
