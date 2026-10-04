@@ -45,13 +45,23 @@ export const ServiceRow = styled.tr<{ inactive: boolean; editing: boolean }>`
     font-weight: 500;
   }
 
+  td.num {
+    white-space: nowrap;
+  }
+
   td.actions {
     width: 1%;
     white-space: nowrap;
     text-align: right;
 
     button + button {
-      margin-left: 4px;
+      margin-left: 2px;
+    }
+
+    /* Só ícones: sobra espaço para o nome do serviço numa linha */
+    button {
+      width: 30px;
+      padding: 0;
     }
   }
 `;

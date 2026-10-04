@@ -1,6 +1,13 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import { Redirect } from 'react-router-dom';
-import { FiEdit2, FiEye, FiEyeOff, FiPlus } from 'react-icons/fi';
+import {
+  FiArrowDown,
+  FiArrowUp,
+  FiEdit2,
+  FiEye,
+  FiEyeOff,
+  FiPlus,
+} from 'react-icons/fi';
 
 import api from '../../services/api';
 import { useAuth } from '../../hooks/Auth';
@@ -127,6 +134,35 @@ const ManageServices: React.FC = () => {
     [loadServices, showError],
   );
 
+  // Sobe ou desce um serviço; a ordem da lista é a do site e a de agendar
+  const handleMove = useCallback(
+    async (index: number, step: -1 | 1) => {
+      const target = index + step;
+
+      if (target < 0 || target >= services.length) return;
+
+      const reordered = [...services];
+      [reordered[index], reordered[target]] = [
+        reordered[target],
+        reordered[index],
+      ];
+      // Muda na hora; se a API recusar, volta como estava
+      setServices(reordered);
+
+      try {
+        const response = await api.put<Service[]>('/services/order', {
+          ids: reordered.map(service => service.id),
+        });
+
+        setServices(response.data);
+      } catch (err) {
+        showError(err, 'Não foi possível mudar a ordem.');
+        loadServices();
+      }
+    },
+    [services, loadServices, showError],
+  );
+
   // Só administradores gerenciam serviços (a API também valida)
   if (!allowed) {
     return <Redirect to="/dashboard" />;
@@ -156,7 +192,10 @@ const ManageServices: React.FC = () => {
         <Columns>
           <Card>
             <CardHeader>
-              <h2>Catálogo</h2>
+              <div>
+                <h2>Catálogo</h2>
+                <p>Use as setas para mudar a ordem em que aparecem no site.</p>
+              </div>
               <Counter>
                 {loading
                   ? '–'
@@ -199,7 +238,7 @@ const ManageServices: React.FC = () => {
                           <td aria-hidden="true" />
                         </tr>
                       ))
-                    : services.map(service => (
+                    : services.map((service, index) => (
                         <ServiceRow
                           key={service.id}
                           inactive={!service.active}
@@ -226,20 +265,49 @@ const ManageServices: React.FC = () => {
                               type="button"
                               variant="ghost"
                               size="sm"
-                              title={`Editar ${service.name}`}
-                              onClick={() => setModal({ service })}
+                              title="Subir"
+                              aria-label={`Subir ${service.name}`}
+                              disabled={index === 0}
+                              onClick={() => handleMove(index, -1)}
                             >
-                              <FiEdit2 />
-                              Editar
+                              <FiArrowUp />
                             </UIButton>
                             <UIButton
                               type="button"
                               variant="ghost"
                               size="sm"
+                              title="Descer"
+                              aria-label={`Descer ${service.name}`}
+                              disabled={index === services.length - 1}
+                              onClick={() => handleMove(index, 1)}
+                            >
+                              <FiArrowDown />
+                            </UIButton>
+                            <UIButton
+                              type="button"
+                              variant="ghost"
+                              size="sm"
+                              title="Editar"
+                              aria-label={`Editar ${service.name}`}
+                              onClick={() => setModal({ service })}
+                            >
+                              <FiEdit2 />
+                            </UIButton>
+                            <UIButton
+                              type="button"
+                              variant="ghost"
+                              size="sm"
+                              title={
+                                service.active
+                                  ? 'Desativar (some do site)'
+                                  : 'Reativar'
+                              }
+                              aria-label={`${
+                                service.active ? 'Desativar' : 'Reativar'
+                              } ${service.name}`}
                               onClick={() => handleToggleActive(service)}
                             >
                               {service.active ? <FiEyeOff /> : <FiEye />}
-                              {service.active ? 'Desativar' : 'Reativar'}
                             </UIButton>
                           </td>
                         </ServiceRow>

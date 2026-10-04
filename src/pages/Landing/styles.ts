@@ -296,11 +296,14 @@ export const ServiceCard = styled(Link)`
     color: ${colors.textMuted};
   }
 
+  /* Preço sempre no rodapé: os cards da mesma linha ficam alinhados mesmo
+     com nomes de uma ou duas linhas */
   footer {
     display: flex;
     align-items: flex-end;
     justify-content: space-between;
-    margin-top: 14px;
+    margin-top: auto;
+    padding-top: 14px;
 
     b {
       font-size: 22px;
