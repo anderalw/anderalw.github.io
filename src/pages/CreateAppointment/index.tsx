@@ -9,7 +9,7 @@ import { FiCheck, FiClock, FiUsers } from 'react-icons/fi';
 import api from '../../services/api';
 import { useToast } from '../../hooks/Toast';
 import getApiErrorMessage from '../../utils/getApiErrorMessage';
-import { formatPrice } from '../../utils/money';
+import { formatPrice, formatServicePrice } from '../../utils/money';
 import { formatDuration } from '../../utils/duration';
 import avatarFallback from '../../utils/avatarFallback';
 
@@ -442,7 +442,7 @@ const CreateAppointment: React.FC = () => {
 
   const canConfirm = !!(service && providerChosen && appointmentDate);
 
-  let totalText = service ? formatPrice(service.price_cents) : 'R$ –';
+  let totalText = service ? formatServicePrice(service.price_cents) : 'R$ –';
   let totalNote = '';
 
   // Pacote com sessão para o serviço: incluso, sem passar pelo clube
@@ -604,7 +604,7 @@ const CreateAppointment: React.FC = () => {
                                 {formatDuration(item.duration_minutes)}
                               </small>
                             </div>
-                            <span>{formatPrice(item.price_cents)}</span>
+                            <span>{formatServicePrice(item.price_cents)}</span>
                           </ServiceOption>
                         ))}
                   </OptionGrid>

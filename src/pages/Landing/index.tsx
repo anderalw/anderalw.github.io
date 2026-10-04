@@ -14,7 +14,7 @@ import { FaWhatsapp } from 'react-icons/fa';
 import api from '../../services/api';
 import { useAuth } from '../../hooks/Auth';
 import { useBranding } from '../../hooks/Branding';
-import { formatPrice } from '../../utils/money';
+import { formatPrice, formatServicePrice } from '../../utils/money';
 import { formatDuration } from '../../utils/duration';
 import { formatPhone, whatsappHref } from '../../utils/phone';
 import BrandMark from '../../components/BrandMark';
@@ -260,7 +260,7 @@ const Landing: React.FC = () => {
                 <strong>{service.name}</strong>
                 <small>{formatDuration(service.duration_minutes)}</small>
                 <footer>
-                  <b>{formatPrice(service.price_cents)}</b>
+                  <b>{formatServicePrice(service.price_cents)}</b>
                   <span>
                     Agendar
                     <FiArrowRight />
@@ -338,7 +338,7 @@ const Landing: React.FC = () => {
           <div>
             <SectionTitle>
               <span>Sobre nós</span>
-              <h2>{`Conheça a ${branding.name}`}</h2>
+              <h2>{`Conheça ${branding.name}`}</h2>
             </SectionTitle>
             <About>{site.about}</About>
           </div>
