@@ -21,6 +21,7 @@ import { formatPrice } from '../../utils/money';
 import { formatPhone, whatsappHref } from '../../utils/phone';
 
 import AppLayout from '../../components/AppLayout';
+import EmptyState from '../../components/EmptyState';
 import {
   Page,
   PageHeader,
@@ -496,9 +497,12 @@ const Insights: React.FC = () => {
           </CardHeader>
 
           {lost && lost.length === 0 ? (
-            <EmptyText>
-              {`Nenhum cliente sumido há mais de ${lostDays} dias.`}
-            </EmptyText>
+            <EmptyState
+              compact
+              icon="users"
+              title={`Nenhum cliente sumido há mais de ${lostDays} dias`}
+              description="Bom sinal: todo mundo tem voltado."
+            />
           ) : (
             <LostTable>
               <thead>

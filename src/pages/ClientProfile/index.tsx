@@ -24,6 +24,7 @@ import avatarFallback from '../../utils/avatarFallback';
 import { formatCep, formatCpf } from '../../utils/profileFields';
 
 import AppLayout from '../../components/AppLayout';
+import EmptyState from '../../components/EmptyState';
 import MembershipCard from './MembershipCard';
 import {
   Page,
@@ -489,11 +490,15 @@ const ClientProfile: React.FC = () => {
             </CardHeader>
 
             {client && shown.length === 0 ? (
-              <EmptyText>
-                {filter === 'all'
-                  ? 'Nenhum agendamento ainda.'
-                  : 'Nenhum agendamento nesta situação.'}
-              </EmptyText>
+              <EmptyState
+                compact
+                icon="calendar"
+                title={
+                  filter === 'all'
+                    ? 'Nenhum agendamento ainda'
+                    : 'Nenhum agendamento nesta situação'
+                }
+              />
             ) : (
               <HistoryTable>
                 <thead>

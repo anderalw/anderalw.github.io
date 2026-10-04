@@ -1,12 +1,17 @@
 import styled, { css } from 'styled-components';
+import { NavLink } from 'react-router-dom';
 
 import { colors, radius } from '../../styles/theme';
 
 // Peças visuais das telas do painel do barbeiro (dentro do AppLayout)
 
-export const Page = styled.div`
+// Duas larguras, sempre centralizadas: a padrão (tabelas, painéis) e a
+// estreita (formulários e listas de leitura)
+export const Page = styled.div<{ narrow?: boolean }>`
+  width: 100%;
+  max-width: ${props => (props.narrow ? '1064px' : '1344px')};
+  margin: 0 auto;
   padding: 28px 32px 40px;
-  max-width: 1280px;
 `;
 
 export const PageHeader = styled.header`
@@ -35,10 +40,23 @@ export const PageHeader = styled.header`
   }
 `;
 
-export const Card = styled.section`
+// accent: o cartão pede atenção (faixa colorida à esquerda)
+export const Card = styled.section<{ accent?: 'warning' | 'primary' }>`
   background: ${colors.surface};
   border: 1px solid ${colors.border};
   border-radius: ${radius.lg};
+
+  ${props =>
+    props.accent &&
+    css`
+      border-color: color-mix(
+        in srgb,
+        ${props.accent === 'warning' ? colors.warning : colors.primary} 45%,
+        ${colors.border}
+      );
+      box-shadow: inset 3px 0 0
+        ${props.accent === 'warning' ? colors.warning : colors.primary};
+    `}
 `;
 
 export const CardHeader = styled.header`
@@ -190,6 +208,8 @@ export const UIButton = styled.button<ButtonProps>`
   font-size: ${props => (props.size === 'sm' ? '13px' : '14px')};
   font-weight: 500;
   white-space: nowrap;
+  /* Também usado como link (as="a") */
+  text-decoration: none;
   transition: background-color 0.15s, border-color 0.15s, color 0.15s;
 
   ${props => buttonVariants[props.variant || 'primary']}
@@ -288,4 +308,74 @@ export const Badge = styled.span<{ tone?: 'success' | 'neutral' | 'primary' }>`
 
 export const Muted = styled.span`
   color: ${colors.textMuted};
+`;
+
+// Abas de uma área (cada uma com endereço próprio), logo abaixo do título
+export const PageTabs = styled.nav`
+  display: flex;
+  gap: 4px;
+  margin-bottom: 24px;
+  border-bottom: 1px solid ${colors.border};
+  overflow-x: auto;
+`;
+
+export const PageTab = styled(NavLink)`
+  flex-shrink: 0;
+  margin-bottom: -1px;
+  padding: 10px 14px;
+  border-bottom: 2px solid transparent;
+  color: ${colors.textMuted};
+  font-size: 14px;
+  font-weight: 500;
+  text-decoration: none;
+  transition: color 0.15s, border-color 0.15s;
+
+  &:hover {
+    color: ${colors.text};
+  }
+
+  &.active {
+    border-bottom-color: ${colors.primary};
+    color: ${colors.text};
+  }
+`;
+
+// Ação de linha de tabela: só o ícone (o nome vai no title e no aria-label)
+export const IconAction = styled.button<{ tone?: 'danger' }>`
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border: 0;
+  border-radius: ${radius.md};
+  background: transparent;
+  color: ${colors.textMuted};
+  transition: background-color 0.15s, color 0.15s;
+
+  svg {
+    width: 16px;
+    height: 16px;
+  }
+
+  &:hover:not(:disabled) {
+    background: ${colors.surfaceHover};
+    color: ${props => (props.tone === 'danger' ? colors.danger : colors.text)};
+  }
+
+  &:disabled {
+    opacity: 0.35;
+    cursor: default;
+  }
+
+  & + & {
+    margin-left: 2px;
+  }
+`;
+
+// Grupo de ações no fim da linha
+export const RowActionGroup = styled.div`
+  display: flex;
+  justify-content: flex-end;
+  white-space: nowrap;
 `;

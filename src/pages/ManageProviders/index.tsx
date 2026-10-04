@@ -10,6 +10,7 @@ import avatarFallback from '../../utils/avatarFallback';
 import scheduleSummary from '../../utils/scheduleSummary';
 
 import AppLayout from '../../components/AppLayout';
+import AreaTabs from '../../components/AreaTabs';
 import {
   Page,
   PageHeader,
@@ -132,8 +133,10 @@ const ManageProviders: React.FC = () => {
       <Page>
         <PageHeader>
           <div>
-            <h1>Barbeiros</h1>
-            <p>Quem atende na barbearia e os dias e horários de cada um.</p>
+            <h1>Equipe</h1>
+            <p>
+              Quem entra no sistema, o que cada um pode fazer e quem atende.
+            </p>
           </div>
           <div>
             <UIButton
@@ -146,6 +149,8 @@ const ManageProviders: React.FC = () => {
             </UIButton>
           </div>
         </PageHeader>
+
+        <AreaTabs area="team" />
 
         <Card>
           <CardHeader>

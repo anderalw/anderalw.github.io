@@ -12,7 +12,6 @@ export const PeriodBar = styled.div`
 
   input {
     width: 150px;
-    color-scheme: dark;
   }
 `;
 
@@ -69,11 +68,23 @@ const toneColors: Record<Tone, string> = {
   neutral: colors.textMuted,
 };
 
-export const StatCard = styled.div<{ tone: Tone }>`
+// main: o número mais importante da tela; attention: pede ação
+export const StatCard = styled.div<{
+  tone: Tone;
+  main?: boolean;
+  attention?: boolean;
+}>`
   padding: 16px 18px;
-  border: 1px solid ${colors.border};
+  border: 1px solid
+    ${props =>
+      props.attention
+        ? `color-mix(in srgb, ${colors.warning} 55%, ${colors.border})`
+        : colors.border};
   border-radius: ${radius.lg};
-  background: ${colors.surface};
+  background: ${props =>
+    props.main
+      ? `color-mix(in srgb, ${colors.primary} 7%, ${colors.surface})`
+      : colors.surface};
 
   span {
     display: block;
@@ -84,7 +95,7 @@ export const StatCard = styled.div<{ tone: Tone }>`
   strong {
     display: block;
     margin-top: 6px;
-    font-size: 24px;
+    font-size: ${props => (props.main ? '28px' : '24px')};
     font-weight: 600;
     font-variant-numeric: tabular-nums;
     color: ${props => toneColors[props.tone]};

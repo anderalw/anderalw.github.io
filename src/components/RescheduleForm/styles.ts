@@ -26,7 +26,6 @@ export const Field = styled.label`
     border: 2px solid ${colors.sunken};
     background: ${colors.sunken};
     color: ${colors.text};
-    color-scheme: dark;
     font: inherit;
 
     &:focus {

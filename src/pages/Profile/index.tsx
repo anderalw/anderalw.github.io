@@ -193,7 +193,7 @@ const Profile: React.FC = () => {
 
   return (
     <AppLayout>
-      <Page>
+      <Page narrow>
         <PageHeader>
           <div>
             <h1>Meu perfil</h1>

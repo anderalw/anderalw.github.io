@@ -176,7 +176,7 @@ const MyAppointments: React.FC = () => {
 
   return (
     <AppLayout>
-      <Page>
+      <Page narrow>
         <PageHeader>
           <div>
             <h1>Meus agendamentos</h1>
@@ -326,7 +326,7 @@ const MyAppointments: React.FC = () => {
         </List>
 
         {past.length > 0 && (
-          <section aria-label="Horários anteriores" style={{ maxWidth: 880 }}>
+          <section aria-label="Horários anteriores">
             <HistoryTitle>Anteriores</HistoryTitle>
             {past.map(item => {
               const status = item.attendance

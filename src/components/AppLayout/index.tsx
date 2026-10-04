@@ -5,9 +5,7 @@ import {
   FiCalendar,
   FiDollarSign,
   FiScissors,
-  FiSlash,
   FiUsers,
-  FiShield,
   FiUser,
   FiLogOut,
   FiPlusCircle,
@@ -180,27 +178,31 @@ const AppLayout: React.FC<AppLayoutProps> = ({ sidebarExtra, children }) => {
               </>
             )}
             {showCatalog && (
-              <NavLink to="/admin/servicos" title="Serviços">
+              <NavLink
+                to="/admin/servicos"
+                title="Serviços e motivos de bloqueio"
+                isActive={(_, location) =>
+                  /^\/admin\/(servicos|motivos-bloqueio)/.test(
+                    location.pathname,
+                  )
+                }
+              >
                 <FiScissors />
                 <span>Serviços</span>
               </NavLink>
             )}
             {showTeam && (
-              <>
-                <NavLink to="/admin/usuarios" title="Usuários e perfis">
-                  <FiShield />
-                  <span>Usuários</span>
-                </NavLink>
-                <NavLink to="/admin/barbeiros" title="Barbeiros">
-                  <FiUsers />
-                  <span>Barbeiros</span>
-                </NavLink>
-              </>
-            )}
-            {showCatalog && (
-              <NavLink to="/admin/motivos-bloqueio" title="Motivos de bloqueio">
-                <FiSlash />
-                <span>Motivos de bloqueio</span>
+              <NavLink
+                to="/admin/usuarios"
+                title="Usuários, perfis de acesso e barbeiros"
+                isActive={(_, location) =>
+                  /^\/admin\/(usuarios|perfis|barbeiros)/.test(
+                    location.pathname,
+                  )
+                }
+              >
+                <FiUsers />
+                <span>Equipe</span>
               </NavLink>
             )}
             {showSettings && (

@@ -39,11 +39,14 @@ export const MemberRow = styled.tr<{ inactive: boolean }>`
       margin-left: 4px;
     }
 
-    /* Tela estreita: só o ícone (o nome fica no title) */
-    @media (max-width: 1200px) {
-      .label {
-        display: none;
-      }
+    /* Só ícones, como nas outras tabelas (o nome fica no title) */
+    .label {
+      display: none;
+    }
+
+    button {
+      width: 32px;
+      padding: 0;
     }
   }
 

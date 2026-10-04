@@ -1,37 +1,8 @@
 import styled, { css } from 'styled-components';
 import { Link } from 'react-router-dom';
 
-import { colors, radius } from '../../styles/theme';
+import { colors } from '../../styles/theme';
 import { FixedDialog } from '../Dashboard/AppointmentDetails/styles';
-
-export const Tabs = styled.div`
-  display: inline-flex;
-  gap: 4px;
-  margin-bottom: 20px;
-  padding: 4px;
-  border: 1px solid ${colors.border};
-  border-radius: ${radius.md};
-  background: ${colors.surface};
-`;
-
-export const Tab = styled.button<{ selected: boolean }>`
-  height: 32px;
-  padding: 0 14px;
-  border: 0;
-  border-radius: 6px;
-  background: transparent;
-  color: ${colors.textMuted};
-  font: inherit;
-  font-size: 14px;
-  font-weight: 500;
-
-  ${props =>
-    props.selected &&
-    css`
-      background: ${colors.surfaceHover};
-      color: ${colors.text};
-    `}
-`;
 
 export const Person = styled.div`
   display: flex;
@@ -80,11 +51,14 @@ export const Row = styled.tr<{ inactive?: boolean }>`
     text-align: right;
     white-space: nowrap;
 
-    /* Tela estreita: só o ícone (o nome fica no title) */
-    @media (max-width: 1200px) {
-      .label {
-        display: none;
-      }
+    /* Só ícones, como nas outras tabelas (o nome fica no title) */
+    .label {
+      display: none;
+    }
+
+    button {
+      width: 32px;
+      padding: 0;
     }
   }
 `;

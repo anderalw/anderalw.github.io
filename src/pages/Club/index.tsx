@@ -8,6 +8,7 @@ import getApiErrorMessage from '../../utils/getApiErrorMessage';
 import { formatPrice } from '../../utils/money';
 
 import AppLayout from '../../components/AppLayout';
+import EmptyState from '../../components/EmptyState';
 import {
   Page,
   PageHeader,
@@ -17,7 +18,7 @@ import {
   Table,
   Badge,
 } from '../../components/ui';
-import { SkeletonBar, EmptyText } from '../ManageServices/styles';
+import { SkeletonBar } from '../ManageServices/styles';
 import { WEEKDAYS } from '../../components/WeekdayPicker';
 
 import PlanModal from './PlanModal';
@@ -242,11 +243,19 @@ const Club: React.FC = () => {
             </Filters>
 
             {overview && memberships.length === 0 ? (
-              <EmptyText>
-                {filter === 'all'
-                  ? 'Nenhum assinante ainda. Assine um cliente pela ficha dele ou divulgue os planos no site.'
-                  : 'Ninguém nesta situação.'}
-              </EmptyText>
+              <EmptyState
+                icon="award"
+                title={
+                  filter === 'all'
+                    ? 'Nenhum assinante ainda'
+                    : 'Ninguém nesta situação'
+                }
+                description={
+                  filter === 'all'
+                    ? 'Assine um cliente pela ficha dele ou divulgue os planos no site.'
+                    : undefined
+                }
+              />
             ) : (
               <TableScroll>
                 <Table>
@@ -354,11 +363,28 @@ const Club: React.FC = () => {
             </CardHeader>
 
             {plans && plans.length === 0 ? (
-              <EmptyText>
-                {can('catalog')
-                  ? 'Nenhum plano. Crie o primeiro em "Novo plano".'
-                  : 'Nenhum plano criado pelo administrador.'}
-              </EmptyText>
+              <EmptyState
+                compact
+                icon="award"
+                title="Nenhum plano ainda"
+                description={
+                  can('catalog')
+                    ? 'Crie um plano para os clientes assinarem.'
+                    : 'O administrador ainda não criou planos.'
+                }
+                action={
+                  can('catalog') && (
+                    <UIButton
+                      type="button"
+                      size="sm"
+                      onClick={() => setEditingPlan(null)}
+                    >
+                      <FiPlus />
+                      Novo plano
+                    </UIButton>
+                  )
+                }
+              />
             ) : (
               <PlanList>
                 {!plans && (

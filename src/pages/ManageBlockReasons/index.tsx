@@ -8,6 +8,8 @@ import { useToast } from '../../hooks/Toast';
 import getApiErrorMessage from '../../utils/getApiErrorMessage';
 
 import AppLayout from '../../components/AppLayout';
+import EmptyState from '../../components/EmptyState';
+import AreaTabs from '../../components/AreaTabs';
 import {
   Page,
   PageHeader,
@@ -16,12 +18,7 @@ import {
   UIButton,
   Table,
 } from '../../components/ui';
-import {
-  ServiceRow,
-  SkeletonBar,
-  EmptyText,
-  Counter,
-} from '../ManageServices/styles';
+import { ServiceRow, SkeletonBar, Counter } from '../ManageServices/styles';
 
 import ReasonModal, { BlockReason } from './ReasonModal';
 
@@ -103,10 +100,10 @@ const ManageBlockReasons: React.FC = () => {
       <Page>
         <PageHeader>
           <div>
-            <h1>Motivos de bloqueio</h1>
+            <h1>Serviços</h1>
             <p>
-              As opções para escolher ao bloquear um horário na agenda (almoço,
-              férias...).
+              O que os clientes podem agendar e os motivos para bloquear um
+              horário na agenda.
             </p>
           </div>
           <div>
@@ -117,6 +114,8 @@ const ManageBlockReasons: React.FC = () => {
           </div>
         </PageHeader>
 
+        <AreaTabs area="catalog" />
+
         <Card style={{ maxWidth: 720 }}>
           <CardHeader>
             <h2>Motivos</h2>
@@ -124,10 +123,21 @@ const ManageBlockReasons: React.FC = () => {
           </CardHeader>
 
           {!loading && reasons.length === 0 ? (
-            <EmptyText>
-              Nenhum motivo cadastrado. É preciso pelo menos um para bloquear
-              horários.
-            </EmptyText>
+            <EmptyState
+              icon="slash"
+              title="Nenhum motivo cadastrado"
+              description="É preciso pelo menos um para bloquear horários na agenda (almoço, férias...)."
+              action={
+                <UIButton
+                  type="button"
+                  size="sm"
+                  onClick={() => setModal({ reason: null })}
+                >
+                  <FiPlus />
+                  Novo motivo
+                </UIButton>
+              }
+            />
           ) : (
             <Table>
               <thead>
@@ -165,6 +175,7 @@ const ManageBlockReasons: React.FC = () => {
                                 type="button"
                                 variant="danger"
                                 size="sm"
+                                data-text
                                 disabled={deleting}
                                 onClick={() => handleDelete(reason)}
                               >
@@ -175,6 +186,7 @@ const ManageBlockReasons: React.FC = () => {
                                 type="button"
                                 variant="ghost"
                                 size="sm"
+                                data-text
                                 disabled={deleting}
                                 onClick={() => setConfirmingId(null)}
                               >
@@ -187,21 +199,21 @@ const ManageBlockReasons: React.FC = () => {
                                 type="button"
                                 variant="ghost"
                                 size="sm"
-                                title={`Editar ${reason.name}`}
+                                title="Editar"
+                                aria-label={`Editar ${reason.name}`}
                                 onClick={() => setModal({ reason })}
                               >
                                 <FiEdit2 />
-                                Editar
                               </UIButton>
                               <UIButton
                                 type="button"
                                 variant="ghost"
                                 size="sm"
-                                title={`Excluir ${reason.name}`}
+                                title="Excluir"
+                                aria-label={`Excluir ${reason.name}`}
                                 onClick={() => setConfirmingId(reason.id)}
                               >
                                 <FiTrash2 />
-                                Excluir
                               </UIButton>
                             </>
                           )}

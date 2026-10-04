@@ -63,6 +63,12 @@ export const ServiceRow = styled.tr<{ inactive: boolean; editing: boolean }>`
       width: 30px;
       padding: 0;
     }
+
+    /* Botões com texto (ex.: confirmar a exclusão) */
+    button[data-text] {
+      width: auto;
+      padding: 0 10px;
+    }
   }
 `;
 

@@ -8,7 +8,6 @@ export const Columns = styled.div`
   grid-template-columns: 280px minmax(0, 1fr);
   gap: 24px;
   align-items: start;
-  max-width: 1000px;
 
   @media (max-width: 1080px) {
     grid-template-columns: minmax(0, 1fr);

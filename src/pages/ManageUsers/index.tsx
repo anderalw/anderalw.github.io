@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useState } from 'react';
-import { Redirect, useHistory } from 'react-router-dom';
+import { Redirect, useHistory, useLocation } from 'react-router-dom';
 import {
   FiAlertTriangle,
   FiEdit2,
@@ -33,7 +33,8 @@ import {
 import UserModal from './UserModal';
 import RoleModal from './RoleModal';
 import { PermissionItem, RoleItem, StaffUser } from './types';
-import { Tabs, Tab, Person, Row, Muted } from './styles';
+import { Person, Row, Muted } from './styles';
+import AreaTabs from '../../components/AreaTabs';
 
 type View = 'users' | 'roles';
 
@@ -48,7 +49,11 @@ const ManageUsers: React.FC = () => {
   const history = useHistory();
   const allowed = can('team');
 
-  const [view, setView] = useState<View>('users');
+  const location = useLocation();
+  // /admin/usuarios ou /admin/perfis
+  const view: View = location.pathname.startsWith('/admin/perfis')
+    ? 'roles'
+    : 'users';
   const [users, setUsers] = useState<StaffUser[] | null>(null);
   const [roles, setRoles] = useState<RoleItem[] | null>(null);
   const [catalog, setCatalog] = useState<PermissionItem[]>([]);
@@ -182,8 +187,10 @@ const ManageUsers: React.FC = () => {
       <Page>
         <PageHeader>
           <div>
-            <h1>Usuários</h1>
-            <p>Quem entra no sistema e o que cada um pode fazer.</p>
+            <h1>Equipe</h1>
+            <p>
+              Quem entra no sistema, o que cada um pode fazer e quem atende.
+            </p>
           </div>
           <div>
             {view === 'users' ? (
@@ -204,26 +211,7 @@ const ManageUsers: React.FC = () => {
           </div>
         </PageHeader>
 
-        <Tabs role="tablist">
-          <Tab
-            type="button"
-            role="tab"
-            aria-selected={view === 'users'}
-            selected={view === 'users'}
-            onClick={() => setView('users')}
-          >
-            Usuários
-          </Tab>
-          <Tab
-            type="button"
-            role="tab"
-            aria-selected={view === 'roles'}
-            selected={view === 'roles'}
-            onClick={() => setView('roles')}
-          >
-            Perfis de acesso
-          </Tab>
-        </Tabs>
+        <AreaTabs area="team" />
 
         <Card>
           {view === 'users' ? (

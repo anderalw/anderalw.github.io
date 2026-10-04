@@ -23,6 +23,7 @@ import {
 } from '../../utils/payment';
 
 import AppLayout from '../../components/AppLayout';
+import EmptyState from '../../components/EmptyState';
 import {
   Page,
   PageHeader,
@@ -33,7 +34,7 @@ import {
   TextInput,
   Badge,
 } from '../../components/ui';
-import { SkeletonBar, EmptyText } from '../ManageServices/styles';
+import { SkeletonBar } from '../ManageServices/styles';
 import { StatCard } from '../Revenue/styles';
 import PendingCard, { PendingItem } from './PendingCard';
 import {
@@ -372,7 +373,7 @@ const CashRegister: React.FC = () => {
         </PageHeader>
 
         <CashCards>
-          <StatCard tone="primary">
+          <StatCard tone="primary" main>
             <span>Total recebido</span>
             <strong>{data ? formatPrice(data.received_cents) : '–'}</strong>
             <small>
@@ -447,7 +448,12 @@ const CashRegister: React.FC = () => {
               </CardHeader>
 
               {data && data.items.length === 0 ? (
-                <EmptyText>Nenhum atendimento concluído neste dia.</EmptyText>
+                <EmptyState
+                  compact
+                  icon="inbox"
+                  title="Nenhum atendimento concluído neste dia"
+                  description="Os atendimentos entram aqui depois de registrados como atendidos."
+                />
               ) : (
                 <ItemsTable>
                   <thead>

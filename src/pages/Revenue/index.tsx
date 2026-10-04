@@ -227,7 +227,7 @@ const Revenue: React.FC = () => {
         </PeriodBar>
 
         <Cards>
-          <StatCard tone="primary">
+          <StatCard tone="primary" main>
             <span>Faturado</span>
             <strong>{show(formatPrice(totals?.revenue_cents || 0))}</strong>
             <small>
@@ -252,7 +252,7 @@ const Revenue: React.FC = () => {
                 : ''}
             </small>
           </StatCard>
-          <StatCard tone="warning">
+          <StatCard tone="warning" attention={!!totals && totals.pending > 0}>
             <span>A confirmar</span>
             <strong>{show(String(totals?.pending || 0))}</strong>
             {can('cash') ? (

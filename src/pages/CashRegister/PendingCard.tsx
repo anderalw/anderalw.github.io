@@ -148,7 +148,7 @@ const PendingCard: React.FC<PendingCardProps> = ({ items, onRegistered }) => {
   );
 
   return (
-    <Card style={{ marginBottom: 24 }}>
+    <Card accent="warning" style={{ marginBottom: 24 }}>
       <CardHeader>
         <div>
           <h2>{`A registrar (${items.length})`}</h2>

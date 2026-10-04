@@ -103,18 +103,14 @@ export const PolicyNote = styled.p`
   display: flex;
   align-items: center;
   gap: 8px;
-  margin-bottom: 16px;
-  padding: 10px 14px;
-  border: 1px solid ${colors.border};
-  border-radius: ${radius.md};
-  background: ${colors.surface};
+  margin: -12px 0 18px;
   font-size: 13px;
-  color: ${colors.textMuted};
+  color: ${colors.textSubtle};
 
   svg {
     flex-shrink: 0;
-    width: 16px;
-    height: 16px;
+    width: 14px;
+    height: 14px;
     color: ${colors.warning};
   }
 `;

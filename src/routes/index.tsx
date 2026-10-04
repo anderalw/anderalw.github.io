@@ -52,6 +52,7 @@ const Routes: React.FC = () => (
     <Route path="/maquininha-virtual" component={VirtualTerminal} isPrivate />
     <Route path="/admin/servicos" component={ManageServices} isPrivate />
     <Route path="/admin/usuarios" exact component={ManageUsers} isPrivate />
+    <Route path="/admin/perfis" component={ManageUsers} isPrivate />
     <Route path="/admin/usuarios/:id" component={UserPage} isPrivate />
     <Route path="/admin/barbeiros" component={ManageProviders} isPrivate />
     <Route path="/admin/faturamento" component={Revenue} isPrivate />

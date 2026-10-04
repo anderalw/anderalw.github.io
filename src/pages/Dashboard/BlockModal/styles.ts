@@ -201,7 +201,6 @@ export const Form = styled.form`
   /* Seletores nativos de data e hora no tema escuro */
   input[type='date'],
   input[type='time'] {
-    color-scheme: dark;
   }
 `;
 

@@ -6,7 +6,6 @@ export const List = styled.div`
   display: flex;
   flex-direction: column;
   gap: 12px;
-  max-width: 880px;
 `;
 
 export const Item = styled.section`
@@ -145,7 +144,6 @@ export const Empty = styled.div`
   flex-direction: column;
   align-items: center;
   gap: 16px;
-  max-width: 880px;
   padding: 56px 24px;
   border: 1px dashed ${colors.borderStrong};
   border-radius: ${radius.lg};

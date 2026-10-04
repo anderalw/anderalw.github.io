@@ -251,7 +251,7 @@ const Settings: React.FC = () => {
 
   return (
     <AppLayout>
-      <Page>
+      <Page narrow>
         <PageHeader>
           <div>
             <h1>Configurações</h1>

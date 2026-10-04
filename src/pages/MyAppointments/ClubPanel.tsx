@@ -19,7 +19,6 @@ import {
 import { StateBadge } from '../Club/styles';
 
 const Box = styled.section`
-  max-width: 880px;
   margin-bottom: 24px;
   padding: 18px 20px;
   border: 1px solid ${colors.border};

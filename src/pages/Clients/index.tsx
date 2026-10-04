@@ -23,6 +23,7 @@ import { formatPrice } from '../../utils/money';
 import { formatPhone, whatsappHref } from '../../utils/phone';
 
 import AppLayout from '../../components/AppLayout';
+import EmptyState from '../../components/EmptyState';
 import {
   Page,
   PageHeader,
@@ -34,7 +35,7 @@ import {
   Table,
   Muted,
 } from '../../components/ui';
-import { SkeletonBar, EmptyText, Counter } from '../ManageServices/styles';
+import { SkeletonBar, Counter } from '../ManageServices/styles';
 
 import NoShowPolicyModal from './NoShowPolicyModal';
 import {
@@ -332,12 +333,12 @@ const Clients: React.FC = () => {
 
   const emptyText = (): string => {
     if (state.search) {
-      return `Nenhum cliente encontrado para "${state.search}".`;
+      return `Nenhum cliente encontrado para "${state.search}"`;
     }
 
-    if (state.filter !== 'all') return 'Nenhum cliente neste recorte.';
+    if (state.filter !== 'all') return 'Nenhum cliente neste recorte';
 
-    return 'Nenhum cliente cadastrado ainda.';
+    return 'Nenhum cliente cadastrado ainda';
   };
 
   return (
@@ -453,7 +454,30 @@ const Clients: React.FC = () => {
           </FilterBar>
 
           {!loading && data && data.clients.length === 0 ? (
-            <EmptyText>{emptyText()}</EmptyText>
+            <EmptyState
+              icon={state.search || state.filter !== 'all' ? 'search' : 'users'}
+              title={emptyText()}
+              description={
+                state.search || state.filter !== 'all'
+                  ? 'Tente outra busca ou outro recorte.'
+                  : 'Os clientes aparecem aqui quando se cadastram no site ou são marcados pela agenda.'
+              }
+              action={
+                (state.search || state.filter !== 'all') && (
+                  <UIButton
+                    type="button"
+                    variant="secondary"
+                    size="sm"
+                    onClick={() => {
+                      setSearch('');
+                      update({ search: '', filter: 'all', sort: null });
+                    }}
+                  >
+                    Limpar busca e recortes
+                  </UIButton>
+                )
+              }
+            />
           ) : (
             <TableScroll>
               <Table>

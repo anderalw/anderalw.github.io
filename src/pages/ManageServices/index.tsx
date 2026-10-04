@@ -17,6 +17,8 @@ import { formatPrice } from '../../utils/money';
 import { formatDuration } from '../../utils/duration';
 
 import AppLayout from '../../components/AppLayout';
+import EmptyState from '../../components/EmptyState';
+import AreaTabs from '../../components/AreaTabs';
 import {
   Page,
   PageHeader,
@@ -36,7 +38,6 @@ import {
   SideColumn,
   ServiceRow,
   SkeletonBar,
-  EmptyText,
   InlineRow,
   Counter,
 } from './styles';
@@ -177,8 +178,8 @@ const ManageServices: React.FC = () => {
           <div>
             <h1>Serviços</h1>
             <p>
-              O que os clientes podem agendar, com a duração que ocupa na agenda
-              e o valor.
+              O que os clientes podem agendar e os motivos para bloquear um
+              horário na agenda.
             </p>
           </div>
           <div>
@@ -188,6 +189,8 @@ const ManageServices: React.FC = () => {
             </UIButton>
           </div>
         </PageHeader>
+
+        <AreaTabs area="catalog" />
 
         <Columns>
           <Card>
@@ -204,10 +207,21 @@ const ManageServices: React.FC = () => {
             </CardHeader>
 
             {!loading && services.length === 0 ? (
-              <EmptyText>
-                Nenhum serviço cadastrado. Os clientes só conseguem agendar
-                depois que houver pelo menos um serviço ativo.
-              </EmptyText>
+              <EmptyState
+                icon="scissors"
+                title="Nenhum serviço cadastrado"
+                description="Os clientes só conseguem agendar depois que houver pelo menos um serviço ativo."
+                action={
+                  <UIButton
+                    type="button"
+                    size="sm"
+                    onClick={() => setModal({ service: null })}
+                  >
+                    <FiPlus />
+                    Novo serviço
+                  </UIButton>
+                }
+              />
             ) : (
               <Table>
                 <thead>

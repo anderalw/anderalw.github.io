@@ -9,7 +9,6 @@ export const DateBar = styled.div`
 
   input {
     width: 160px;
-    color-scheme: dark;
   }
 `;
 
