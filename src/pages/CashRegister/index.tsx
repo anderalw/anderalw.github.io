@@ -1,7 +1,15 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import { format, parseISO } from 'date-fns';
 import ptBR from 'date-fns/locale/pt-BR';
-import { FiAlertTriangle, FiLock, FiRefreshCw } from 'react-icons/fi';
+import {
+  FiAlertTriangle,
+  FiCheck,
+  FiEdit2,
+  FiLock,
+  FiRefreshCw,
+  FiRotateCcw,
+  FiX,
+} from 'react-icons/fi';
 
 import api from '../../services/api';
 import { useToast } from '../../hooks/Toast';
@@ -44,6 +52,8 @@ import {
   CashCards,
   LeftColumn,
   PendingDays,
+  RowActions,
+  ValueEdit,
 } from './styles';
 
 type TotalKey = PaymentMethod | 'unknown';
@@ -92,6 +102,8 @@ interface CashDay {
   pending: number;
   // Já passaram e ninguém registrou (neste dia)
   pending_items: PendingItem[];
+  // Faltas do dia (dá para desfazer)
+  no_show_items: PendingItem[];
   // Dias anteriores com pendências, do mais recente
   pending_days: { date: string; count: number }[];
   no_show: number;
@@ -124,6 +136,11 @@ const CashRegister: React.FC = () => {
   const [date, setDate] = useState(today);
   const [data, setData] = useState<CashDay | null>(null);
   const [savingId, setSavingId] = useState<string | null>(null);
+  // Atendimento com o valor sendo corrigido
+  const [editingValue, setEditingValue] = useState<{
+    id: string;
+    text: string;
+  } | null>(null);
 
   // Fechamento
   const [editingClose, setEditingClose] = useState(false);
@@ -177,6 +194,68 @@ const CashRegister: React.FC = () => {
         addToast({
           type: 'error',
           title: 'Não foi possível salvar',
+          description: getApiErrorMessage(err, 'Tente novamente.'),
+        });
+      } finally {
+        setSavingId(null);
+      }
+    },
+    [load, addToast],
+  );
+
+  // Corrige o valor recebido (desconto, gorjeta); vazio = o preço marcado
+  const saveValue = useCallback(
+    async (item: CashItem, text: string) => {
+      const cents = text.trim() ? parsePrice(text) : null;
+
+      if (text.trim() && cents === null) {
+        addToast({
+          type: 'error',
+          title: 'Valor inválido',
+          description: 'Use o formato 45,00.',
+        });
+        return;
+      }
+
+      setSavingId(item.id);
+
+      try {
+        await api.patch(`/cash/payments/${item.id}`, {
+          payment_method: item.payment_method,
+          paid_cents: cents === item.price_cents ? null : cents,
+        });
+        setEditingValue(null);
+        load();
+      } catch (err) {
+        addToast({
+          type: 'error',
+          title: 'Não foi possível salvar',
+          description: getApiErrorMessage(err, 'Tente novamente.'),
+        });
+      } finally {
+        setSavingId(null);
+      }
+    },
+    [load, addToast],
+  );
+
+  // Registro errado: o atendimento volta para "a registrar"
+  const undo = useCallback(
+    async (id: string, clientName: string) => {
+      setSavingId(id);
+
+      try {
+        await api.delete(`/cash/attendances/${id}`);
+        addToast({
+          type: 'success',
+          title: 'Registro desfeito',
+          description: `${clientName} voltou para "A registrar".`,
+        });
+        load();
+      } catch (err) {
+        addToast({
+          type: 'error',
+          title: 'Não foi possível desfazer',
           description: getApiErrorMessage(err, 'Tente novamente.'),
         });
       } finally {
@@ -360,7 +439,10 @@ const CashRegister: React.FC = () => {
               <CardHeader>
                 <div>
                   <h2>Atendimentos</h2>
-                  <p>Complete a forma de pagamento dos que ficaram sem.</p>
+                  <p>
+                    Corrija a forma de pagamento ou o valor, ou desfaça um
+                    registro errado.
+                  </p>
                 </div>
               </CardHeader>
 
@@ -375,6 +457,7 @@ const CashRegister: React.FC = () => {
                       <th>Barbeiro</th>
                       <th className="num">Valor</th>
                       <th>Pagamento</th>
+                      <th aria-label="Ações" />
                     </tr>
                   </thead>
                   <tbody>
@@ -396,6 +479,7 @@ const CashRegister: React.FC = () => {
                             <td>
                               <SkeletonBar width={100} />
                             </td>
+                            <td aria-hidden="true" />
                           </tr>
                         ))
                       : data.items.map(item => (
@@ -407,13 +491,64 @@ const CashRegister: React.FC = () => {
                             </td>
                             <td>{item.provider_name}</td>
                             <td className="num">
-                              {formatPrice(item.received_cents)}
-                              {item.price_cents !== null &&
-                                item.received_cents !== item.price_cents && (
-                                  <small>
-                                    {`preço ${formatPrice(item.price_cents)}`}
-                                  </small>
-                                )}
+                              {editingValue?.id === item.id ? (
+                                <ValueEdit
+                                  onSubmit={event => {
+                                    event.preventDefault();
+                                    saveValue(item, editingValue.text);
+                                  }}
+                                >
+                                  <TextInput
+                                    aria-label={`Valor recebido de ${item.client_name}`}
+                                    value={editingValue.text}
+                                    inputMode="decimal"
+                                    autoFocus
+                                    disabled={savingId === item.id}
+                                    onChange={event =>
+                                      setEditingValue({
+                                        id: item.id,
+                                        text: event.target.value,
+                                      })
+                                    }
+                                    onKeyDown={event => {
+                                      if (event.key === 'Escape') {
+                                        setEditingValue(null);
+                                      }
+                                    }}
+                                  />
+                                  <RowActions>
+                                    <button
+                                      type="submit"
+                                      title="Salvar"
+                                      aria-label="Salvar valor"
+                                      disabled={savingId === item.id}
+                                    >
+                                      <FiCheck />
+                                    </button>
+                                    <button
+                                      type="button"
+                                      title="Cancelar"
+                                      aria-label="Cancelar"
+                                      onClick={() => setEditingValue(null)}
+                                    >
+                                      <FiX />
+                                    </button>
+                                  </RowActions>
+                                </ValueEdit>
+                              ) : (
+                                <>
+                                  {formatPrice(item.received_cents)}
+                                  {item.price_cents !== null &&
+                                    item.received_cents !==
+                                      item.price_cents && (
+                                      <small>
+                                        {`preço ${formatPrice(
+                                          item.price_cents,
+                                        )}`}
+                                      </small>
+                                    )}
+                                </>
+                              )}
                             </td>
                             <td>
                               {item.payment_method === 'membership' ? (
@@ -440,6 +575,37 @@ const CashRegister: React.FC = () => {
                                   ))}
                                 </MethodSelect>
                               )}
+                            </td>
+                            <td>
+                              <RowActions>
+                                {item.payment_method !== 'membership' && (
+                                  <button
+                                    type="button"
+                                    title="Corrigir o valor (desconto, gorjeta)"
+                                    aria-label={`Corrigir o valor de ${item.client_name}`}
+                                    disabled={savingId === item.id}
+                                    onClick={() =>
+                                      setEditingValue({
+                                        id: item.id,
+                                        text: centsToInput(item.received_cents),
+                                      })
+                                    }
+                                  >
+                                    <FiEdit2 />
+                                  </button>
+                                )}
+                                <button
+                                  type="button"
+                                  title="Desfazer: volta para A registrar"
+                                  aria-label={`Desfazer o registro de ${item.client_name}`}
+                                  disabled={savingId === item.id}
+                                  onClick={() =>
+                                    undo(item.id, item.client_name)
+                                  }
+                                >
+                                  <FiRotateCcw />
+                                </button>
+                              </RowActions>
                             </td>
                           </tr>
                         ))}
@@ -476,6 +642,45 @@ const CashRegister: React.FC = () => {
                           {formatPrice(item.amount_cents)}
                         </td>
                         <td>{PAYMENT_LABELS[item.payment_method]}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </ItemsTable>
+              </Card>
+            )}
+            {data && data.no_show_items.length > 0 && (
+              <Card>
+                <CardHeader>
+                  <div>
+                    <h2>{`Faltas (${data.no_show_items.length})`}</h2>
+                    <p>
+                      Marcou falta por engano? Desfaça para registrar de novo.
+                    </p>
+                  </div>
+                </CardHeader>
+                <ItemsTable>
+                  <tbody>
+                    {data.no_show_items.map(item => (
+                      <tr key={item.id}>
+                        <td>{format(parseISO(item.date), 'HH:mm')}</td>
+                        <td>
+                          {item.client_name}
+                          <small>{item.service_name}</small>
+                        </td>
+                        <td>{item.provider_name}</td>
+                        <td>
+                          <RowActions>
+                            <button
+                              type="button"
+                              title="Desfazer: volta para A registrar"
+                              aria-label={`Desfazer a falta de ${item.client_name}`}
+                              disabled={savingId === item.id}
+                              onClick={() => undo(item.id, item.client_name)}
+                            >
+                              <FiRotateCcw />
+                            </button>
+                          </RowActions>
+                        </td>
                       </tr>
                     ))}
                   </tbody>

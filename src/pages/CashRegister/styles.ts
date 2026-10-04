@@ -374,3 +374,51 @@ export const PendingDays = styled.div`
     }
   }
 `;
+
+// Ações da linha (corrigir valor, desfazer): só ícones
+export const RowActions = styled.div`
+  display: flex;
+  justify-content: flex-end;
+  gap: 2px;
+
+  button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 30px;
+    height: 30px;
+    border: 0;
+    border-radius: ${radius.sm};
+    background: transparent;
+    color: ${colors.textMuted};
+
+    svg {
+      width: 15px;
+      height: 15px;
+    }
+
+    &:hover:not(:disabled) {
+      background: ${colors.surfaceHover};
+      color: ${colors.text};
+    }
+
+    &:disabled {
+      opacity: 0.4;
+    }
+  }
+`;
+
+// Valor sendo corrigido: campo pequeno no lugar do valor
+export const ValueEdit = styled.form`
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+
+  input {
+    width: 92px;
+    height: 30px;
+    padding: 0 8px;
+    text-align: right;
+    font-size: 13px;
+  }
+`;
