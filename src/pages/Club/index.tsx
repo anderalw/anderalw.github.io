@@ -39,6 +39,7 @@ import {
   FilterChip,
   StateBadge,
   Actions,
+  TableScroll,
   PlanList,
   Numbers,
   Hint,
@@ -247,97 +248,100 @@ const Club: React.FC = () => {
                   : 'Ninguém nesta situação.'}
               </EmptyText>
             ) : (
-              <Table>
-                <thead>
-                  <tr>
-                    <th>Cliente</th>
-                    <th>Plano</th>
-                    <th>Situação</th>
-                    <th>Pago até</th>
-                    <th aria-label="Ações" />
-                  </tr>
-                </thead>
-                <tbody>
-                  {!overview
-                    ? [160, 120, 180].map(width => (
-                        <tr key={width}>
-                          <td>
-                            <SkeletonBar width={width} />
-                          </td>
-                          <td>
-                            <SkeletonBar width={100} />
-                          </td>
-                          <td>
-                            <SkeletonBar width={70} />
-                          </td>
-                          <td>
-                            <SkeletonBar width={80} />
-                          </td>
-                          <td aria-hidden="true" />
-                        </tr>
-                      ))
-                    : memberships.map(membership => {
-                        const info = stateInfo(membership);
-                        const pending = membership.state === 'pending';
+              <TableScroll>
+                <Table>
+                  <thead>
+                    <tr>
+                      <th>Cliente</th>
+                      <th>Plano</th>
+                      <th>Situação</th>
+                      <th>Pago até</th>
+                      <th aria-label="Ações" />
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {!overview
+                      ? [160, 120, 180].map(width => (
+                          <tr key={width}>
+                            <td>
+                              <SkeletonBar width={width} />
+                            </td>
+                            <td>
+                              <SkeletonBar width={100} />
+                            </td>
+                            <td>
+                              <SkeletonBar width={70} />
+                            </td>
+                            <td>
+                              <SkeletonBar width={80} />
+                            </td>
+                            <td aria-hidden="true" />
+                          </tr>
+                        ))
+                      : memberships.map(membership => {
+                          const info = stateInfo(membership);
+                          const pending = membership.state === 'pending';
 
-                        return (
-                          <tr key={membership.id}>
-                            <td>
-                              <ClientLink
-                                to={`/clientes/${membership.client.id}`}
-                              >
-                                {membership.client.name}
-                              </ClientLink>
-                            </td>
-                            <td style={{ whiteSpace: 'nowrap' }}>
-                              {membership.plan.name}
-                            </td>
-                            <td>
-                              <StateBadge tone={info.tone}>
-                                {info.label}
-                              </StateBadge>
-                            </td>
-                            <td>
-                              {membership.paid_until
-                                ? lastPaidDay(membership.paid_until)
-                                : '–'}
-                            </td>
-                            <td>
-                              <Actions>
-                                <UIButton
-                                  type="button"
-                                  size="sm"
-                                  variant={pending ? 'primary' : 'ghost'}
-                                  disabled={busy === membership.id}
-                                  onClick={() =>
-                                    setPaying({
-                                      mode: pending ? 'confirm' : 'renew',
-                                      membership,
-                                    })
-                                  }
+                          return (
+                            <tr key={membership.id}>
+                              <td>
+                                <ClientLink
+                                  to={`/clientes/${membership.client.id}`}
                                 >
-                                  {pending ? <FiCheck /> : <FiDollarSign />}
-                                  {pending ? 'Confirmar' : 'Receber'}
-                                </UIButton>
-                                {pending && (
+                                  {membership.client.name}
+                                </ClientLink>
+                              </td>
+                              <td style={{ whiteSpace: 'nowrap' }}>
+                                {membership.plan.name}
+                              </td>
+                              <td>
+                                <StateBadge tone={info.tone}>
+                                  {info.label}
+                                </StateBadge>
+                              </td>
+                              <td>
+                                {membership.paid_until
+                                  ? lastPaidDay(membership.paid_until)
+                                  : '–'}
+                              </td>
+                              <td>
+                                <Actions>
                                   <UIButton
                                     type="button"
                                     size="sm"
-                                    variant="ghost"
+                                    variant={pending ? 'primary' : 'ghost'}
                                     disabled={busy === membership.id}
-                                    onClick={() => reject(membership)}
+                                    onClick={() =>
+                                      setPaying({
+                                        mode: pending ? 'confirm' : 'renew',
+                                        membership,
+                                      })
+                                    }
                                   >
-                                    <FiX />
-                                    Recusar
+                                    {pending ? <FiCheck /> : <FiDollarSign />}
+                                    {pending ? 'Confirmar' : 'Receber'}
                                   </UIButton>
-                                )}
-                              </Actions>
-                            </td>
-                          </tr>
-                        );
-                      })}
-                </tbody>
-              </Table>
+                                  {pending && (
+                                    <UIButton
+                                      type="button"
+                                      size="sm"
+                                      variant="ghost"
+                                      disabled={busy === membership.id}
+                                      title="Recusar o pedido"
+                                      aria-label={`Recusar o pedido de ${membership.client.name}`}
+                                      onClick={() => reject(membership)}
+                                    >
+                                      <FiX />
+                                    </UIButton>
+                                  )}
+                                </Actions>
+                              </td>
+                            </tr>
+                          );
+                        })}
+                  </tbody>
+                </Table>
+              </TableScroll>
             )}
           </Card>
 

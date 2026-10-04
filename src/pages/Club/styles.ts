@@ -233,3 +233,26 @@ export const ClientLink = styled(Link)`
     text-decoration: underline;
   }
 `;
+
+// Tabela de assinantes: rola de lado em telas estreitas e com menos espaço
+// entre as colunas, para as ações caberem ao lado do cartão de planos
+export const TableScroll = styled.div`
+  overflow-x: auto;
+
+  th,
+  td {
+    padding-left: 12px;
+    padding-right: 12px;
+    white-space: nowrap;
+  }
+
+  th:first-child,
+  td:first-child {
+    padding-left: 20px;
+  }
+
+  th:last-child,
+  td:last-child {
+    padding-right: 16px;
+  }
+`;
