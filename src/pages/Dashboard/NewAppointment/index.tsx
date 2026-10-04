@@ -66,6 +66,7 @@ import {
   extraPayload,
   useProfileFields,
 } from '../../../utils/profileFields';
+import { useFeatures } from '../../../hooks/Vocabulary';
 
 interface ClientOption {
   id: string;
@@ -166,6 +167,7 @@ const NewAppointment: React.FC<NewAppointmentProps> = ({
   onClose,
   onCreated,
 }) => {
+  const features = useFeatures();
   const { addToast } = useToast();
   const searchInputRef = useRef<HTMLInputElement>(null);
   const nameInputRef = useRef<HTMLInputElement>(null);
@@ -1111,14 +1113,16 @@ const NewAppointment: React.FC<NewAppointmentProps> = ({
               <SecondaryButton type="button" onClick={() => setStep('client')}>
                 Voltar
               </SecondaryButton>
-              <SecondaryButton
-                type="button"
-                onClick={() => setStep('repeat')}
-                disabled={!service || !chosenStart || saving}
-                title="Marcar o mesmo horário a cada semana ou a cada algumas semanas"
-              >
-                <FiRepeat /> Repetir (cliente fixo)
-              </SecondaryButton>
+              {features.series && (
+                <SecondaryButton
+                  type="button"
+                  onClick={() => setStep('repeat')}
+                  disabled={!service || !chosenStart || saving}
+                  title="Marcar o mesmo horário a cada semana ou a cada algumas semanas"
+                >
+                  <FiRepeat /> Repetir (cliente fixo)
+                </SecondaryButton>
+              )}
               <PrimaryButton
                 type="button"
                 onClick={handleConfirm}

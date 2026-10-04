@@ -9,7 +9,12 @@ import {
 } from 'react-icons/fi';
 
 import { useBranding } from './Branding';
-import { buildTerms, DEFAULT_VOCABULARY, Terms } from '../utils/vocabulary';
+import {
+  buildTerms,
+  DEFAULT_VOCABULARY,
+  FeatureKey,
+  Terms,
+} from '../utils/vocabulary';
 
 export type { Terms } from '../utils/vocabulary';
 
@@ -110,5 +115,22 @@ export function useSegmentExamples(): SegmentExamples {
   return (
     SEGMENT_EXAMPLES[branding.segment || 'barbershop'] ||
     SEGMENT_EXAMPLES.barbershop
+  );
+}
+
+// Recursos ligados no negócio; sem a resposta da API, tudo ligado
+export function useFeatures(): Record<FeatureKey, boolean> {
+  const { branding } = useBranding();
+
+  return useMemo(
+    () => ({
+      club: true,
+      any_provider: true,
+      walk_in: true,
+      series: true,
+      waitlist: true,
+      ...branding.features,
+    }),
+    [branding.features],
   );
 }

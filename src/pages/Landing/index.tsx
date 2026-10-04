@@ -52,7 +52,11 @@ import {
   Footer,
   Skeleton,
 } from './styles';
-import { useVocabulary, useSegmentExamples } from '../../hooks/Vocabulary';
+import {
+  useVocabulary,
+  useSegmentExamples,
+  useFeatures,
+} from '../../hooks/Vocabulary';
 
 interface Site {
   tagline: string;
@@ -117,6 +121,7 @@ function todayStatus(
 // Site da barbearia: capa, serviços, equipe, horários e contato, com o
 // que o admin configura e os dados do próprio sistema
 const Landing: React.FC = () => {
+  const features = useFeatures();
   const examples = useSegmentExamples();
   const terms = useVocabulary();
   const { role } = useAuth();
@@ -136,6 +141,7 @@ const Landing: React.FC = () => {
     api
       .get<Plan[]>('/memberships/plans/public')
       .then(response => setPlans(response.data))
+      // Com as assinaturas desligadas a rota recusa: sem a seção
       .catch(() => {
         // Sem o clube, a página segue sem a seção
       });
@@ -168,7 +174,9 @@ const Landing: React.FC = () => {
 
           <Nav aria-label="Seções">
             <a href="#servicos">Serviços</a>
-            {plans.length > 0 && <a href="#clube">{terms.Club}</a>}
+            {features.club && plans.length > 0 && (
+              <a href="#clube">{terms.Club}</a>
+            )}
             {site && site.team.length > 0 && <a href="#equipe">Equipe</a>}
             <a href="#contato">Horários e contato</a>
           </Nav>

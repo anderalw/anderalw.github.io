@@ -41,7 +41,11 @@ import {
   SignOutButton,
   Main,
 } from './styles';
-import { useSegmentIcon, useVocabulary } from '../../hooks/Vocabulary';
+import {
+  useSegmentIcon,
+  useVocabulary,
+  useFeatures,
+} from '../../hooks/Vocabulary';
 
 interface AppLayoutProps {
   // Conteúdo extra do menu lateral, abaixo dos links (ex: o calendário da
@@ -52,6 +56,7 @@ interface AppLayoutProps {
 // Estrutura das telas com sessão (barbeiro ou cliente): menu lateral fixo e
 // o conteúdo à direita
 const AppLayout: React.FC<AppLayoutProps> = ({ sidebarExtra, children }) => {
+  const features = useFeatures();
   const terms = useVocabulary();
   const ServiceIcon = useSegmentIcon();
   const { user, client, role, signOut, can } = useAuth();
@@ -141,7 +146,7 @@ const AppLayout: React.FC<AppLayoutProps> = ({ sidebarExtra, children }) => {
                 <span>Caixa</span>
               </NavLink>
             )}
-            {can('club') && (
+            {can('club') && features.club && (
               <NavLink to="/clube" title={`${terms.Club} de assinatura`}>
                 <FiAward />
                 <span>{terms.Club}</span>

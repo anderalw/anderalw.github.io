@@ -60,7 +60,7 @@ import {
   WhatsAppLink,
   TableScroll,
 } from './styles';
-import { useVocabulary } from '../../hooks/Vocabulary';
+import { useVocabulary, useFeatures } from '../../hooks/Vocabulary';
 
 const PER_PAGE = 20;
 
@@ -163,6 +163,7 @@ function birthdayText(value?: string | null): string | null {
 
 // Lista de clientes da barbearia com o resumo de cada um. Clicar abre a ficha
 const Clients: React.FC = () => {
+  const features = useFeatures();
   const terms = useVocabulary();
   const history = useHistory();
   const location = useLocation();
@@ -412,17 +413,19 @@ const Clients: React.FC = () => {
           </CardHeader>
 
           <FilterBar role="group" aria-label="Recortes da lista">
-            {FILTERS.map(item => (
-              <FilterChip
-                key={item.key}
-                type="button"
-                active={state.filter === item.key}
-                title={item.hint}
-                onClick={() => update({ filter: item.key, sort: null })}
-              >
-                {item.label}
-              </FilterChip>
-            ))}
+            {FILTERS.filter(item => item.key !== 'club' || features.club).map(
+              item => (
+                <FilterChip
+                  key={item.key}
+                  type="button"
+                  active={state.filter === item.key}
+                  title={item.hint}
+                  onClick={() => update({ filter: item.key, sort: null })}
+                >
+                  {item.label}
+                </FilterChip>
+              ),
+            )}
 
             {state.filter === 'inactive' && (
               <Select

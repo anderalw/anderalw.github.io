@@ -83,3 +83,44 @@ export function buildTerms(vocabulary: Vocabulary): Terms {
     theProfessional: `o ${lower(v.professional)}`,
   };
 }
+
+// Recursos que cada ramo traz ligados ou desligados (iguais aos da API)
+export type FeatureKey =
+  | 'club'
+  | 'any_provider'
+  | 'walk_in'
+  | 'series'
+  | 'waitlist';
+
+export const FEATURES: Array<{
+  key: FeatureKey;
+  label: string;
+  description: string;
+}> = [
+  {
+    key: 'club',
+    label: 'Assinaturas',
+    description: 'Planos mensais com serviços inclusos (clube, pacotes).',
+  },
+  {
+    key: 'any_provider',
+    label: 'Qualquer profissional',
+    description:
+      'No agendamento pelo site, a opção de deixar o sistema escolher quem atende.',
+  },
+  {
+    key: 'walk_in',
+    label: 'Encaixe',
+    description: 'Botão na agenda para encaixar quem chega sem horário.',
+  },
+  {
+    key: 'series',
+    label: 'Horário fixo',
+    description: 'Repetir o mesmo horário toda semana (cliente fixo).',
+  },
+  {
+    key: 'waitlist',
+    label: 'Lista de espera',
+    description: 'Aviso para quem quer um horário num dia lotado.',
+  },
+];

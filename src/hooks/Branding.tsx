@@ -8,7 +8,11 @@ import React, {
 } from 'react';
 
 import api from '../services/api';
-import { Vocabulary, DEFAULT_VOCABULARY } from '../utils/vocabulary';
+import {
+  Vocabulary,
+  DEFAULT_VOCABULARY,
+  FeatureKey,
+} from '../utils/vocabulary';
 import TenantUnavailable, {
   TenantProblem,
 } from '../components/TenantUnavailable';
@@ -23,6 +27,9 @@ export interface Branding {
   segment?: string;
   segment_name?: string;
   vocabulary?: Vocabulary;
+  // Recursos ligados (padrão do ramo + ajuste do admin)
+  features?: Partial<Record<FeatureKey, boolean>>;
+  feature_defaults?: Partial<Record<FeatureKey, boolean>>;
 }
 
 interface BrandingContextData {

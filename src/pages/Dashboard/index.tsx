@@ -83,7 +83,7 @@ import {
   hourRange,
   toHour,
 } from './agenda';
-import { useVocabulary } from '../../hooks/Vocabulary';
+import { useVocabulary, useFeatures } from '../../hooks/Vocabulary';
 
 type ViewMode = 'day' | 'week';
 
@@ -136,6 +136,7 @@ function weekTitle(start: Date): string {
 }
 
 const Dashboard: React.FC = () => {
+  const features = useFeatures();
   const terms = useVocabulary();
   const { user, can } = useAuth();
   const location = useLocation();
@@ -544,7 +545,7 @@ const Dashboard: React.FC = () => {
             }}
           />
 
-          {view === 'day' && (
+          {view === 'day' && features.waitlist && (
             <WaitlistPanel
               day={selectedDate}
               providers={activeProviders}
@@ -567,7 +568,7 @@ const Dashboard: React.FC = () => {
             </ProviderFilter>
           )}
 
-          {view === 'day' && isToday(selectedDate) && (
+          {view === 'day' && isToday(selectedDate) && features.walk_in && (
             <WalkInButton
               type="button"
               title="Encaixe: cliente sem horário, veja quem está livre agora"

@@ -31,7 +31,7 @@ import {
   HistoryItem,
   HistoryStatus,
 } from './styles';
-import { useVocabulary } from '../../hooks/Vocabulary';
+import { useVocabulary, useFeatures } from '../../hooks/Vocabulary';
 
 interface ClientAppointment {
   id: string;
@@ -76,6 +76,7 @@ interface Provider {
 type ActiveAction = { id: string; type: 'reschedule' | 'cancel' } | null;
 
 const MyAppointments: React.FC = () => {
+  const features = useFeatures();
   const terms = useVocabulary();
   const { addToast } = useToast();
   const history = useHistory();
@@ -187,7 +188,7 @@ const MyAppointments: React.FC = () => {
           {appointments.length > 0 && <div>{newAppointmentButton}</div>}
         </PageHeader>
 
-        <ClubPanel />
+        {features.club && <ClubPanel />}
 
         {loading && (
           <List>

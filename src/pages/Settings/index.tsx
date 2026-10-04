@@ -6,7 +6,6 @@ import {
   FiCheck,
   FiClock,
   FiImage,
-  FiScissors,
   FiSlash,
   FiTrash2,
   FiUpload,
@@ -25,6 +24,7 @@ import SiteSettings from './SiteSettings';
 import TerminalSettings from './TerminalSettings';
 import WhatsAppSettings from './WhatsAppSettings';
 import ProfileFieldsSettings from './ProfileFieldsSettings';
+import FeaturesSettings from './FeaturesSettings';
 import {
   Page,
   PageHeader,
@@ -59,7 +59,7 @@ import {
   Links,
   FieldLabel,
 } from './styles';
-import { useVocabulary } from '../../hooks/Vocabulary';
+import { useSegmentIcon, useVocabulary } from '../../hooks/Vocabulary';
 
 // Sugestões de cor (a primeira é o laranja original)
 const PALETTE = [
@@ -93,6 +93,7 @@ const INTEGRATIONS = [
 
 const Settings: React.FC = () => {
   const terms = useVocabulary();
+  const SegmentIcon = useSegmentIcon();
   const { can } = useAuth();
   const { addToast } = useToast();
   const { branding, setBranding } = useBranding();
@@ -461,6 +462,8 @@ const Settings: React.FC = () => {
                   </UIButton>
                 </CardFooter>
               </Card>
+
+              <FeaturesSettings />
             </div>
 
             <div>
@@ -491,7 +494,7 @@ const Settings: React.FC = () => {
                         />
                       ) : (
                         <PreviewIcon>
-                          <FiScissors />
+                          <SegmentIcon />
                         </PreviewIcon>
                       )}
                       <strong>{previewName}</strong>

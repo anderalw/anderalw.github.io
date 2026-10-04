@@ -46,7 +46,7 @@ import {
   SummaryFooter,
   WaitlistBox,
 } from './styles';
-import { useVocabulary } from '../../hooks/Vocabulary';
+import { useVocabulary, useFeatures } from '../../hooks/Vocabulary';
 
 interface Provider {
   id: string;
@@ -109,6 +109,7 @@ interface Benefit {
 }
 
 const CreateAppointment: React.FC = () => {
+  const features = useFeatures();
   const terms = useVocabulary();
   const { addToast } = useToast();
   const location = useLocation();
@@ -163,6 +164,17 @@ const CreateAppointment: React.FC = () => {
       })
       .finally(() => setProvidersLoaded(true));
   }, []);
+
+  // Sem "qualquer profissional" no negócio: começa no primeiro
+  useEffect(() => {
+    if (
+      !features.any_provider &&
+      selectedProvider === ANY_PROVIDER &&
+      providers.length > 0
+    ) {
+      setSelectedProvider(providers[0].id);
+    }
+  }, [features.any_provider, selectedProvider, providers]);
 
   // Vindo do site (card do serviço) ou de "Agendar de novo": já escolhe o
   // serviço e o barbeiro do endereço (?servico=&barbeiro=), se existirem
@@ -498,21 +510,23 @@ const CreateAppointment: React.FC = () => {
                   {!providersLoaded
                     ? [0, 1, 2].map(item => <OptionSkeleton key={item} />)
                     : [
-                        <ProviderOption
-                          key={ANY_PROVIDER}
-                          type="button"
-                          selected={isAnyProvider}
-                          aria-pressed={isAnyProvider}
-                          onClick={() => setSelectedProvider(ANY_PROVIDER)}
-                        >
-                          <span className="any-icon">
-                            <FiUsers />
-                          </span>
-                          <div>
-                            <strong>{`Qualquer ${terms.professional}`}</strong>
-                            <small>Mais horários disponíveis</small>
-                          </div>
-                        </ProviderOption>,
+                        features.any_provider && (
+                          <ProviderOption
+                            key={ANY_PROVIDER}
+                            type="button"
+                            selected={isAnyProvider}
+                            aria-pressed={isAnyProvider}
+                            onClick={() => setSelectedProvider(ANY_PROVIDER)}
+                          >
+                            <span className="any-icon">
+                              <FiUsers />
+                            </span>
+                            <div>
+                              <strong>{`Qualquer ${terms.professional}`}</strong>
+                              <small>Mais horários disponíveis</small>
+                            </div>
+                          </ProviderOption>
+                        ),
                         ...providers.map(item => (
                           <ProviderOption
                             key={item.id}
@@ -574,7 +588,7 @@ const CreateAppointment: React.FC = () => {
                         <>
                           <HelpText>{timesMessage}</HelpText>
 
-                          {dayIsFull && waitingRequest && (
+                          {features.waitlist && dayIsFull && waitingRequest && (
                             <WaitlistBox>
                               <strong>
                                 <FiClock /> Você está na lista de espera
@@ -597,44 +611,46 @@ const CreateAppointment: React.FC = () => {
                             </WaitlistBox>
                           )}
 
-                          {dayIsFull && !waitingRequest && (
-                            <WaitlistBox>
-                              <strong>Quer esperar uma vaga?</strong>
-                              <p>
-                                Entre na lista de espera: se alguém cancelar,
-                                avisamos você por e-mail.
-                              </p>
-                              <Select
-                                aria-label="Período"
-                                value={waitPeriod}
-                                onChange={event =>
-                                  setWaitPeriod(
-                                    event.target.value as WaitlistPeriod,
-                                  )
-                                }
-                              >
-                                {PERIODS.map(option => (
-                                  <option
-                                    key={option.value}
-                                    value={option.value}
-                                  >
-                                    {option.label}
-                                  </option>
-                                ))}
-                              </Select>
-                              <UIButton
-                                type="button"
-                                size="sm"
-                                disabled={joining}
-                                onClick={joinWaitlist}
-                              >
-                                <FiClock />
-                                {joining
-                                  ? 'Entrando...'
-                                  : 'Entrar na lista de espera'}
-                              </UIButton>
-                            </WaitlistBox>
-                          )}
+                          {features.waitlist &&
+                            dayIsFull &&
+                            !waitingRequest && (
+                              <WaitlistBox>
+                                <strong>Quer esperar uma vaga?</strong>
+                                <p>
+                                  Entre na lista de espera: se alguém cancelar,
+                                  avisamos você por e-mail.
+                                </p>
+                                <Select
+                                  aria-label="Período"
+                                  value={waitPeriod}
+                                  onChange={event =>
+                                    setWaitPeriod(
+                                      event.target.value as WaitlistPeriod,
+                                    )
+                                  }
+                                >
+                                  {PERIODS.map(option => (
+                                    <option
+                                      key={option.value}
+                                      value={option.value}
+                                    >
+                                      {option.label}
+                                    </option>
+                                  ))}
+                                </Select>
+                                <UIButton
+                                  type="button"
+                                  size="sm"
+                                  disabled={joining}
+                                  onClick={joinWaitlist}
+                                >
+                                  <FiClock />
+                                  {joining
+                                    ? 'Entrando...'
+                                    : 'Entrar na lista de espera'}
+                                </UIButton>
+                              </WaitlistBox>
+                            )}
                         </>
                       ) : (
                         <HourList>

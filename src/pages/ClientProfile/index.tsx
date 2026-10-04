@@ -58,7 +58,11 @@ import {
   HistoryRow,
   HistoryTable,
 } from './styles';
-import { useVocabulary, useSegmentExamples } from '../../hooks/Vocabulary';
+import {
+  useVocabulary,
+  useSegmentExamples,
+  useFeatures,
+} from '../../hooks/Vocabulary';
 
 type Filter = 'all' | 'completed' | 'no_show' | 'canceled';
 
@@ -151,6 +155,7 @@ function clientSince(createdAt: string): string {
 
 // Ficha do cliente: contatos, resumo, observações e todo o histórico
 const ClientProfile: React.FC = () => {
+  const features = useFeatures();
   const examples = useSegmentExamples();
   const terms = useVocabulary();
   const { id } = useParams<{ id: string }>();
@@ -469,7 +474,9 @@ const ClientProfile: React.FC = () => {
               </CardBody>
             </Card>
 
-            <MembershipCard clientId={id} clientName={client?.name || ''} />
+            {features.club && (
+              <MembershipCard clientId={id} clientName={client?.name || ''} />
+            )}
           </SideColumn>
 
           <Card>
