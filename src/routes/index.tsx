@@ -5,8 +5,8 @@ import Route from './Route';
 
 import Landing from '../pages/Landing';
 import SignIn from '../pages/SignIn';
-import ForgotPassword from '../pages/ForgotPassword';
-import ResetPassword from '../pages/ResetPassword';
+import ForgotPassword, { ClientForgotPassword } from '../pages/ForgotPassword';
+import ResetPassword, { ClientResetPassword } from '../pages/ResetPassword';
 import Dashboard from '../pages/Dashboard';
 import Profile from '../pages/Profile';
 import CreateAppointment from '../pages/CreateAppointment';
@@ -69,6 +69,9 @@ const Routes: React.FC = () => (
     {/* Rotas dos Clientes */}
     <Route path="/cliente/login" component={SignInClient} />
     <Route path="/cliente/cadastro" component={SignUpClient} />
+    <Route path="/cliente/esqueci-senha" component={ClientForgotPassword} />
+    {/* Link enviado no e-mail de recuperação do cliente */}
+    <Route path="/cliente/redefinir-senha" component={ClientResetPassword} />
     {/* Link do e-mail da véspera: funciona com ou sem login */}
     <Route path="/confirmar-agendamento" component={ConfirmAppointment} />
     <Route

@@ -13,6 +13,10 @@ import getApiErrorMessage from '../../utils/getApiErrorMessage';
 import api from '../../services/api';
 
 import AuthLayout from '../../components/AuthLayout';
+import {
+  PasswordAudience,
+  PASSWORD_AUDIENCE,
+} from '../../utils/passwordAudience';
 import FormField from '../../components/FormField';
 import { UIButton } from '../../components/ui';
 
@@ -20,7 +24,14 @@ interface ForgotPasswordFormData {
   email: string;
 }
 
-const ForgotPassword: React.FC = () => {
+interface ForgotPasswordProps {
+  audience?: PasswordAudience;
+}
+
+const ForgotPassword: React.FC<ForgotPasswordProps> = ({
+  audience = 'staff',
+}) => {
+  const texts = PASSWORD_AUDIENCE[audience];
   const [loading, setLoading] = useState(false);
 
   const formRef = useRef<FormHandles>(null);
@@ -43,7 +54,7 @@ const ForgotPassword: React.FC = () => {
           abortEarly: false,
         });
 
-        await api.post('/password/forgot', {
+        await api.post(texts.forgotEndpoint, {
           email: data.email,
         });
 
@@ -51,7 +62,7 @@ const ForgotPassword: React.FC = () => {
           type: 'success',
           title: 'E-mail de recuperação enviado',
           description:
-            'Enviamos um e-mail para confirmar a recuperação de senha, confira sua caixa de entrada',
+            'Se houver uma conta com esse e-mail, enviamos um link para criar uma nova senha. Confira sua caixa de entrada.',
         });
       } catch (err) {
         if (err instanceof Yup.ValidationError) {
@@ -73,16 +84,16 @@ const ForgotPassword: React.FC = () => {
         setLoading(false);
       }
     },
-    [addToast],
+    [addToast, texts],
   );
 
   return (
     <AuthLayout
       title="Recuperar senha"
-      subtitle="Informe o e-mail da sua conta de barbeiro. Enviaremos um link para você criar uma nova senha."
+      subtitle={texts.forgotSubtitle}
       footer={
         <p>
-          Lembrou a senha? <Link to="/barbeiro">Voltar ao login</Link>
+          Lembrou a senha? <Link to={texts.login}>Voltar ao login</Link>
         </p>
       }
     >
@@ -103,3 +114,8 @@ const ForgotPassword: React.FC = () => {
   );
 };
 export default ForgotPassword;
+
+// Mesma tela para o cliente (link no login do site)
+export const ClientForgotPassword: React.FC = () => (
+  <ForgotPassword audience="client" />
+);

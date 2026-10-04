@@ -73,6 +73,9 @@ const SignInClient: React.FC = () => {
       footer={
         <>
           <p>
+            <Link to="/cliente/esqueci-senha">Esqueci minha senha</Link>
+          </p>
+          <p>
             Ainda não tem conta? <Link to="/cliente/cadastro">Criar conta</Link>
           </p>
           <p>

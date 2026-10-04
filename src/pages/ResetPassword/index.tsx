@@ -13,6 +13,10 @@ import getApiErrorMessage from '../../utils/getApiErrorMessage';
 import api from '../../services/api';
 
 import AuthLayout from '../../components/AuthLayout';
+import {
+  PasswordAudience,
+  PASSWORD_AUDIENCE,
+} from '../../utils/passwordAudience';
 import FormField from '../../components/FormField';
 import { UIButton } from '../../components/ui';
 
@@ -21,7 +25,14 @@ interface ResetPasswordFormData {
   password_confirmation: string;
 }
 
-const ResetPassword: React.FC = () => {
+interface ResetPasswordProps {
+  audience?: PasswordAudience;
+}
+
+const ResetPassword: React.FC<ResetPasswordProps> = ({
+  audience = 'staff',
+}) => {
+  const texts = PASSWORD_AUDIENCE[audience];
   const formRef = useRef<FormHandles>(null);
 
   const { addToast } = useToast();
@@ -59,7 +70,7 @@ const ResetPassword: React.FC = () => {
           return;
         }
 
-        await api.post('/password/reset', {
+        await api.post(texts.resetEndpoint, {
           password,
           password_confirmation,
           token,
@@ -71,7 +82,7 @@ const ResetPassword: React.FC = () => {
           description: 'Faça login com a nova senha.',
         });
 
-        history.push('/barbeiro');
+        history.push(texts.login);
       } catch (err) {
         if (err instanceof Yup.ValidationError) {
           const errors = getValidationErrors(err);
@@ -90,16 +101,16 @@ const ResetPassword: React.FC = () => {
         });
       }
     },
-    [addToast, history, location.search],
+    [addToast, history, location.search, texts],
   );
 
   return (
     <AuthLayout
       title="Criar nova senha"
-      subtitle="Escolha uma nova senha para sua conta de barbeiro."
+      subtitle={texts.resetSubtitle}
       footer={
         <p>
-          <Link to="/barbeiro">Voltar ao login</Link>
+          <Link to={texts.login}>Voltar ao login</Link>
         </p>
       }
     >
@@ -124,3 +135,8 @@ const ResetPassword: React.FC = () => {
   );
 };
 export default ResetPassword;
+
+// Link do e-mail de recuperação do cliente
+export const ClientResetPassword: React.FC = () => (
+  <ResetPassword audience="client" />
+);
