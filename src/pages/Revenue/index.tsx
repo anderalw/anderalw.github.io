@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { Redirect } from 'react-router-dom';
+import { Link, Redirect } from 'react-router-dom';
 import {
   endOfMonth,
   endOfWeek,
@@ -255,7 +255,19 @@ const Revenue: React.FC = () => {
           <StatCard tone="warning">
             <span>A confirmar</span>
             <strong>{show(String(totals?.pending || 0))}</strong>
-            <small>Já passaram: registre na agenda</small>
+            {can('cash') ? (
+              <small>
+                Já passaram:{' '}
+                <Link
+                  to="/caixa"
+                  style={{ color: 'var(--color-primary)', fontWeight: 600 }}
+                >
+                  registre no caixa
+                </Link>
+              </small>
+            ) : (
+              <small>Já passaram: registre na agenda</small>
+            )}
           </StatCard>
           <StatCard tone="success">
             <span>Previsto</span>

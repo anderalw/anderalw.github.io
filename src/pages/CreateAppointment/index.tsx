@@ -1,4 +1,5 @@
 import React, { useEffect, useState, useCallback, useMemo } from 'react';
+import { useLocation } from 'react-router-dom';
 import { format, startOfDay } from 'date-fns';
 import ptBR from 'date-fns/locale/pt-BR';
 import DayPicker from 'react-day-picker';
@@ -108,6 +109,7 @@ interface Benefit {
 
 const CreateAppointment: React.FC = () => {
   const { addToast } = useToast();
+  const location = useLocation();
 
   const [services, setServices] = useState<Service[]>([]);
   const [servicesLoaded, setServicesLoaded] = useState(false);
@@ -159,6 +161,26 @@ const CreateAppointment: React.FC = () => {
       })
       .finally(() => setProvidersLoaded(true));
   }, []);
+
+  // Vindo do site (card do serviço) ou de "Agendar de novo": já escolhe o
+  // serviço e o barbeiro do endereço (?servico=&barbeiro=), se existirem
+  useEffect(() => {
+    if (!servicesLoaded || !providersLoaded) return;
+
+    const params = new URLSearchParams(location.search);
+    const serviceId = params.get('servico');
+    const providerId = params.get('barbeiro');
+
+    if (serviceId && services.some(item => item.id === serviceId)) {
+      setSelectedService(serviceId);
+    }
+
+    if (providerId && providers.some(item => item.id === providerId)) {
+      setSelectedProvider(providerId);
+    }
+    // Só ao abrir a página
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [servicesLoaded, providersLoaded]);
 
   // Horários livres: dependem do serviço (duração), do barbeiro e do dia
   useEffect(() => {

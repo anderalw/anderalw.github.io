@@ -4,7 +4,11 @@ export default function clientHomeAfterLogin(state: unknown): string {
   const from = (state as { from?: { pathname: string; search?: string } })
     ?.from;
 
-  if (from && from.pathname.startsWith('/meus-agendamentos')) {
+  if (
+    from &&
+    (from.pathname.startsWith('/meus-agendamentos') ||
+      from.pathname.startsWith('/agendar'))
+  ) {
     return `${from.pathname}${from.search || ''}`;
   }
 

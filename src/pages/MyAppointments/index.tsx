@@ -2,7 +2,7 @@ import React, { useCallback, useEffect, useState } from 'react';
 import { format, parseISO } from 'date-fns';
 import ptBR from 'date-fns/locale/pt-BR';
 import { useHistory } from 'react-router-dom';
-import { FiCalendar, FiPlus, FiRepeat, FiX } from 'react-icons/fi';
+import { FiCalendar, FiPlus, FiRefreshCw, FiRepeat, FiX } from 'react-icons/fi';
 
 import api from '../../services/api';
 import { useToast } from '../../hooks/Toast';
@@ -27,6 +27,9 @@ import {
   PanelActions,
   ItemSkeleton,
   Empty,
+  HistoryTitle,
+  HistoryItem,
+  HistoryStatus,
 } from './styles';
 
 interface ClientAppointment {
@@ -42,6 +45,26 @@ interface ClientAppointment {
   // Ainda dá tempo de o cliente cancelar ou remarcar sozinho
   can_change: boolean;
 }
+
+// Horário que já passou
+interface PastAppointment {
+  id: string;
+  date: string;
+  provider: { id: string; name: string; avatar_url: string | null };
+  service: { id: string; name: string } | null;
+  price_cents: number | null;
+  included: boolean;
+  attendance: 'completed' | 'no_show' | null;
+}
+
+// Sem registro da barbearia, não mostra situação
+const PAST_STATUS: Record<
+  'completed' | 'no_show',
+  { label: string; tone: 'ok' | 'missed' | 'neutral' }
+> = {
+  completed: { label: 'Atendido', tone: 'ok' },
+  no_show: { label: 'Faltou', tone: 'missed' },
+};
 
 interface Provider {
   id: string;
@@ -60,6 +83,7 @@ const MyAppointments: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [action, setAction] = useState<ActiveAction>(null);
   const [canceling, setCanceling] = useState(false);
+  const [past, setPast] = useState<PastAppointment[]>([]);
 
   const loadAppointments = useCallback(async () => {
     try {
@@ -81,6 +105,12 @@ const MyAppointments: React.FC = () => {
 
   useEffect(() => {
     loadAppointments();
+    api
+      .get<PastAppointment[]>('/appointments/mine/history')
+      .then(response => setPast(response.data))
+      .catch(() => {
+        // Sem o histórico, os próximos horários continuam na tela
+      });
 
     api.get<Provider[]>('/providers').then(response => {
       setProviders(response.data);
@@ -150,7 +180,7 @@ const MyAppointments: React.FC = () => {
         <PageHeader>
           <div>
             <h1>Meus agendamentos</h1>
-            <p>Seus próximos horários na barbearia.</p>
+            <p>Seus próximos horários na barbearia e os anteriores.</p>
           </div>
           {appointments.length > 0 && <div>{newAppointmentButton}</div>}
         </PageHeader>
@@ -294,6 +324,54 @@ const MyAppointments: React.FC = () => {
             );
           })}
         </List>
+
+        {past.length > 0 && (
+          <section aria-label="Horários anteriores" style={{ maxWidth: 880 }}>
+            <HistoryTitle>Anteriores</HistoryTitle>
+            {past.map(item => {
+              const status = item.attendance
+                ? PAST_STATUS[item.attendance]
+                : null;
+              const again = new URLSearchParams();
+
+              if (item.service) again.set('servico', item.service.id);
+              again.set('barbeiro', item.provider.id);
+
+              return (
+                <HistoryItem key={item.id}>
+                  <div>
+                    <strong>{item.service?.name || 'Serviço'}</strong>
+                    <small>
+                      {`${format(
+                        parseISO(item.date),
+                        "dd/MM/yyyy 'às' HH:mm",
+                      )} · com ${item.provider.name}`}
+                      {item.included && ' · Incluso no plano'}
+                      {!item.included &&
+                        item.price_cents !== null &&
+                        ` · ${formatPrice(item.price_cents)}`}
+                    </small>
+                  </div>
+                  {status && (
+                    <HistoryStatus tone={status.tone}>
+                      {status.label}
+                    </HistoryStatus>
+                  )}
+                  <UIButton
+                    type="button"
+                    variant="secondary"
+                    size="sm"
+                    title="Mesmo serviço, com o mesmo barbeiro"
+                    onClick={() => history.push(`/agendar?${again.toString()}`)}
+                  >
+                    <FiRefreshCw />
+                    Agendar de novo
+                  </UIButton>
+                </HistoryItem>
+              );
+            })}
+          </section>
+        )}
       </Page>
     </AppLayout>
   );

@@ -222,7 +222,22 @@ const Landing: React.FC = () => {
           <ServiceGrid>
             {!site && [1, 2, 3].map(key => <Skeleton key={key} height={132} />)}
             {site?.services.map(service => (
-              <ServiceCard key={service.id} to={bookTo}>
+              <ServiceCard
+                key={service.id}
+                to={
+                  role === 'client'
+                    ? `/agendar?servico=${service.id}`
+                    : {
+                        pathname: '/cliente/login',
+                        state: {
+                          from: {
+                            pathname: '/agendar',
+                            search: `?servico=${service.id}`,
+                          },
+                        },
+                      }
+                }
+              >
                 <strong>{service.name}</strong>
                 <small>{formatDuration(service.duration_minutes)}</small>
                 <footer>

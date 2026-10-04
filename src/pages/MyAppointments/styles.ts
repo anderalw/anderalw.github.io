@@ -158,3 +158,54 @@ export const Empty = styled.div`
     color: ${colors.textSubtle};
   }
 `;
+
+// Horários anteriores: lista mais discreta, abaixo dos próximos
+export const HistoryTitle = styled.h2`
+  margin: 32px 0 12px;
+  font-size: 15px;
+  font-weight: 600;
+  color: ${colors.text};
+`;
+
+export const HistoryItem = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 12px 20px;
+  border: 1px solid ${colors.border};
+  border-radius: ${radius.lg};
+  background: ${colors.surface};
+
+  & + & {
+    margin-top: 8px;
+  }
+
+  > div {
+    flex: 1;
+    min-width: 0;
+  }
+
+  strong {
+    display: block;
+    font-size: 14px;
+    font-weight: 600;
+    color: ${colors.text};
+  }
+
+  small {
+    font-size: 13px;
+    color: ${colors.textMuted};
+  }
+`;
+
+export const HistoryStatus = styled.span<{ tone: 'ok' | 'missed' | 'neutral' }>`
+  font-size: 12px;
+  font-weight: 500;
+  white-space: nowrap;
+  color: ${props => {
+    if (props.tone === 'ok') return colors.success;
+    if (props.tone === 'missed') return colors.danger;
+
+    return colors.textMuted;
+  }};
+`;
