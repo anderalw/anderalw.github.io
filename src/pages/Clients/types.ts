@@ -97,7 +97,7 @@ export const FILTERS: { key: ClientFilter; label: string; hint: string }[] = [
     hint: 'Fazem aniversário no mês.',
   },
   { key: 'no_shows', label: 'Com faltas', hint: 'Já faltaram alguma vez.' },
-  { key: 'club', label: 'Do clube', hint: 'Com assinatura ativa no clube.' },
+  { key: 'club', label: 'Assinantes', hint: 'Com assinatura ativa.' },
   { key: 'new', label: 'Novos', hint: 'Cadastrados nos últimos 30 dias.' },
 ];
 

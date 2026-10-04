@@ -16,6 +16,7 @@ import MembershipPaymentModal, {
 } from '../Club/MembershipPaymentModal';
 import { MembershipDetails, lastPaidDay, stateInfo } from '../Club/types';
 import { StateBadge } from '../Club/styles';
+import { useVocabulary } from '../../hooks/Vocabulary';
 
 interface MembershipCardProps {
   clientId: string;
@@ -114,6 +115,7 @@ const MembershipCard: React.FC<MembershipCardProps> = ({
   clientId,
   clientName,
 }) => {
+  const terms = useVocabulary();
   const { addToast } = useToast();
   // undefined: carregando; null: não é assinante
   const [membership, setMembership] = useState<
@@ -187,7 +189,7 @@ const MembershipCard: React.FC<MembershipCardProps> = ({
   } else if (membership === null) {
     content = (
       <Empty>
-        Não é assinante do clube.
+        Não tem plano de assinatura.
         <UIButton
           type="button"
           size="sm"
@@ -302,7 +304,7 @@ const MembershipCard: React.FC<MembershipCardProps> = ({
     <Card>
       <CardHeader>
         <div>
-          <h2>Clube</h2>
+          <h2>{terms.Club}</h2>
           <p>
             {membership?.cycle
               ? `Saldo de ${format(

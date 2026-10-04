@@ -46,6 +46,7 @@ import {
   Hint,
   ClientLink,
 } from './styles';
+import { useVocabulary } from '../../hooks/Vocabulary';
 
 type Filter = 'all' | 'pending' | 'overdue' | 'due';
 
@@ -81,6 +82,7 @@ function describeRules(plan: Plan): string {
 
 // Clube de assinatura: assinantes, pedidos do site, mensalidades e planos
 const Club: React.FC = () => {
+  const terms = useVocabulary();
   const { can } = useAuth();
   const { addToast } = useToast();
 
@@ -109,7 +111,7 @@ const Club: React.FC = () => {
       .catch(err =>
         addToast({
           type: 'error',
-          title: 'Não foi possível carregar o clube',
+          title: 'Não foi possível carregar as assinaturas',
           description: getApiErrorMessage(err, 'Tente novamente.'),
         }),
       );
@@ -174,10 +176,9 @@ const Club: React.FC = () => {
       <Page>
         <PageHeader>
           <div>
-            <h1>Clube de assinatura</h1>
+            <h1>{`${terms.Club} de assinatura`}</h1>
             <p>
-              Assinantes, mensalidades e os planos. Para assinar um cliente na
-              barbearia, abra a ficha dele.
+              {`Assinantes, mensalidades e os planos. Para assinar um ${terms.client} pela equipe, abra a ficha dele.`}
             </p>
           </div>
           {can('catalog') && (
@@ -261,7 +262,7 @@ const Club: React.FC = () => {
                 <Table>
                   <thead>
                     <tr>
-                      <th>Cliente</th>
+                      <th>{terms.Client}</th>
                       <th>Plano</th>
                       <th>Situação</th>
                       <th>Pago até</th>

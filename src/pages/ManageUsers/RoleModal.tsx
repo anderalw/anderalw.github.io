@@ -19,6 +19,7 @@ import {
   PermissionGroups,
   PermissionGroup,
 } from './styles';
+import { useVocabulary } from '../../hooks/Vocabulary';
 
 interface RoleModalProps {
   // null = novo perfil
@@ -36,6 +37,7 @@ const RoleModal: React.FC<RoleModalProps> = ({
   onClose,
   onSaved,
 }) => {
+  const terms = useVocabulary();
   const { addToast } = useToast();
   const isNew = !role;
   const locked = !!role?.is_admin;
@@ -160,7 +162,7 @@ const RoleModal: React.FC<RoleModalProps> = ({
           <Hint>
             {locked
               ? 'O Administrador pode tudo, inclusive o que surgir em versões novas, e não pode ser alterado.'
-              : 'Sem nenhuma permissão, a pessoa vê e mexe só na própria agenda (se for barbeiro).'}
+              : `Sem nenhuma permissão, a pessoa vê e mexe só na própria agenda (se for ${terms.professional}).`}
           </Hint>
 
           <PermissionGroups>

@@ -24,6 +24,7 @@ import {
 } from '../../components/ui';
 import defaultCover from '../../assets/sign-in-background.png';
 import { Field, FieldLabel, LogoActions, SaveError } from './styles';
+import { useVocabulary } from '../../hooks/Vocabulary';
 
 interface SiteContent {
   tagline: string;
@@ -111,6 +112,7 @@ const Counter = styled.small`
 // Conteúdo da página inicial (o site da barbearia): frase da capa, texto
 // "sobre", contatos e a foto da capa
 const SiteSettings: React.FC = () => {
+  const terms = useVocabulary();
   const { addToast } = useToast();
   const fileRef = useRef<HTMLInputElement>(null);
 
@@ -252,7 +254,7 @@ const SiteSettings: React.FC = () => {
     <Card as="form" onSubmit={handleSave}>
       <CardHeader>
         <div>
-          <h2>Página da barbearia</h2>
+          <h2>{`Página ${terms.ofPlace}`}</h2>
           <p>
             O site que os clientes veem ao abrir o endereço. Serviços, equipe e
             horários vêm do sistema.
@@ -322,19 +324,19 @@ const SiteSettings: React.FC = () => {
             id="site-tagline"
             value={form.tagline}
             maxLength={120}
-            placeholder="Ex: Cortes, barbas e tratamentos com hora marcada."
+            placeholder="Ex: Atendimento com hora marcada, sem espera."
             onChange={change('tagline')}
           />
           <small>Aparece na capa, abaixo do nome.</small>
         </Field>
 
         <Field>
-          <FieldLabel htmlFor="site-about">Sobre a barbearia</FieldLabel>
+          <FieldLabel htmlFor="site-about">{`Sobre ${terms.thePlace}`}</FieldLabel>
           <TextArea
             id="site-about"
             value={form.about}
             maxLength={1000}
-            placeholder="Conte a história da barbearia, o estilo, o que faz ela especial... (vazio: a seção não aparece)"
+            placeholder={`Conte a história ${terms.ofPlace}, o estilo, o que faz o lugar especial... (vazio: a seção não aparece)`}
             onChange={change('about')}
           />
           <Counter>{`${form.about.length}/1000`}</Counter>
@@ -370,7 +372,7 @@ const SiteSettings: React.FC = () => {
             <TextInput
               id="site-instagram"
               value={form.instagram}
-              placeholder="@suabarbearia"
+              placeholder="@seunegocio"
               onChange={change('instagram')}
             />
           </Field>

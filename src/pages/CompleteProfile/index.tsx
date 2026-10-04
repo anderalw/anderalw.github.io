@@ -17,6 +17,7 @@ import {
   extraPayload,
   useProfileFields,
 } from '../../utils/profileFields';
+import { useVocabulary } from '../../hooks/Vocabulary';
 
 const Form = styled.form`
   display: flex;
@@ -43,6 +44,7 @@ const FieldLabel = styled.label``;
 // Depois do primeiro login com Google: confirma o nome e pede o telefone
 // (a barbearia precisa dele para falar com o cliente)
 const CompleteProfile: React.FC = () => {
+  const terms = useVocabulary();
   const { client, updateClient, signOut } = useAuth();
   const { addToast } = useToast();
   const history = useHistory();
@@ -98,7 +100,7 @@ const CompleteProfile: React.FC = () => {
   return (
     <AuthLayout
       title={asksMore ? 'Complete o seu cadastro' : 'Falta só o telefone'}
-      subtitle="A barbearia usa o telefone para avisar sobre o seu horário, se precisar."
+      subtitle={`${terms.ThePlace} usa o telefone para avisar sobre o seu horário, se precisar.`}
       footer={
         <p>
           Não é você?{' '}

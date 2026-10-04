@@ -53,10 +53,12 @@ import {
   CardGrid,
   CardActions,
 } from './styles';
+import { useVocabulary } from '../../hooks/Vocabulary';
 
 // Página de um usuário da equipe: os dados, o que ele pode fazer (perfil
 // opcional + permissões dele), a senha e a situação da conta
 const UserPage: React.FC = () => {
+  const terms = useVocabulary();
   const { id } = useParams<{ id: string }>();
   const { user: me, can } = useAuth();
   const { addToast } = useToast();
@@ -287,7 +289,7 @@ const UserPage: React.FC = () => {
                     </Badge>
                   </h1>
                   <small>
-                    {user.is_barber ? 'Barbeiro' : 'Não atende'}
+                    {user.is_barber ? terms.Professional : 'Não atende'}
                     {' · '}
                     {user.role ? `Perfil ${user.role.name}` : 'Sem perfil'}
                   </small>

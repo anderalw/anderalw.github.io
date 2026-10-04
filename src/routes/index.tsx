@@ -35,10 +35,13 @@ const Routes: React.FC = () => (
   <Switch>
     <Route path="/" exact component={Landing} isOpen />
 
-    {/* Rotas dos Barbeiros */}
-    <Route path="/barbeiro" exact component={SignIn} />
-    <Route path="/barbeiro/esqueci-senha" component={ForgotPassword} />
+    {/* Rotas da equipe (os endereços antigos /barbeiro continuam valendo) */}
+    <Route path="/equipe" exact component={SignIn} />
+    <Redirect exact from="/barbeiro" to="/equipe" />
+    <Route path="/equipe/esqueci-senha" component={ForgotPassword} />
+    <Redirect from="/barbeiro/esqueci-senha" to="/equipe/esqueci-senha" />
     {/* Link enviado no e-mail de recuperação (backend) */}
+    <Route path="/equipe/redefinir-senha" component={ResetPassword} />
     <Route path="/barbeiro/redefinir-senha" component={ResetPassword} />
     {/* Primeiro acesso: troca da senha provisória */}
     <Route path="/trocar-senha" component={ChangePassword} isPrivate />
@@ -54,7 +57,8 @@ const Routes: React.FC = () => (
     <Route path="/admin/usuarios" exact component={ManageUsers} isPrivate />
     <Route path="/admin/perfis" component={ManageUsers} isPrivate />
     <Route path="/admin/usuarios/:id" component={UserPage} isPrivate />
-    <Route path="/admin/barbeiros" component={ManageProviders} isPrivate />
+    <Route path="/admin/profissionais" component={ManageProviders} isPrivate />
+    <Redirect from="/admin/barbeiros" to="/admin/profissionais" />
     <Route path="/admin/faturamento" component={Revenue} isPrivate />
     <Route path="/admin/indicadores" component={Insights} isPrivate />
     <Route path="/admin/configuracoes" component={Settings} isPrivate />
@@ -65,7 +69,7 @@ const Routes: React.FC = () => (
     />
     {/* Endereços antigos das telas de administração */}
     <Redirect from="/admin/services" to="/admin/servicos" />
-    <Redirect from="/admin/create-provider" to="/admin/barbeiros" />
+    <Redirect from="/admin/create-provider" to="/admin/profissionais" />
 
     {/* Rotas dos Clientes */}
     <Route path="/cliente/login" component={SignInClient} />

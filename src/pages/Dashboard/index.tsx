@@ -83,6 +83,7 @@ import {
   hourRange,
   toHour,
 } from './agenda';
+import { useVocabulary } from '../../hooks/Vocabulary';
 
 type ViewMode = 'day' | 'week';
 
@@ -135,6 +136,7 @@ function weekTitle(start: Date): string {
 }
 
 const Dashboard: React.FC = () => {
+  const terms = useVocabulary();
   const { user, can } = useAuth();
   const location = useLocation();
   const { addToast } = useToast();
@@ -552,11 +554,11 @@ const Dashboard: React.FC = () => {
 
           {view === 'week' && (
             <ProviderFilter
-              aria-label="Barbeiro"
+              aria-label={terms.Professional}
               value={providerFilter}
               onChange={event => setProviderFilter(event.target.value)}
             >
-              <option value="all">Todos os barbeiros</option>
+              <option value="all">{`Todos os ${terms.professionals}`}</option>
               {activeProviders.map(provider => (
                 <option key={provider.id} value={provider.id}>
                   {provider.name}
@@ -617,7 +619,7 @@ const Dashboard: React.FC = () => {
         )}
 
         {view === 'day' && !loading && agenda.providers.length === 0 && (
-          <EmptyState>Nenhum barbeiro cadastrado.</EmptyState>
+          <EmptyState>{`Nenhum ${terms.professional} cadastrado.`}</EmptyState>
         )}
 
         {view === 'day' && (loading || agenda.providers.length > 0) && (

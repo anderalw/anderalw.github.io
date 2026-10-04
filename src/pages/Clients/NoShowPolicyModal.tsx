@@ -20,6 +20,7 @@ import {
   Hint,
 } from '../ManageServices/styles';
 import { NoShowPolicy, RECENT_APPOINTMENTS } from './types';
+import { useVocabulary } from '../../hooks/Vocabulary';
 
 interface NoShowPolicyModalProps {
   policy: NoShowPolicy;
@@ -62,6 +63,7 @@ const NoShowPolicyModal: React.FC<NoShowPolicyModalProps> = ({
   onClose,
   onSaved,
 }) => {
+  const terms = useVocabulary();
   const { addToast } = useToast();
 
   const [threshold, setThreshold] = useState(policy.alert_threshold);
@@ -178,10 +180,10 @@ const NoShowPolicyModal: React.FC<NoShowPolicyModalProps> = ({
                 onChange={event => setBlockOnline(event.target.checked)}
               />
               <span>
-                Clientes com alerta só agendam pela barbearia
+                {`${terms.Clients} com alerta só agendam ${terms.byPlace}`}
                 <small>
-                  No site, eles veem um aviso para entrar em contato. A
-                  barbearia continua marcando normalmente pela agenda.
+                  No site, eles veem um aviso para entrar em contato. A equipe
+                  continua marcando normalmente pela agenda.
                 </small>
               </span>
             </BlockOption>

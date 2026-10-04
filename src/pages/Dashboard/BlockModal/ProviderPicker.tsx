@@ -8,6 +8,7 @@ import {
   PickerOption,
   PickerWrapper,
 } from './styles';
+import { useVocabulary } from '../../../hooks/Vocabulary';
 
 interface ProviderPickerProps {
   providers: AgendaProvider[];
@@ -22,6 +23,7 @@ const ProviderPicker: React.FC<ProviderPickerProps> = ({
   selected,
   onChange,
 }) => {
+  const terms = useVocabulary();
   const [open, setOpen] = useState(false);
   const wrapperRef = useRef<HTMLDivElement>(null);
 
@@ -55,9 +57,10 @@ const ProviderPicker: React.FC<ProviderPickerProps> = ({
     .map(provider => provider.name);
 
   let label = names.join(', ');
-  if (names.length === 0) label = 'Escolha os barbeiros';
-  else if (allSelected && providers.length > 1) label = 'Todos os barbeiros';
-  else if (names.length > 2) label = `${names.length} barbeiros`;
+  if (names.length === 0) label = `Escolha os ${terms.professionals}`;
+  else if (allSelected && providers.length > 1) {
+    label = `Todos os ${terms.professionals}`;
+  } else if (names.length > 2) label = `${names.length} ${terms.professionals}`;
 
   const toggle = (id: string): void => {
     onChange(
@@ -75,7 +78,7 @@ const ProviderPicker: React.FC<ProviderPickerProps> = ({
         type="button"
         aria-haspopup="listbox"
         aria-expanded={open}
-        aria-label={`Barbeiros: ${label}`}
+        aria-label={`${terms.Professionals}: ${label}`}
         onClick={() => setOpen(value => !value)}
       >
         <span>{label}</span>

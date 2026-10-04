@@ -20,6 +20,7 @@ import {
   extraPayload,
   useProfileFields,
 } from '../../utils/profileFields';
+import { useVocabulary } from '../../hooks/Vocabulary';
 
 interface SignUpClientFormData {
   name: string;
@@ -29,6 +30,7 @@ interface SignUpClientFormData {
 }
 
 const SignUpClient: React.FC = () => {
+  const terms = useVocabulary();
   const formRef = useRef<FormHandles>(null);
   const { addToast } = useToast();
   const history = useHistory();
@@ -94,7 +96,7 @@ const SignUpClient: React.FC = () => {
   return (
     <AuthLayout
       title="Criar conta"
-      subtitle="Se a barbearia já marcou um horário para você, use o mesmo e-mail para ver seus agendamentos."
+      subtitle={`Se ${terms.thePlace} já marcou um horário para você, use o mesmo e-mail para ver seus agendamentos.`}
       image="signup"
       footer={
         <>

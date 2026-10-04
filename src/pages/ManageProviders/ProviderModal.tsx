@@ -33,6 +33,7 @@ import {
   GroupItem,
   DaysOff,
 } from './styles';
+import { useVocabulary } from '../../hooks/Vocabulary';
 
 export interface TeamMember {
   id: string;
@@ -116,6 +117,7 @@ const ProviderModal: React.FC<ProviderModalProps> = ({
   onClose,
   onSaved,
 }) => {
+  const terms = useVocabulary();
   const { addToast } = useToast();
   const isNew = !member;
   // Usuário escolhido para virar barbeiro
@@ -198,8 +200,7 @@ const ProviderModal: React.FC<ProviderModalProps> = ({
       addToast({
         type: 'error',
         title: 'Escolha o usuário',
-        description:
-          'Cadastre a pessoa em Usuários antes de torná-la barbeiro.',
+        description: `Cadastre a pessoa em Usuários antes de colocá-la na agenda.`,
       });
       return;
     }
@@ -238,7 +239,7 @@ const ProviderModal: React.FC<ProviderModalProps> = ({
 
       addToast({
         type: 'success',
-        title: isNew ? 'Barbeiro adicionado!' : 'Horários salvos',
+        title: isNew ? `${terms.Professional} adicionado!` : 'Horários salvos',
         description: isNew
           ? `${name} já aparece na agenda e no site.`
           : `Horários de ${name} atualizados.`,
@@ -254,7 +255,7 @@ const ProviderModal: React.FC<ProviderModalProps> = ({
     } finally {
       setSaving(false);
     }
-  }, [isNew, userId, member, candidates, schedules, addToast, onSaved]);
+  }, [terms, isNew, userId, member, candidates, schedules, addToast, onSaved]);
 
   return (
     <Overlay
@@ -271,7 +272,9 @@ const ProviderModal: React.FC<ProviderModalProps> = ({
         <DialogHeader>
           <div>
             <h2 id="provider-modal-title">
-              {isNew ? 'Adicionar barbeiro' : `Horários de ${member?.name}`}
+              {isNew
+                ? `Adicionar ${terms.professional}`
+                : `Horários de ${member?.name}`}
             </h2>
             <ModalSubtitle>
               {isNew
@@ -292,7 +295,7 @@ const ProviderModal: React.FC<ProviderModalProps> = ({
         <ModalForm onSubmit={handleSubmit}>
           <FormColumns>
             <FormAside>
-              <SectionTitle>Barbeiro</SectionTitle>
+              <SectionTitle>{terms.Professional}</SectionTitle>
               {isNew ? (
                 <>
                   <Label>
@@ -415,7 +418,8 @@ const ProviderModal: React.FC<ProviderModalProps> = ({
             <UIButton type="submit" disabled={saving}>
               <FiCheck />
               {saving && 'Salvando...'}
-              {!saving && (isNew ? 'Adicionar barbeiro' : 'Salvar horários')}
+              {!saving &&
+                (isNew ? `Adicionar ${terms.professional}` : 'Salvar horários')}
             </UIButton>
           </Footer>
         </ModalForm>

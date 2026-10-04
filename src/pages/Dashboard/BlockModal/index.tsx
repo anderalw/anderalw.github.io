@@ -32,6 +32,7 @@ import {
 import TimeSelect from '../../../components/TimeSelect';
 import ProviderPicker from './ProviderPicker';
 import ReasonSelect, { BlockReason } from './ReasonSelect';
+import { useVocabulary } from '../../../hooks/Vocabulary';
 
 interface BlockModalProps {
   // Barbeiro e horário clicados na agenda
@@ -68,6 +69,7 @@ const BlockModal: React.FC<BlockModalProps> = ({
   onClose,
   onCreated,
 }) => {
+  const terms = useVocabulary();
   const [mode, setMode] = useState<Mode>('once');
   // Um ou mais barbeiros; começa com o da coluna clicada
   const [providerIds, setProviderIds] = useState([provider.id]);
@@ -138,7 +140,9 @@ const BlockModal: React.FC<BlockModalProps> = ({
 
   // Problema que impede salvar, mostrado no resumo
   const problem = useMemo(() => {
-    if (providerIds.length === 0) return 'Escolha pelo menos um barbeiro.';
+    if (providerIds.length === 0) {
+      return `Escolha pelo menos um ${terms.professional}.`;
+    }
 
     if (mode === 'repeat') {
       if (days.length === 0) return 'Escolha pelo menos um dia da semana.';
@@ -159,6 +163,7 @@ const BlockModal: React.FC<BlockModalProps> = ({
 
     return null;
   }, [
+    terms,
     providerIds,
     mode,
     days,
@@ -265,7 +270,7 @@ const BlockModal: React.FC<BlockModalProps> = ({
           .map(item => item.name);
         const who =
           names.length > 2
-            ? `${names.length} barbeiros`
+            ? `${names.length} ${terms.professionals}`
             : names.join(' e ') || provider.name;
 
         onCreated({
@@ -283,6 +288,7 @@ const BlockModal: React.FC<BlockModalProps> = ({
       }
     },
     [
+      terms,
       problem,
       mode,
       providerIds,
@@ -343,7 +349,7 @@ const BlockModal: React.FC<BlockModalProps> = ({
           <div>
             <h2 id="block-modal-title">Bloquear horário</h2>
             <Subtitle>
-              Ninguém consegue agendar com o barbeiro no período bloqueado.
+              {`Ninguém consegue agendar com ${terms.theProfessional} no período bloqueado.`}
             </Subtitle>
           </div>
           <CloseButton
@@ -360,7 +366,7 @@ const BlockModal: React.FC<BlockModalProps> = ({
           <Main>
             <TopRow>
               <Field as="div">
-                <span>Barbeiros</span>
+                <span>{terms.Professionals}</span>
                 <ProviderPicker
                   providers={providers}
                   selected={providerIds}

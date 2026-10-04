@@ -31,6 +31,7 @@ import {
   HistoryItem,
   HistoryStatus,
 } from './styles';
+import { useVocabulary } from '../../hooks/Vocabulary';
 
 interface ClientAppointment {
   id: string;
@@ -75,6 +76,7 @@ interface Provider {
 type ActiveAction = { id: string; type: 'reschedule' | 'cancel' } | null;
 
 const MyAppointments: React.FC = () => {
+  const terms = useVocabulary();
   const { addToast } = useToast();
   const history = useHistory();
 
@@ -180,7 +182,7 @@ const MyAppointments: React.FC = () => {
         <PageHeader>
           <div>
             <h1>Meus agendamentos</h1>
-            <p>Seus próximos horários na barbearia e os anteriores.</p>
+            <p>{`Seus próximos horários ${terms.inPlace} e os anteriores.`}</p>
           </div>
           {appointments.length > 0 && <div>{newAppointmentButton}</div>}
         </PageHeader>
@@ -279,8 +281,7 @@ const MyAppointments: React.FC = () => {
                     </ItemActions>
                   ) : (
                     <Hint>
-                      Faltam menos de 2 horas: para cancelar ou remarcar, fale
-                      com a barbearia.
+                      {`Faltam menos de 2 horas: para cancelar ou remarcar, fale com ${terms.thePlace}.`}
                     </Hint>
                   )}
                 </Row>
@@ -335,7 +336,7 @@ const MyAppointments: React.FC = () => {
               const again = new URLSearchParams();
 
               if (item.service) again.set('servico', item.service.id);
-              again.set('barbeiro', item.provider.id);
+              again.set('profissional', item.provider.id);
 
               return (
                 <HistoryItem key={item.id}>
@@ -361,7 +362,7 @@ const MyAppointments: React.FC = () => {
                     type="button"
                     variant="secondary"
                     size="sm"
-                    title="Mesmo serviço, com o mesmo barbeiro"
+                    title={`Mesmo serviço, com o mesmo ${terms.professional}`}
                     onClick={() => history.push(`/agendar?${again.toString()}`)}
                   >
                     <FiRefreshCw />

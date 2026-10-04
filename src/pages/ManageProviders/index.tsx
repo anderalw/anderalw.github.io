@@ -30,11 +30,13 @@ import {
   ConfirmOverlay,
   ConfirmBox,
 } from './styles';
+import { useVocabulary } from '../../hooks/Vocabulary';
 
 // Modal aberto: adicionar barbeiro (null) ou os horários de um existente
 type ModalState = { member: TeamMember | null } | null;
 
 const ManageProviders: React.FC = () => {
+  const terms = useVocabulary();
   const { user, can } = useAuth();
   const { addToast } = useToast();
   const allowed = can('team');
@@ -64,11 +66,11 @@ const ManageProviders: React.FC = () => {
         title: 'Erro ao carregar a equipe',
         description: getApiErrorMessage(
           err,
-          'Não foi possível carregar os barbeiros, tente novamente.',
+          `Não foi possível carregar os ${terms.professionals}, tente novamente.`,
         ),
       });
     }
-  }, [addToast]);
+  }, [addToast, terms]);
 
   useEffect(() => {
     if (allowed) loadTeam();
@@ -145,7 +147,7 @@ const ManageProviders: React.FC = () => {
               onClick={() => setModal({ member: null })}
             >
               <FiPlus />
-              Adicionar barbeiro
+              {`Adicionar ${terms.professional}`}
             </UIButton>
           </div>
         </PageHeader>
@@ -165,7 +167,7 @@ const ManageProviders: React.FC = () => {
           <Table>
             <thead>
               <tr>
-                <th>Barbeiro</th>
+                <th>{terms.Professional}</th>
                 <th>Atendimento</th>
                 <th>Situação</th>
                 <th aria-label="Ações" />

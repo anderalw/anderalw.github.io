@@ -13,12 +13,12 @@ export const PASSWORD_AUDIENCE: Record<
   }
 > = {
   staff: {
-    login: '/barbeiro',
+    login: '/equipe',
     forgotEndpoint: '/password/forgot',
     resetEndpoint: '/password/reset',
     forgotSubtitle:
-      'Informe o e-mail da sua conta de barbeiro. Enviaremos um link para você criar uma nova senha.',
-    resetSubtitle: 'Escolha uma nova senha para sua conta de barbeiro.',
+      'Informe o e-mail da sua conta da equipe. Enviaremos um link para você criar uma nova senha.',
+    resetSubtitle: 'Escolha uma nova senha para sua conta da equipe.',
   },
   client: {
     login: '/cliente/login',

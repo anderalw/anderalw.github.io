@@ -17,6 +17,7 @@ import {
   stateInfo,
 } from '../Club/types';
 import { StateBadge } from '../Club/styles';
+import { useVocabulary } from '../../hooks/Vocabulary';
 
 const Box = styled.section`
   margin-bottom: 24px;
@@ -118,6 +119,7 @@ const Usage = styled.ul`
 // "Meu plano" na área do cliente: pedir um plano do clube, acompanhar o
 // pedido, o saldo do mês e até quando está pago
 const ClubPanel: React.FC = () => {
+  const terms = useVocabulary();
   const { addToast } = useToast();
   const location = useLocation();
   // undefined: carregando
@@ -161,7 +163,7 @@ const ClubPanel: React.FC = () => {
         addToast({
           type: 'success',
           title: 'Pedido enviado',
-          description: `A barbearia confirma o ${plan.name} quando receber a primeira mensalidade.`,
+          description: `${terms.ThePlace} confirma o ${plan.name} quando receber a primeira mensalidade.`,
         });
       } catch (err) {
         addToast({
@@ -173,7 +175,7 @@ const ClubPanel: React.FC = () => {
         setBusy(false);
       }
     },
-    [addToast],
+    [addToast, terms],
   );
 
   const withdraw = useCallback(async () => {
@@ -201,14 +203,16 @@ const ClubPanel: React.FC = () => {
 
   if (membership && membership.state === 'pending') {
     return (
-      <Box aria-label="Clube">
+      <Box aria-label={terms.Club}>
         <header>
           <FiAward />
           <h2>{`Pedido do plano ${membership.plan.name}`}</h2>
-          <StateBadge tone="primary">Aguardando a barbearia</StateBadge>
+          <StateBadge tone="primary">Aguardando confirmação</StateBadge>
         </header>
         <p>
-          {`A barbearia ativa o plano quando receber a primeira mensalidade (${formatPrice(
+          {`${
+            terms.ThePlace
+          } ativa o plano quando receber a primeira mensalidade (${formatPrice(
             membership.plan.price_cents,
           )}). Combine o pagamento no balcão ou pelo WhatsApp.`}
         </p>
@@ -238,7 +242,7 @@ const ClubPanel: React.FC = () => {
         </header>
         <p>
           {membership.state === 'overdue'
-            ? 'Mensalidade em atraso: por enquanto os serviços são cobrados normalmente. Os benefícios voltam assim que a barbearia registrar o pagamento.'
+            ? 'Mensalidade em atraso: por enquanto os serviços são cobrados normalmente. Os benefícios voltam assim que o pagamento for registrado.'
             : `Pago até ${
                 membership.paid_until ? lastPaidDay(membership.paid_until) : '–'
               }. Os serviços do plano aparecem como "Incluso no plano" ao agendar.`}
@@ -260,10 +264,10 @@ const ClubPanel: React.FC = () => {
   }
 
   return (
-    <Box aria-label="Clube">
+    <Box aria-label={terms.Club}>
       <header>
         <FiAward />
-        <h2>Clube da barbearia</h2>
+        <h2>{`${terms.Club} ${terms.ofPlace}`}</h2>
       </header>
       <p>Pague por mês e use os serviços do plano sem pagar a cada visita.</p>
       <Plans>

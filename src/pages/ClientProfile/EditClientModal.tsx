@@ -27,6 +27,7 @@ import {
   toAddress,
   useProfileFields,
 } from '../../utils/profileFields';
+import { useVocabulary } from '../../hooks/Vocabulary';
 
 interface EditClientModalProps {
   client: ClientDetails;
@@ -48,6 +49,7 @@ const EditClientModal: React.FC<EditClientModalProps> = ({
   onClose,
   onSaved,
 }) => {
+  const terms = useVocabulary();
   const { addToast } = useToast();
 
   const [name, setName] = useState(client.name);
@@ -147,7 +149,7 @@ const EditClientModal: React.FC<EditClientModalProps> = ({
             <ModalSubtitle>
               {client.has_account
                 ? 'O cliente tem conta no site e entra com este e-mail.'
-                : 'Cadastrado pela barbearia (sem conta no site).'}
+                : `Cadastrado ${terms.byPlace} (sem conta no site).`}
             </ModalSubtitle>
           </div>
           <CloseButton

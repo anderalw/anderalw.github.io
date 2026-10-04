@@ -43,6 +43,7 @@ import {
   Tables,
   EmptyRow,
 } from './styles';
+import { useVocabulary } from '../../hooks/Vocabulary';
 
 interface Counts {
   completed: number;
@@ -116,6 +117,7 @@ const plural = (count: number, one: string, many: string): string =>
 // atendimentos a confirmar e o previsto, no total, por dia, por barbeiro e
 // por serviço. Só para administradores
 const Revenue: React.FC = () => {
+  const terms = useVocabulary();
   const { can } = useAuth();
   // A tela é de quem tem a permissão (a API também confere)
   const allowed = can('reports');
@@ -318,7 +320,7 @@ const Revenue: React.FC = () => {
         <Tables>
           <Card>
             <CardHeader>
-              <h2>Por barbeiro</h2>
+              <h2>{`Por ${terms.professional}`}</h2>
             </CardHeader>
             {!loading && report && report.providers.length === 0 ? (
               <EmptyRow>Nenhum agendamento no período.</EmptyRow>
@@ -326,7 +328,7 @@ const Revenue: React.FC = () => {
               <Table>
                 <thead>
                   <tr>
-                    <th>Barbeiro</th>
+                    <th>{terms.Professional}</th>
                     <th className="num">Atendidos</th>
                     <th className="num">Faltas</th>
                     <th className="num">A confirmar</th>

@@ -16,6 +16,7 @@ import {
   PrimaryButton,
   SecondaryButton,
 } from './styles';
+import { useVocabulary } from '../../hooks/Vocabulary';
 
 interface RescheduleFormProps {
   appointmentId: string;
@@ -37,6 +38,7 @@ const RescheduleForm: React.FC<RescheduleFormProps> = ({
   onCancel,
   onRescheduled,
 }) => {
+  const terms = useVocabulary();
   const { addToast } = useToast();
 
   const [providerId, setProviderId] = useState(currentProviderId);
@@ -126,7 +128,7 @@ const RescheduleForm: React.FC<RescheduleFormProps> = ({
   return (
     <Form>
       <Field>
-        <span>Barbeiro</span>
+        <span>{terms.Professional}</span>
         <select
           value={providerId}
           onChange={event => setProviderId(event.target.value)}
@@ -155,8 +157,7 @@ const RescheduleForm: React.FC<RescheduleFormProps> = ({
           {loading && <Hint>Carregando horários...</Hint>}
           {!loading && times.length === 0 && (
             <Hint>
-              Nenhum horário livre neste dia. Tente outra data ou outro
-              barbeiro.
+              {`Nenhum horário livre neste dia. Tente outra data ou outro ${terms.professional}.`}
             </Hint>
           )}
           {!loading && times.length > 0 && (

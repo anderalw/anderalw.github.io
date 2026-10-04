@@ -47,6 +47,7 @@ import {
   LostTable,
   Actions,
 } from './styles';
+import { useVocabulary } from '../../hooks/Vocabulary';
 
 interface Occupancy {
   booked_minutes: number;
@@ -182,6 +183,7 @@ function change(
 // Painel de indicadores (admin): ocupação da agenda, faltas, serviços mais
 // pedidos, horários mais cheios e clientes que sumiram
 const Insights: React.FC = () => {
+  const terms = useVocabulary();
   const { can } = useAuth();
   // A tela é de quem tem a permissão (a API também confere)
   const allowed = can('reports');
@@ -372,7 +374,7 @@ const Insights: React.FC = () => {
           <Card>
             <CardHeader>
               <div>
-                <h2>Ocupação por barbeiro</h2>
+                <h2>{`Ocupação por ${terms.professional}`}</h2>
                 <p>Horas marcadas ÷ horas de expediente (sem bloqueios).</p>
               </div>
             </CardHeader>
@@ -507,7 +509,7 @@ const Insights: React.FC = () => {
             <LostTable>
               <thead>
                 <tr>
-                  <th>Cliente</th>
+                  <th>{terms.Client}</th>
                   <th className="num">Visitas</th>
                   <th>Última visita</th>
                   <th className="num">Total gasto</th>

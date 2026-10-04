@@ -14,6 +14,7 @@ import getApiErrorMessage from '../../utils/getApiErrorMessage';
 import AuthLayout, { InlineLink } from '../../components/AuthLayout';
 import FormField from '../../components/FormField';
 import { UIButton } from '../../components/ui';
+import { useVocabulary } from '../../hooks/Vocabulary';
 
 interface SignInFormData {
   email: string;
@@ -21,6 +22,7 @@ interface SignInFormData {
 }
 
 const SignIn: React.FC = () => {
+  const terms = useVocabulary();
   const formRef = useRef<FormHandles>(null);
 
   const { signIn } = useAuth();
@@ -72,8 +74,8 @@ const SignIn: React.FC = () => {
 
   return (
     <AuthLayout
-      title="Acesso do barbeiro"
-      subtitle="Entre para ver a agenda da barbearia."
+      title="Acesso da equipe"
+      subtitle={`Entre para ver a agenda ${terms.ofPlace}.`}
       footer={
         <p>
           <Link to="/">Voltar ao início</Link>
@@ -94,9 +96,7 @@ const SignIn: React.FC = () => {
           label="Senha"
           autoComplete="current-password"
         />
-        <InlineLink to="/barbeiro/esqueci-senha">
-          Esqueci minha senha
-        </InlineLink>
+        <InlineLink to="/equipe/esqueci-senha">Esqueci minha senha</InlineLink>
 
         <UIButton type="submit">Entrar</UIButton>
       </Form>

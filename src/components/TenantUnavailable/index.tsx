@@ -26,11 +26,11 @@ export type TenantProblem = 'not_found' | 'suspended';
 const TEXTS: Record<TenantProblem, { title: string; text: string }> = {
   not_found: {
     title: 'Endereço não encontrado',
-    text: 'Não há nenhuma barbearia neste endereço. Confira o link que você recebeu.',
+    text: 'Não há nada neste endereço. Confira o link que você recebeu.',
   },
   suspended: {
     title: 'Sistema temporariamente indisponível',
-    text: 'Esta barbearia está com o sistema pausado. Tente de novo mais tarde.',
+    text: 'Este endereço está com o sistema pausado. Tente de novo mais tarde.',
   },
 };
 

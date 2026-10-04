@@ -8,6 +8,7 @@ import React, {
 } from 'react';
 
 import api from '../services/api';
+import { Vocabulary, DEFAULT_VOCABULARY } from '../utils/vocabulary';
 import TenantUnavailable, {
   TenantProblem,
 } from '../components/TenantUnavailable';
@@ -18,12 +19,18 @@ export interface Branding {
   primary_color: string;
   on_primary_color: string;
   logo_url: string | null;
+  // Ramo do negócio e os termos das telas (hooks/Vocabulary)
+  segment?: string;
+  segment_name?: string;
+  vocabulary?: Vocabulary;
+  defaults?: Vocabulary;
 }
 
 interface BrandingContextData {
   branding: Branding;
-  // Depois de salvar nas configurações: aplica na hora
-  setBranding(branding: Branding): void;
+  // Depois de salvar nas configurações: aplica na hora (junta com o que já
+  // havia: o vocabulário vem separado da identidade)
+  setBranding(branding: Partial<Branding>): void;
 }
 
 const STORAGE_KEY = '@GoBarber:branding';
@@ -33,6 +40,7 @@ export const DEFAULT_BRANDING: Branding = {
   primary_color: '#ff9000',
   on_primary_color: '#1b1a1f',
   logo_url: null,
+  vocabulary: DEFAULT_VOCABULARY,
 };
 
 const BrandingContext = createContext<BrandingContextData>(
@@ -158,15 +166,20 @@ export const BrandingProvider: React.FC = ({ children }) => {
     return initial;
   });
 
-  const setBranding = useCallback((next: Branding) => {
-    setState(next);
-    applyBranding(next);
+  const setBranding = useCallback((changes: Partial<Branding>) => {
+    setState(previous => {
+      const next = { ...previous, ...changes };
 
-    try {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(next));
-    } catch {
-      // Sem storage: vale até recarregar a página
-    }
+      applyBranding(next);
+
+      try {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(next));
+      } catch {
+        // Sem storage: vale até recarregar a página
+      }
+
+      return next;
+    });
   }, []);
 
   // Endereço sem barbearia, ou barbearia suspensa: nada do sistema abre

@@ -35,6 +35,7 @@ import RoleModal from './RoleModal';
 import { PermissionItem, RoleItem, StaffUser } from './types';
 import { Person, Row, Muted } from './styles';
 import AreaTabs from '../../components/AreaTabs';
+import { useVocabulary } from '../../hooks/Vocabulary';
 
 type View = 'users' | 'roles';
 
@@ -44,6 +45,7 @@ type Confirming =
   | { kind: 'delete-role'; role: RoleItem };
 
 const ManageUsers: React.FC = () => {
+  const terms = useVocabulary();
   const { user: me, can } = useAuth();
   const { addToast } = useToast();
   const history = useHistory();
@@ -220,7 +222,7 @@ const ManageUsers: React.FC = () => {
                 <tr>
                   <th>Usuário</th>
                   <th>Perfil</th>
-                  <th>Barbeiro</th>
+                  <th>{terms.Professional}</th>
                   <th>Situação</th>
                   <th aria-label="Ações" />
                 </tr>
@@ -457,7 +459,7 @@ const ManageUsers: React.FC = () => {
             </h2>
             <p>
               {confirming.kind === 'deactivate'
-                ? 'A pessoa não consegue mais entrar no sistema e, se for barbeiro, sai da agenda e do site. Você pode reativar quando quiser.'
+                ? `A pessoa não consegue mais entrar no sistema e, se for ${terms.professional}, sai da agenda e do site. Você pode reativar quando quiser.`
                 : 'Nenhum usuário usa este perfil. Ele some da lista de perfis.'}
             </p>
             {confirming.kind === 'deactivate' && (

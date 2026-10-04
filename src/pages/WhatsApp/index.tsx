@@ -32,6 +32,7 @@ import {
   Empty,
   StatusText,
 } from './styles';
+import { useVocabulary } from '../../hooks/Vocabulary';
 
 interface Status {
   pending: number;
@@ -45,6 +46,7 @@ type View = 'pending' | 'history';
 // Mensagens de WhatsApp para os clientes: no envio assistido, a fila para
 // enviar com um clique; e o histórico do que saiu
 const WhatsApp: React.FC = () => {
+  const terms = useVocabulary();
   const { can } = useAuth();
   const { addToast } = useToast();
   const [view, setView] = useState<View>('pending');
@@ -154,7 +156,8 @@ const WhatsApp: React.FC = () => {
           <div>
             <h1>WhatsApp</h1>
             <p>
-              Lembretes, confirmações, avisos da lista de espera e do clube.
+              Lembretes, confirmações, avisos da lista de espera e das
+              assinaturas.
             </p>
           </div>
         </PageHeader>
@@ -250,7 +253,7 @@ const WhatsApp: React.FC = () => {
               <thead>
                 <tr>
                   <th>Quando</th>
-                  <th>Cliente</th>
+                  <th>{terms.Client}</th>
                   <th>Mensagem</th>
                   <th>Situação</th>
                 </tr>

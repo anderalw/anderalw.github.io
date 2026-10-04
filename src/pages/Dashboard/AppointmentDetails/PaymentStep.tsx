@@ -378,7 +378,7 @@ const PaymentStep: React.FC<PaymentStepProps> = ({
           <div>
             <strong>Incluso no plano</strong>
             <p>
-              O cliente é assinante do clube: este atendimento não é cobrado
+              O cliente tem plano de assinatura: este atendimento não é cobrado
               {listPriceCents !== null &&
                 ` (no preço normal seria ${formatPrice(listPriceCents)})`}
               .

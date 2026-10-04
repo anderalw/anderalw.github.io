@@ -25,6 +25,7 @@ import SiteSettings from './SiteSettings';
 import TerminalSettings from './TerminalSettings';
 import WhatsAppSettings from './WhatsAppSettings';
 import ProfileFieldsSettings from './ProfileFieldsSettings';
+import VocabularySettings from './VocabularySettings';
 import {
   Page,
   PageHeader,
@@ -59,6 +60,7 @@ import {
   Links,
   FieldLabel,
 } from './styles';
+import { useVocabulary } from '../../hooks/Vocabulary';
 
 // Sugestões de cor (a primeira é o laranja original)
 const PALETTE = [
@@ -78,7 +80,7 @@ const HEX = /^#[0-9a-f]{6}$/i;
 // de salvar, e atalhos para as outras configurações
 // Abas das configurações; a chave é o fim do endereço
 const SECTIONS = [
-  { key: '', label: 'Barbearia' },
+  { key: '', label: 'Geral' },
   { key: 'site', label: 'Site' },
   { key: 'cadastros', label: 'Cadastros' },
   { key: 'integracoes', label: 'Integrações' },
@@ -91,6 +93,7 @@ const INTEGRATIONS = [
 ];
 
 const Settings: React.FC = () => {
+  const terms = useVocabulary();
   const { can } = useAuth();
   const { addToast } = useToast();
   const { branding, setBranding } = useBranding();
@@ -255,7 +258,7 @@ const Settings: React.FC = () => {
         <PageHeader>
           <div>
             <h1>Configurações</h1>
-            <p>A identidade da barbearia e as regras do sistema.</p>
+            <p>{`A identidade ${terms.ofPlace} e as regras do sistema.`}</p>
           </div>
         </PageHeader>
 
@@ -309,7 +312,7 @@ const Settings: React.FC = () => {
               <Card as="form" onSubmit={handleSave}>
                 <CardHeader>
                   <div>
-                    <h2>Identidade da barbearia</h2>
+                    <h2>{`Identidade ${terms.ofPlace}`}</h2>
                     <p>
                       Vale para o painel, o site de agendamento e os e-mails aos
                       clientes.
@@ -319,14 +322,14 @@ const Settings: React.FC = () => {
                 <CardBody>
                   <Field>
                     <FieldLabel htmlFor="shop-name">
-                      Nome da barbearia
+                      {`Nome ${terms.ofPlace}`}
                     </FieldLabel>
                     <NameInput>
                       <TextInput
                         id="shop-name"
                         value={name}
                         maxLength={40}
-                        placeholder="Ex: Barbearia do Zé"
+                        placeholder={`Ex: ${terms.Place} do Zé`}
                         onChange={event => {
                           editedRef.current = true;
                           setName(event.target.value);
@@ -459,6 +462,8 @@ const Settings: React.FC = () => {
                   </UIButton>
                 </CardFooter>
               </Card>
+
+              <VocabularySettings />
             </div>
 
             <div>
@@ -501,7 +506,7 @@ const Settings: React.FC = () => {
                       </span>
                       <span>
                         <FiUsers />
-                        Clientes
+                        {terms.Clients}
                       </span>
                     </nav>
                   </PreviewSidebar>
@@ -542,10 +547,10 @@ const Settings: React.FC = () => {
                     </Link>
                   </li>
                   <li>
-                    <Link to="/admin/barbeiros">
+                    <Link to="/admin/profissionais">
                       <FiUsers />
                       <span>
-                        Barbeiros e horários
+                        {`${terms.Professionals} e horários`}
                         <small>Equipe, expediente e quem é administrador</small>
                       </span>
                     </Link>

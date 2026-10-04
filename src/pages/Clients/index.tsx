@@ -60,6 +60,7 @@ import {
   WhatsAppLink,
   TableScroll,
 } from './styles';
+import { useVocabulary } from '../../hooks/Vocabulary';
 
 const PER_PAGE = 20;
 
@@ -162,6 +163,7 @@ function birthdayText(value?: string | null): string | null {
 
 // Lista de clientes da barbearia com o resumo de cada um. Clicar abre a ficha
 const Clients: React.FC = () => {
+  const terms = useVocabulary();
   const history = useHistory();
   const location = useLocation();
   const { can } = useAuth();
@@ -333,12 +335,12 @@ const Clients: React.FC = () => {
 
   const emptyText = (): string => {
     if (state.search) {
-      return `Nenhum cliente encontrado para "${state.search}"`;
+      return `Nenhum ${terms.client} encontrado para "${state.search}"`;
     }
 
-    if (state.filter !== 'all') return 'Nenhum cliente neste recorte';
+    if (state.filter !== 'all') return `Nenhum ${terms.client} neste recorte`;
 
-    return 'Nenhum cliente cadastrado ainda';
+    return `Nenhum ${terms.client} cadastrado ainda`;
   };
 
   return (
@@ -346,8 +348,8 @@ const Clients: React.FC = () => {
       <Page>
         <PageHeader>
           <div>
-            <h1>Clientes</h1>
-            <p>Histórico, observações e faltas de cada cliente.</p>
+            <h1>{terms.Clients}</h1>
+            <p>{`Histórico, observações e faltas de cada ${terms.client}.`}</p>
           </div>
           <div style={{ display: 'flex', gap: 8 }}>
             <UIButton
@@ -385,7 +387,7 @@ const Clients: React.FC = () => {
               policy.alert_threshold === 1 ? 'vez' : 'vezes'
             } ou mais nos últimos ${RECENT_APPOINTMENTS} agendamentos${
               policy.block_online
-                ? '; esses clientes só agendam pela barbearia.'
+                ? `; esses ${terms.clients} só agendam ${terms.byPlace}.`
                 : '.'
             }`}
         </PolicyNote>
@@ -399,11 +401,13 @@ const Clients: React.FC = () => {
                 value={search}
                 onChange={event => setSearch(event.target.value)}
                 placeholder="Buscar por nome, telefone, e-mail ou CPF"
-                aria-label="Buscar cliente"
+                aria-label={`Buscar ${terms.client}`}
               />
             </SearchField>
             <Counter>
-              {data ? `${total} ${total === 1 ? 'cliente' : 'clientes'}` : '–'}
+              {data
+                ? `${total} ${total === 1 ? terms.client : terms.clients}`
+                : '–'}
             </Counter>
           </CardHeader>
 
@@ -460,7 +464,7 @@ const Clients: React.FC = () => {
               description={
                 state.search || state.filter !== 'all'
                   ? 'Tente outra busca ou outro recorte.'
-                  : 'Os clientes aparecem aqui quando se cadastram no site ou são marcados pela agenda.'
+                  : `Os ${terms.clients} aparecem aqui quando se cadastram no site ou são marcados pela agenda.`
               }
               action={
                 (state.search || state.filter !== 'all') && (
@@ -485,8 +489,11 @@ const Clients: React.FC = () => {
                   <tr>
                     <th>
                       {state.filter === 'birthdays'
-                        ? sortHeader('birthday', 'Cliente (aniversário)')
-                        : sortHeader('name', 'Cliente')}
+                        ? sortHeader(
+                            'birthday',
+                            `${terms.Client} (aniversário)`,
+                          )
+                        : sortHeader('name', terms.Client)}
                     </th>
                     <th className="num">
                       {sortHeader('visits', 'Atendimentos')}

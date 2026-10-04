@@ -139,13 +139,18 @@ export const GhostLink = styled(Link)`
 
 // Capa: foto com o nome, a frase e os botões (sempre escura por cima da
 // foto, nos dois modos, para o texto ser legível)
+// Sem foto (ramos sem foto padrão, até o negócio enviar a dele): fundo
+// escuro com um brilho da cor principal
 export const Hero = styled.section<{ image: string }>`
   position: relative;
   display: flex;
   align-items: flex-end;
   min-height: min(620px, 82vh);
   padding: 96px 0 72px;
-  background: #16151a url(${props => props.image}) center / cover no-repeat;
+  background: ${props =>
+    props.image
+      ? `#16151a url(${props.image}) center / cover no-repeat`
+      : '#16151a radial-gradient(circle at 78% 28%, rgba(var(--color-primary-rgb), 0.45), transparent 58%)'};
   color: #ffffff;
 
   &::before {

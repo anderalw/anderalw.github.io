@@ -43,10 +43,18 @@ const AuthLayout: React.FC<AuthLayoutProps> = ({
   image = 'signin',
   footer,
   wide = false,
-  quote = 'O seu estilo nas mãos dos melhores especialistas.',
+  quote,
   children,
 }) => {
   const { branding } = useBranding();
+  // A foto e a frase padrão são de barbearia; os outros ramos ficam com a
+  // cor do negócio
+  const barbershop = !branding.segment || branding.segment === 'barbershop';
+  const text =
+    quote ||
+    (barbershop
+      ? 'O seu estilo nas mãos dos melhores especialistas.'
+      : 'Atendimento com hora marcada, do seu jeito.');
 
   return (
     <Container>
@@ -75,9 +83,9 @@ const AuthLayout: React.FC<AuthLayoutProps> = ({
         </small>
       </Panel>
 
-      <Photo image={images[image]}>
+      <Photo image={barbershop ? images[image] : ''}>
         <blockquote>
-          {quote}
+          {text}
           <cite>Agende online, sem fila e sem ligação.</cite>
         </blockquote>
       </Photo>

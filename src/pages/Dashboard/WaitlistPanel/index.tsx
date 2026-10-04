@@ -45,6 +45,7 @@ import {
   RemoveButton,
   FieldLabel,
 } from './styles';
+import { useVocabulary } from '../../../hooks/Vocabulary';
 
 export type WaitlistPeriod = 'any' | 'morning' | 'afternoon' | 'evening';
 
@@ -101,6 +102,7 @@ const WaitlistPanel: React.FC<WaitlistPanelProps> = ({
   providers,
   refreshKey,
 }) => {
+  const terms = useVocabulary();
   const { addToast } = useToast();
   const triggerRef = useRef<HTMLButtonElement>(null);
   const panelRef = useRef<HTMLDivElement>(null);
@@ -357,7 +359,7 @@ const WaitlistPanel: React.FC<WaitlistPanelProps> = ({
             {adding ? (
               <AddForm onSubmit={handleAdd} noValidate>
                 <FieldLabel htmlFor="waitlist-search">
-                  <span>Cliente</span>
+                  <span>{terms.Client}</span>
                   <TextInput
                     id="waitlist-search"
                     value={search}
@@ -418,13 +420,13 @@ const WaitlistPanel: React.FC<WaitlistPanelProps> = ({
                     </Select>
                   </FieldLabel>
                   <FieldLabel htmlFor="waitlist-provider">
-                    <span>Barbeiro</span>
+                    <span>{terms.Professional}</span>
                     <Select
                       id="waitlist-provider"
                       value={providerId}
                       onChange={event => setProviderId(event.target.value)}
                     >
-                      <option value="">Qualquer barbeiro</option>
+                      <option value="">{`Qualquer ${terms.professional}`}</option>
                       {providers.map(provider => (
                         <option key={provider.id} value={provider.id}>
                           {provider.name}
@@ -505,7 +507,7 @@ const WaitlistPanel: React.FC<WaitlistPanelProps> = ({
                             {item.notes ||
                               (item.created_by === 'client'
                                 ? 'Entrou pelo site'
-                                : 'Adicionado pela barbearia')}
+                                : `Adicionado ${terms.byPlace}`)}
                           </em>
                         </EntryText>
 

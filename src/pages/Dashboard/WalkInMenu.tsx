@@ -16,6 +16,7 @@ import {
   WalkInItem,
   WalkInStatus,
 } from './styles';
+import { useVocabulary } from '../../hooks/Vocabulary';
 
 interface WalkInMenuProps {
   // Canto do botão "Encaixe", onde o menu abre
@@ -139,6 +140,7 @@ const WalkInMenu: React.FC<WalkInMenuProps> = ({
   onPick,
   onClose,
 }) => {
+  const terms = useVocabulary();
   const firstItemRef = useRef<HTMLButtonElement>(null);
 
   const list = useMemo(
@@ -189,7 +191,7 @@ const WalkInMenu: React.FC<WalkInMenuProps> = ({
 
         {list.length === 0 && (
           <WalkInStatus as="p" style={{ padding: '8px 10px' }}>
-            Nenhum barbeiro disponível para você encaixar.
+            {`Nenhum ${terms.professional} disponível para você encaixar.`}
           </WalkInStatus>
         )}
 

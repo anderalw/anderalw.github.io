@@ -15,6 +15,7 @@ import {
   ModalField,
   FieldError,
 } from '../ManageServices/styles';
+import { useVocabulary } from '../../hooks/Vocabulary';
 
 export interface RegisteredDevice {
   id: string;
@@ -129,6 +130,7 @@ const TerminalDeviceModal: React.FC<TerminalDeviceModalProps> = ({
   onClose,
   onSaved,
 }) => {
+  const terms = useVocabulary();
   const adding = !device;
 
   const [externalId, setExternalId] = useState(device?.external_id || '');
@@ -266,7 +268,7 @@ const TerminalDeviceModal: React.FC<TerminalDeviceModalProps> = ({
             </h2>
             <ModalSubtitle>
               {adding
-                ? `Uma maquininha da barbearia na conta ${providerLabel}.`
+                ? `Uma maquininha ${terms.ofPlace} na conta ${providerLabel}.`
                 : `${deviceIdLabel}: ${device?.external_id}`}
             </ModalSubtitle>
           </div>

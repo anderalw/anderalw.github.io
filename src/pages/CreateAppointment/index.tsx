@@ -46,6 +46,7 @@ import {
   SummaryFooter,
   WaitlistBox,
 } from './styles';
+import { useVocabulary } from '../../hooks/Vocabulary';
 
 interface Provider {
   id: string;
@@ -108,6 +109,7 @@ interface Benefit {
 }
 
 const CreateAppointment: React.FC = () => {
+  const terms = useVocabulary();
   const { addToast } = useToast();
   const location = useLocation();
 
@@ -169,7 +171,7 @@ const CreateAppointment: React.FC = () => {
 
     const params = new URLSearchParams(location.search);
     const serviceId = params.get('servico');
-    const providerId = params.get('barbeiro');
+    const providerId = params.get('profissional') || params.get('barbeiro');
 
     if (serviceId && services.some(item => item.id === serviceId)) {
       setSelectedService(serviceId);
@@ -308,7 +310,7 @@ const CreateAppointment: React.FC = () => {
         type: 'success',
         title: 'Agendamento concluído!',
         description: `${service.name} com ${
-          assigned?.name || 'um dos nossos barbeiros'
+          assigned?.name || `um dos nossos ${terms.professionals}`
         } em ${format(appointmentDate, "dd/MM/yyyy 'às' HH:mm")}.`,
       });
 
@@ -330,6 +332,7 @@ const CreateAppointment: React.FC = () => {
       setSaving(false);
     }
   }, [
+    terms,
     service,
     provider,
     providers,
@@ -431,7 +434,7 @@ const CreateAppointment: React.FC = () => {
     timesMessage = 'Carregando horários...';
   } else if (availableTimes.length === 0) {
     timesMessage = isAnyProvider
-      ? 'Nenhum barbeiro tem horário livre neste dia. Tente outra data.'
+      ? `Nenhum ${terms.professional} tem horário livre neste dia. Tente outra data.`
       : 'Nenhum horário livre neste dia. Tente outra data ou outro profissional.';
   }
 
@@ -506,7 +509,7 @@ const CreateAppointment: React.FC = () => {
                             <FiUsers />
                           </span>
                           <div>
-                            <strong>Qualquer barbeiro</strong>
+                            <strong>{`Qualquer ${terms.professional}`}</strong>
                             <small>Mais horários disponíveis</small>
                           </div>
                         </ProviderOption>,
@@ -673,7 +676,7 @@ const CreateAppointment: React.FC = () => {
                   <dt>Profissional</dt>
                   <dd className={providerChosen ? '' : 'empty'}>
                     {isAnyProvider
-                      ? 'Qualquer barbeiro'
+                      ? `Qualquer ${terms.professional}`
                       : provider?.name || 'A escolher'}
                   </dd>
                   <dt>Data</dt>

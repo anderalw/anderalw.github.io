@@ -20,6 +20,7 @@ import {
   CardFooter,
   UIButton,
 } from '../../components/ui';
+import { useVocabulary } from '../../hooks/Vocabulary';
 
 const Table = styled.table`
   width: 100%;
@@ -80,7 +81,7 @@ const ROWS: ProfileField[] = ['email', 'phone', 'cpf', 'birth_date', 'address'];
 
 const COLUMNS: Array<{ context: ProfileContext; title: string }> = [
   { context: 'client_site', title: 'Cliente no site' },
-  { context: 'client_counter', title: 'Cliente na barbearia' },
+  { context: 'client_counter', title: 'Cadastro pela equipe' },
   { context: 'staff', title: 'Equipe' },
 ];
 
@@ -96,6 +97,7 @@ const FIXED: Partial<
 
 // Quais campos aparecem em cada cadastro e quais são obrigatórios
 const ProfileFieldsSettings: React.FC = () => {
+  const terms = useVocabulary();
   const { addToast } = useToast();
   const [rules, setRules] = useState<ProfileFieldRules | null>(null);
   const [saved, setSaved] = useState('');
@@ -163,9 +165,7 @@ const ProfileFieldsSettings: React.FC = () => {
       </CardHeader>
       <CardBody>
         <Note>
-          Escolha o que pedir no cadastro de clientes e da equipe. O cliente que
-          se cadastra pelo site pode ter menos exigências; a barbearia completa
-          o resto no balcão.
+          {`Escolha o que pedir no cadastro de ${terms.clients} e da equipe. Quem se cadastra pelo site pode ter menos exigências; a equipe completa o resto no atendimento.`}
         </Note>
         <Table>
           <thead>

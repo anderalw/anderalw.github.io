@@ -62,6 +62,7 @@ import {
   SeriesNote,
   UndoRow,
 } from './styles';
+import { useVocabulary } from '../../../hooks/Vocabulary';
 
 export interface AppointmentDetailsData {
   id: string;
@@ -148,6 +149,7 @@ const AppointmentDetails: React.FC<AppointmentDetailsProps> = ({
   onClose,
   onChanged,
 }) => {
+  const terms = useVocabulary();
   const closeButtonRef = useRef<HTMLButtonElement>(null);
   const { addToast } = useToast();
   const [mode, setMode] = useState<Mode>('view');
@@ -591,7 +593,7 @@ const AppointmentDetails: React.FC<AppointmentDetailsProps> = ({
                             'O cliente confirmou por telefone ou WhatsApp.'}
                           {appointment.confirmed_at &&
                             (appointment.confirmed_by
-                              ? 'Registrado pela barbearia. Clique para desfazer.'
+                              ? `Registrado ${terms.byPlace}. Clique para desfazer.`
                               : 'O cliente confirmou pelo link (e-mail ou WhatsApp).')}
                         </small>
                       </span>
@@ -603,7 +605,7 @@ const AppointmentDetails: React.FC<AppointmentDetailsProps> = ({
                       <FiRepeat />
                       <span>
                         <strong>Remarcar</strong>
-                        <small>Trocar o dia, o horário ou o barbeiro.</small>
+                        <small>{`Trocar o dia, o horário ou ${terms.theProfessional}.`}</small>
                       </span>
                     </ActionCard>
                     <ActionCard

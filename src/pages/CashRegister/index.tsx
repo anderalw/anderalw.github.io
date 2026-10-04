@@ -56,6 +56,7 @@ import {
   RowActions,
   ValueEdit,
 } from './styles';
+import { useVocabulary } from '../../hooks/Vocabulary';
 
 type TotalKey = PaymentMethod | 'unknown';
 
@@ -132,6 +133,7 @@ function differenceText(cents: number): string {
 // (com a forma de pagamento editável) e o fechamento com a conferência do
 // dinheiro na gaveta
 const CashRegister: React.FC = () => {
+  const terms = useVocabulary();
   const { addToast } = useToast();
 
   const [date, setDate] = useState(today);
@@ -459,8 +461,8 @@ const CashRegister: React.FC = () => {
                   <thead>
                     <tr>
                       <th>Horário</th>
-                      <th>Cliente</th>
-                      <th>Barbeiro</th>
+                      <th>{terms.Client}</th>
+                      <th>{terms.Professional}</th>
                       <th className="num">Valor</th>
                       <th>Pagamento</th>
                       <th aria-label="Ações" />
@@ -624,7 +626,7 @@ const CashRegister: React.FC = () => {
               <Card>
                 <CardHeader>
                   <div>
-                    <h2>Mensalidades do clube</h2>
+                    <h2>Mensalidades das assinaturas</h2>
                     <p>Entram nos totais de cada forma de pagamento.</p>
                   </div>
                 </CardHeader>
@@ -632,7 +634,7 @@ const CashRegister: React.FC = () => {
                   <thead>
                     <tr>
                       <th>Horário</th>
-                      <th>Cliente</th>
+                      <th>{terms.Client}</th>
                       <th>Plano</th>
                       <th className="num">Valor</th>
                       <th>Pagamento</th>

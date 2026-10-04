@@ -20,6 +20,7 @@ import {
   QuickActions,
   QuickButton,
 } from './styles';
+import { useVocabulary } from '../../hooks/Vocabulary';
 
 export interface PendingItem {
   id: string;
@@ -55,6 +56,7 @@ function priceText(item: PendingItem): string {
 // clique marca como atendido (já com a forma de pagamento) ou falta; dá para
 // selecionar vários e registrar de uma vez
 const PendingCard: React.FC<PendingCardProps> = ({ items, onRegistered }) => {
+  const terms = useVocabulary();
   const { addToast } = useToast();
 
   const [selected, setSelected] = useState<string[]>([]);
@@ -177,7 +179,7 @@ const PendingCard: React.FC<PendingCardProps> = ({ items, onRegistered }) => {
                   selected.length === 1 ? 'selecionado' : 'selecionados'
                 }${
                   selectedIncluded > 0
-                    ? ` (${selectedIncluded} no plano do clube)`
+                    ? ` (${selectedIncluded} com plano de assinatura)`
                     : ''
                 }`
               : 'Selecione para registrar vários de uma vez'}
@@ -213,8 +215,8 @@ const PendingCard: React.FC<PendingCardProps> = ({ items, onRegistered }) => {
             <tr>
               <th aria-label="Selecionar" style={{ width: 20 }} />
               <th>Horário</th>
-              <th>Cliente</th>
-              <th>Barbeiro</th>
+              <th>{terms.Client}</th>
+              <th>{terms.Professional}</th>
               <th className="num">Valor</th>
               <th>Registrar</th>
             </tr>

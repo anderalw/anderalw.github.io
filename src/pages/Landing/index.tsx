@@ -52,6 +52,7 @@ import {
   Footer,
   Skeleton,
 } from './styles';
+import { useVocabulary } from '../../hooks/Vocabulary';
 
 interface Site {
   tagline: string;
@@ -116,6 +117,7 @@ function todayStatus(
 // Site da barbearia: capa, serviços, equipe, horários e contato, com o
 // que o admin configura e os dados do próprio sistema
 const Landing: React.FC = () => {
+  const terms = useVocabulary();
   const { role } = useAuth();
   const { branding } = useBranding();
   const [site, setSite] = useState<Site | null>(null);
@@ -165,7 +167,7 @@ const Landing: React.FC = () => {
 
           <Nav aria-label="Seções">
             <a href="#servicos">Serviços</a>
-            {plans.length > 0 && <a href="#clube">Clube</a>}
+            {plans.length > 0 && <a href="#clube">{terms.Club}</a>}
             {site && site.team.length > 0 && <a href="#equipe">Equipe</a>}
             <a href="#contato">Horários e contato</a>
           </Nav>
@@ -187,7 +189,15 @@ const Landing: React.FC = () => {
         </div>
       </Header>
 
-      <Hero id="inicio" image={site?.cover_url || defaultCover}>
+      <Hero
+        id="inicio"
+        image={
+          site?.cover_url ||
+          (!branding.segment || branding.segment === 'barbershop'
+            ? defaultCover
+            : '')
+        }
+      >
         <div>
           {status && <TodayBadge open={status.open}>{status.text}</TodayBadge>}
           <h1>{branding.name}</h1>
@@ -257,7 +267,7 @@ const Landing: React.FC = () => {
         <Section id="clube" alt>
           <div>
             <SectionTitle>
-              <span>Clube</span>
+              <span>{terms.Club}</span>
               <h2>Assine e fique sempre em dia</h2>
               <p>
                 Pague por mês e use os serviços do plano sem pagar a cada
@@ -348,7 +358,7 @@ const Landing: React.FC = () => {
                     </span>
                   )}
                   <strong>{member.name}</strong>
-                  <small>Barbeiro</small>
+                  <small>{terms.Professional}</small>
                 </Member>
               ))}
             </TeamGrid>
@@ -494,7 +504,7 @@ const Landing: React.FC = () => {
       <Footer>
         <div>
           <span>{`© ${new Date().getFullYear()} ${branding.name}`}</span>
-          <GhostLink to="/barbeiro" style={{ display: 'inline-flex' }}>
+          <GhostLink to="/equipe" style={{ display: 'inline-flex' }}>
             <FiLock />
             Área da equipe
           </GhostLink>

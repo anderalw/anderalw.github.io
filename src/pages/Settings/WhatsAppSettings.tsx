@@ -65,7 +65,7 @@ const GROUPS: Array<{ key: Group; label: string; description: string }> = [
   },
   {
     key: 'membership',
-    label: 'Mensalidade do clube',
+    label: 'Mensalidade da assinatura',
     description: '3 dias antes do vencimento e quando atrasa.',
   },
 ];

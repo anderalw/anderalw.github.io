@@ -26,6 +26,7 @@ import {
 } from '../../components/ui';
 import { Field, FieldLabel } from './styles';
 import TerminalDeviceModal, { RegisteredDevice } from './TerminalDeviceModal';
+import { useVocabulary } from '../../hooks/Vocabulary';
 
 interface CredentialField {
   key: string;
@@ -205,6 +206,7 @@ const IconButton = styled.button`
 // Cobrança integrada na maquininha: a operadora, a conta da barbearia nela e
 // as maquininhas cadastradas
 const TerminalSettings: React.FC = () => {
+  const terms = useVocabulary();
   const { addToast } = useToast();
   const [data, setData] = useState<TerminalSettingsData | null>(null);
   // Operadora escolhida no select (só vale depois de conectar)
@@ -262,7 +264,7 @@ const TerminalSettings: React.FC = () => {
             ? 'Maquininha conectada'
             : 'Maquininha desligada',
           description: response.data.provider
-            ? 'Cadastre as maquininhas da barbearia para cobrar pela agenda.'
+            ? `Cadastre as maquininhas ${terms.ofPlace} para cobrar pela agenda.`
             : 'Os pagamentos voltam a ser registrados só à mão.',
         });
       } catch (err) {
@@ -274,7 +276,7 @@ const TerminalSettings: React.FC = () => {
         setSaving(false);
       }
     },
-    [addToast, receive],
+    [addToast, receive, terms],
   );
 
   const chooseProvider = (key: string): void => {
@@ -480,7 +482,7 @@ const TerminalSettings: React.FC = () => {
         {connected && option && data && (
           <Section>
             <header>
-              <h3>Maquininhas da barbearia</h3>
+              <h3>{`Maquininhas ${terms.ofPlace}`}</h3>
               <UIButton
                 type="button"
                 size="sm"
@@ -494,7 +496,7 @@ const TerminalSettings: React.FC = () => {
 
             {data.registered.length === 0 ? (
               <Empty>
-                Nenhuma maquininha cadastrada. Adicione as da barbearia para
+                Nenhuma maquininha cadastrada. Adicione as maquininhas para
                 aparecer a opção &quot;Cobrar na maquininha&quot; na agenda.
               </Empty>
             ) : (

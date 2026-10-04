@@ -161,8 +161,10 @@ export const Photo = styled.div<{ image: string }>`
   display: flex;
   align-items: flex-end;
   padding: 48px;
-  background: url(${props => props.image}) no-repeat center;
-  background-size: cover;
+  background: ${props =>
+    props.image
+      ? `url(${props.image}) no-repeat center / cover`
+      : '#16151a radial-gradient(circle at 70% 30%, rgba(var(--color-primary-rgb), 0.45), transparent 60%)'};
 
   /* Escurece a foto embaixo para a frase ficar legível */
   &::before {

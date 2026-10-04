@@ -42,8 +42,8 @@ export const KIND_LABELS: Record<MessageKind, string> = {
   series_created: 'Cliente fixo: horários',
   series_canceled: 'Cliente fixo: cancelados',
   waitlist_slot: 'Vaga da lista de espera',
-  membership_due: 'Clube: vencimento',
-  membership_overdue: 'Clube: em atraso',
+  membership_due: 'Assinatura: vencimento',
+  membership_overdue: 'Assinatura: em atraso',
 };
 
 export const STATUS_LABELS: Record<MessageStatus, string> = {

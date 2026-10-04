@@ -95,7 +95,7 @@ const ChangePassword: React.FC = () => {
           autoComplete="new-password"
         />
         <UIButton type="submit">Salvar e entrar</UIButton>
-        <InlineLink to="/barbeiro" onClick={signOut}>
+        <InlineLink to="/equipe" onClick={signOut}>
           Sair
         </InlineLink>
       </Form>

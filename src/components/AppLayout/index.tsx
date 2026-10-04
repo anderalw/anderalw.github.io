@@ -4,7 +4,6 @@ import {
   FiBell,
   FiCalendar,
   FiDollarSign,
-  FiScissors,
   FiUsers,
   FiUser,
   FiLogOut,
@@ -42,6 +41,7 @@ import {
   SignOutButton,
   Main,
 } from './styles';
+import { useSegmentIcon, useVocabulary } from '../../hooks/Vocabulary';
 
 interface AppLayoutProps {
   // Conteúdo extra do menu lateral, abaixo dos links (ex: o calendário da
@@ -52,6 +52,8 @@ interface AppLayoutProps {
 // Estrutura das telas com sessão (barbeiro ou cliente): menu lateral fixo e
 // o conteúdo à direita
 const AppLayout: React.FC<AppLayoutProps> = ({ sidebarExtra, children }) => {
+  const terms = useVocabulary();
+  const ServiceIcon = useSegmentIcon();
   const { user, client, role, signOut, can } = useAuth();
   const isClient = role === 'client';
   const { unread } = useNotifications();
@@ -128,9 +130,9 @@ const AppLayout: React.FC<AppLayoutProps> = ({ sidebarExtra, children }) => {
             </NavButton>
 
             {can('clients') && (
-              <NavLink to="/clientes" title="Clientes">
+              <NavLink to="/clientes" title={terms.Clients}>
                 <FiUserCheck />
-                <span>Clientes</span>
+                <span>{terms.Clients}</span>
               </NavLink>
             )}
             {(can('cash') || can('cash.close')) && (
@@ -140,9 +142,9 @@ const AppLayout: React.FC<AppLayoutProps> = ({ sidebarExtra, children }) => {
               </NavLink>
             )}
             {can('club') && (
-              <NavLink to="/clube" title="Clube de assinatura">
+              <NavLink to="/clube" title={`${terms.Club} de assinatura`}>
                 <FiAward />
-                <span>Clube</span>
+                <span>{terms.Club}</span>
               </NavLink>
             )}
             {can('whatsapp') && (
@@ -187,16 +189,16 @@ const AppLayout: React.FC<AppLayoutProps> = ({ sidebarExtra, children }) => {
                   )
                 }
               >
-                <FiScissors />
+                <ServiceIcon />
                 <span>Serviços</span>
               </NavLink>
             )}
             {showTeam && (
               <NavLink
                 to="/admin/usuarios"
-                title="Usuários, perfis de acesso e barbeiros"
+                title={`Usuários, perfis de acesso e ${terms.professionals}`}
                 isActive={(_, location) =>
-                  /^\/admin\/(usuarios|perfis|barbeiros)/.test(
+                  /^\/admin\/(usuarios|perfis|profissionais)/.test(
                     location.pathname,
                   )
                 }

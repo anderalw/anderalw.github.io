@@ -58,6 +58,7 @@ import {
   HistoryRow,
   HistoryTable,
 } from './styles';
+import { useVocabulary } from '../../hooks/Vocabulary';
 
 type Filter = 'all' | 'completed' | 'no_show' | 'canceled';
 
@@ -115,7 +116,7 @@ function historyStatus(
       label:
         item.canceled_by === 'client'
           ? 'Cancelado (cliente)'
-          : 'Cancelado (barbearia)',
+          : 'Cancelado (equipe)',
       tone: 'muted',
     };
   }
@@ -150,6 +151,7 @@ function clientSince(createdAt: string): string {
 
 // Ficha do cliente: contatos, resumo, observações e todo o histórico
 const ClientProfile: React.FC = () => {
+  const terms = useVocabulary();
   const { id } = useParams<{ id: string }>();
   const history = useHistory();
   const { addToast } = useToast();
@@ -247,7 +249,7 @@ const ClientProfile: React.FC = () => {
           <BackLink>
             <Link to="/clientes">
               <FiArrowLeft />
-              Clientes
+              {terms.Clients}
             </Link>
           </BackLink>
           <EmptyText>Cliente não encontrado.</EmptyText>
@@ -281,7 +283,7 @@ const ClientProfile: React.FC = () => {
         <BackLink>
           <Link to="/clientes">
             <FiArrowLeft />
-            Clientes
+            {terms.Clients}
           </Link>
         </BackLink>
 
@@ -330,7 +332,7 @@ const ClientProfile: React.FC = () => {
                   <Badge tone={client.has_account ? 'success' : 'neutral'}>
                     {client.has_account
                       ? 'Conta no site'
-                      : 'Cadastrado pela barbearia'}
+                      : `Cadastrado ${terms.byPlace}`}
                   </Badge>
                   <span>{`Cliente ${clientSince(client.created_at)}`}</span>
                 </Contacts>
@@ -505,7 +507,7 @@ const ClientProfile: React.FC = () => {
                   <tr>
                     <th>Data</th>
                     <th>Serviço</th>
-                    <th>Barbeiro</th>
+                    <th>{terms.Professional}</th>
                     <th className="num">Valor</th>
                     <th>Situação</th>
                   </tr>
