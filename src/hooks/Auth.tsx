@@ -37,6 +37,11 @@ interface User {
   permissions: Permission[];
   // Ainda com a senha provisória (o e-mail): troca antes de usar o sistema
   must_change_password: boolean;
+  // Dados do cadastro (os que a barbearia pede em Configurações → Cadastros)
+  phone?: string | null;
+  cpf?: string | null;
+  birth_date?: string | null;
+  address?: Record<string, string | null> | null;
 }
 
 interface Client {

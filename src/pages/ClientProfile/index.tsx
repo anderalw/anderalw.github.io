@@ -5,8 +5,11 @@ import ptBR from 'date-fns/locale/pt-BR';
 import {
   FiAlertTriangle,
   FiArrowLeft,
+  FiCreditCard,
   FiEdit2,
+  FiGift,
   FiMail,
+  FiMapPin,
   FiPhone,
   FiSave,
 } from 'react-icons/fi';
@@ -18,6 +21,7 @@ import getApiErrorMessage from '../../utils/getApiErrorMessage';
 import { formatPrice } from '../../utils/money';
 import { formatPhone, phoneHref, whatsappHref } from '../../utils/phone';
 import avatarFallback from '../../utils/avatarFallback';
+import { formatCep, formatCpf } from '../../utils/profileFields';
 
 import AppLayout from '../../components/AppLayout';
 import MembershipCard from './MembershipCard';
@@ -55,6 +59,41 @@ import {
 } from './styles';
 
 type Filter = 'all' | 'completed' | 'no_show' | 'canceled';
+
+// "12/03 · 36 anos" (e um aviso se o aniversário é neste mês)
+function birthdayInfo(value: string): { text: string; thisMonth: boolean } {
+  const [year, month, day] = value.slice(0, 10).split('-').map(Number);
+  const today = new Date();
+  let age = today.getFullYear() - year;
+
+  if (
+    today.getMonth() + 1 < month ||
+    (today.getMonth() + 1 === month && today.getDate() < day)
+  ) {
+    age -= 1;
+  }
+
+  return {
+    text: `${String(day).padStart(2, '0')}/${String(month).padStart(
+      2,
+      '0',
+    )} · ${age} anos`,
+    thisMonth: today.getMonth() + 1 === month,
+  };
+}
+
+// "Av. Paulista, 1000 - Bela Vista, São Paulo/SP"
+function addressText(address: NonNullable<ClientDetails['address']>): string {
+  const street = [address.street, address.number].filter(Boolean).join(', ');
+  const place = [
+    address.district,
+    [address.city, address.state].filter(Boolean).join('/'),
+  ]
+    .filter(Boolean)
+    .join(', ');
+
+  return [street, place].filter(Boolean).join(' - ') || formatCep(address.cep);
+}
 
 const FILTERS: { value: Filter; label: string }[] = [
   { value: 'all', label: 'Todos' },
@@ -294,6 +333,44 @@ const ClientProfile: React.FC = () => {
                   </Badge>
                   <span>{`Cliente ${clientSince(client.created_at)}`}</span>
                 </Contacts>
+                {(client.birth_date || client.cpf || client.address) && (
+                  <Contacts>
+                    {client.birth_date && (
+                      <span
+                        title="Aniversário"
+                        style={
+                          birthdayInfo(client.birth_date).thisMonth
+                            ? { color: 'var(--color-primary)' }
+                            : undefined
+                        }
+                      >
+                        <FiGift />
+                        {birthdayInfo(client.birth_date).text}
+                        {birthdayInfo(client.birth_date).thisMonth &&
+                          ' · faz aniversário este mês'}
+                      </span>
+                    )}
+                    {client.cpf && (
+                      <span title="CPF">
+                        <FiCreditCard />
+                        {formatCpf(client.cpf)}
+                      </span>
+                    )}
+                    {client.address && (
+                      <a
+                        href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(
+                          addressText(client.address),
+                        )}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        title="Ver no mapa"
+                      >
+                        <FiMapPin />
+                        {addressText(client.address)}
+                      </a>
+                    )}
+                  </Contacts>
+                )}
               </>
             ) : (
               <>

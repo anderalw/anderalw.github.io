@@ -25,6 +25,13 @@ import {
 
 import { Columns, AvatarCard, SectionTitle } from './styles';
 import { useAuth } from '../../hooks/Auth';
+import ProfileExtraFields from '../../components/ProfileExtraFields';
+import {
+  ExtraValues,
+  extraPayload,
+  toAddress,
+  useProfileFields,
+} from '../../utils/profileFields';
 
 interface ProfileFormData {
   name: string;
@@ -42,6 +49,18 @@ const Profile: React.FC = () => {
   const [uploading, setUploading] = useState(false);
 
   const { user, updateUser } = useAuth();
+
+  // Telefone, CPF, nascimento e endereço: aparecem conforme as regras da
+  // barbearia para a equipe
+  const staffRules = useProfileFields('staff');
+  const [extras, setExtras] = useState<ExtraValues>(() => ({
+    phone: user.phone || '',
+    cpf: user.cpf || '',
+    birth_date: user.birth_date?.slice(0, 10) || '',
+    address: toAddress(user.address),
+  }));
+  const hasExtras =
+    !!staffRules && Object.values(staffRules).some(rule => rule?.show);
 
   const handleSubmit = useCallback(
     async (data: ProfileFormData) => {
@@ -78,6 +97,7 @@ const Profile: React.FC = () => {
         const formData = {
           name,
           email,
+          ...extraPayload(staffRules, extras),
           ...(old_password
             ? {
                 old_password,
@@ -127,7 +147,7 @@ const Profile: React.FC = () => {
         setSaving(false);
       }
     },
-    [addToast, updateUser],
+    [addToast, updateUser, staffRules, extras],
   );
 
   const handleAvatarChange = useCallback(
@@ -177,7 +197,7 @@ const Profile: React.FC = () => {
         <PageHeader>
           <div>
             <h1>Meu perfil</h1>
-            <p>Seus dados de acesso e a foto que aparece na agenda.</p>
+            <p>Seus dados, o acesso e a foto que aparece na agenda.</p>
           </div>
         </PageHeader>
 
@@ -229,6 +249,16 @@ const Profile: React.FC = () => {
                   <FormField name="name" label="Nome" />
                   <FormField name="email" type="email" label="E-mail" />
                 </FieldGrid>
+
+                {hasExtras && (
+                  <div>
+                    <ProfileExtraFields
+                      rules={staffRules}
+                      values={extras}
+                      onChange={setExtras}
+                    />
+                  </div>
+                )}
 
                 <SectionTitle>Alterar senha</SectionTitle>
                 <FormField
