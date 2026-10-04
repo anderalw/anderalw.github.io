@@ -19,11 +19,10 @@ export interface Branding {
   primary_color: string;
   on_primary_color: string;
   logo_url: string | null;
-  // Ramo do negócio e os termos das telas (hooks/Vocabulary)
+  // Ramo do negócio e os termos das telas, fixos por ramo (hooks/Vocabulary)
   segment?: string;
   segment_name?: string;
   vocabulary?: Vocabulary;
-  defaults?: Vocabulary;
 }
 
 interface BrandingContextData {

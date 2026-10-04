@@ -25,7 +25,6 @@ import SiteSettings from './SiteSettings';
 import TerminalSettings from './TerminalSettings';
 import WhatsAppSettings from './WhatsAppSettings';
 import ProfileFieldsSettings from './ProfileFieldsSettings';
-import VocabularySettings from './VocabularySettings';
 import {
   Page,
   PageHeader,
@@ -462,8 +461,6 @@ const Settings: React.FC = () => {
                   </UIButton>
                 </CardFooter>
               </Card>
-
-              <VocabularySettings />
             </div>
 
             <div>
