@@ -90,7 +90,10 @@ export type FeatureKey =
   | 'any_provider'
   | 'walk_in'
   | 'series'
-  | 'waitlist';
+  | 'waitlist'
+  | 'deposit'
+  | 'packages'
+  | 'consent';
 
 export const FEATURES: Array<{
   key: FeatureKey;
@@ -100,7 +103,7 @@ export const FEATURES: Array<{
   {
     key: 'club',
     label: 'Assinaturas',
-    description: 'Planos mensais com serviços inclusos (clube, pacotes).',
+    description: 'Planos mensais com serviços inclusos (clube, planos).',
   },
   {
     key: 'any_provider',
@@ -122,5 +125,21 @@ export const FEATURES: Array<{
     key: 'waitlist',
     label: 'Lista de espera',
     description: 'Aviso para quem quer um horário num dia lotado.',
+  },
+  {
+    key: 'deposit',
+    label: 'Sinal',
+    description:
+      'Valor pago antes para garantir o horário (definido em cada serviço).',
+  },
+  {
+    key: 'packages',
+    label: 'Pacotes de sessões',
+    description: 'Vender um número de sessões que vão sendo usadas.',
+  },
+  {
+    key: 'consent',
+    label: 'Termo de consentimento',
+    description: 'O cliente aceita o termo antes de agendar pelo site.',
   },
 ];

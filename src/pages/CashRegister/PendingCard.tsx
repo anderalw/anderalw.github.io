@@ -47,7 +47,7 @@ interface PendingCardProps {
 }
 
 function priceText(item: PendingItem): string {
-  if (item.included) return 'Plano';
+  if (item.included) return 'Incluso';
 
   return item.price_cents !== null ? formatPrice(item.price_cents) : '–';
 }
@@ -257,7 +257,7 @@ const PendingCard: React.FC<PendingCardProps> = ({ items, onRegistered }) => {
                           ])
                         }
                       >
-                        No plano
+                        Incluso
                       </QuickButton>
                     )}
                     {PAYMENT_METHODS.map(method => (
@@ -267,7 +267,7 @@ const PendingCard: React.FC<PendingCardProps> = ({ items, onRegistered }) => {
                         disabled={saving}
                         title={
                           item.included
-                            ? 'Cobrar à parte tira este atendimento do plano'
+                            ? 'Cobrar à parte tira este atendimento do plano ou pacote'
                             : undefined
                         }
                         onClick={() =>

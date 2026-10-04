@@ -858,9 +858,14 @@ const Dashboard: React.FC = () => {
                               compact={compact || height < COMPACT_CARD_HEIGHT}
                               style={{ top: top + 2, height }}
                               title={`${timeRange} · ${clientName} · ${serviceName}${
-                                appointment.membership_id
-                                  ? ' (incluso no plano)'
-                                  : ''
+                                (appointment.membership_id &&
+                                  ' (incluso no plano)') ||
+                                (appointment.package_id &&
+                                  ' (incluso no pacote)') ||
+                                (appointment.deposit_cents &&
+                                !appointment.deposit_paid_at
+                                  ? ' (sinal pendente)'
+                                  : '')
                               } · ${provider.name}`}
                             >
                               <time>{timeRange}</time>
@@ -868,6 +873,11 @@ const Dashboard: React.FC = () => {
                               <small>
                                 {serviceName}
                                 {appointment.membership_id && ' · Plano'}
+                                {appointment.package_id && ' · Pacote'}
+                                {!!appointment.deposit_cents &&
+                                  !appointment.deposit_paid_at &&
+                                  !appointment.attendance &&
+                                  ' · Sinal pendente'}
                               </small>
                             </AppointmentCard>
                           </React.Fragment>

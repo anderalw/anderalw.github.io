@@ -15,6 +15,7 @@ import AppLayout from '../../components/AppLayout';
 import { Page, PageHeader, UIButton } from '../../components/ui';
 
 import {
+  DepositLine,
   List,
   Item,
   Row,
@@ -32,6 +33,7 @@ import {
   HistoryStatus,
 } from './styles';
 import { useVocabulary, useFeatures } from '../../hooks/Vocabulary';
+import { useBranding } from '../../hooks/Branding';
 
 interface ClientAppointment {
   id: string;
@@ -43,6 +45,11 @@ interface ClientAppointment {
   // Clube: coberto pelo plano (preço 0) / preço normal quando houve benefício
   included: boolean;
   list_price_cents: number | null;
+  // Incluso num pacote de sessões
+  package?: boolean;
+  // Sinal pedido e quando foi recebido (null = ainda não)
+  deposit_cents?: number | null;
+  deposit_paid_at?: string | null;
   // Ainda dá tempo de o cliente cancelar ou remarcar sozinho
   can_change: boolean;
 }
@@ -78,6 +85,7 @@ type ActiveAction = { id: string; type: 'reschedule' | 'cancel' } | null;
 const MyAppointments: React.FC = () => {
   const features = useFeatures();
   const terms = useVocabulary();
+  const { branding } = useBranding();
   const { addToast } = useToast();
   const history = useHistory();
 
@@ -245,9 +253,29 @@ const MyAppointments: React.FC = () => {
                       />
                       {`com ${appointment.provider.name}`}
                     </div>
+                    {!!appointment.deposit_cents && (
+                      <DepositLine paid={!!appointment.deposit_paid_at}>
+                        {appointment.deposit_paid_at
+                          ? `Sinal de ${formatPrice(
+                              appointment.deposit_cents,
+                            )} recebido`
+                          : `Sinal de ${formatPrice(
+                              appointment.deposit_cents,
+                            )} pendente · ${
+                              branding.deposit_instructions ||
+                              `combine com ${terms.thePlace}`
+                            }`}
+                      </DepositLine>
+                    )}
                   </Info>
 
-                  {appointment.included && <Price>Incluso no plano</Price>}
+                  {appointment.included && (
+                    <Price>
+                      {appointment.package
+                        ? 'Incluso no pacote'
+                        : 'Incluso no plano'}
+                    </Price>
+                  )}
                   {!appointment.included &&
                     appointment.price_cents !== null && (
                       <Price>{formatPrice(appointment.price_cents)}</Price>
@@ -348,7 +376,7 @@ const MyAppointments: React.FC = () => {
                         parseISO(item.date),
                         "dd/MM/yyyy 'às' HH:mm",
                       )} · com ${item.provider.name}`}
-                      {item.included && ' · Incluso no plano'}
+                      {item.included && ' · Incluso'}
                       {!item.included &&
                         item.price_cents !== null &&
                         ` · ${formatPrice(item.price_cents)}`}

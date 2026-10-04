@@ -21,13 +21,15 @@ import {
   FieldError,
   Hint,
 } from './styles';
-import { useSegmentExamples } from '../../hooks/Vocabulary';
+import { useFeatures, useSegmentExamples } from '../../hooks/Vocabulary';
 
 export interface Service {
   id: string;
   name: string;
   duration_minutes: number;
   price_cents: number;
+  // Sinal para garantir o horário (null = sem sinal)
+  deposit_cents?: number | null;
   active: boolean;
 }
 
@@ -42,6 +44,7 @@ interface FormErrors {
   name?: string;
   duration?: string;
   price?: string;
+  deposit?: string;
 }
 
 // Modal para cadastrar ou editar um serviço: nome, duração e valor, com
@@ -52,6 +55,7 @@ const ServiceModal: React.FC<ServiceModalProps> = ({
   onSaved,
 }) => {
   const examples = useSegmentExamples();
+  const features = useFeatures();
   const { addToast } = useToast();
   const isNew = !service;
 
@@ -61,6 +65,11 @@ const ServiceModal: React.FC<ServiceModalProps> = ({
   );
   const [price, setPrice] = useState(
     service ? (service.price_cents / 100).toFixed(2).replace('.', ',') : '',
+  );
+  const [deposit, setDeposit] = useState(
+    service?.deposit_cents
+      ? (service.deposit_cents / 100).toFixed(2).replace('.', ',')
+      : '',
   );
   const [errors, setErrors] = useState<FormErrors>({});
   const [saving, setSaving] = useState(false);
@@ -102,6 +111,17 @@ const ServiceModal: React.FC<ServiceModalProps> = ({
         found.price = 'Use o formato 45,00.';
       }
 
+      // Em branco = sem sinal
+      const depositCents = deposit.trim() ? parsePrice(deposit) : null;
+
+      if (features.deposit && deposit.trim()) {
+        if (depositCents === null) {
+          found.deposit = 'Use o formato 50,00.';
+        } else if (priceCents !== null && depositCents > priceCents) {
+          found.deposit = 'O sinal não pode passar do valor.';
+        }
+      }
+
       setErrors(found);
 
       if (Object.keys(found).length > 0 || priceCents === null) return;
@@ -110,6 +130,7 @@ const ServiceModal: React.FC<ServiceModalProps> = ({
         name: cleanName,
         duration_minutes: minutes,
         price_cents: priceCents,
+        ...(features.deposit && { deposit_cents: depositCents || null }),
       };
 
       setSaving(true);
@@ -145,7 +166,17 @@ const ServiceModal: React.FC<ServiceModalProps> = ({
         });
       }
     },
-    [name, duration, price, service, isNew, addToast, onSaved],
+    [
+      name,
+      duration,
+      price,
+      deposit,
+      features.deposit,
+      service,
+      isNew,
+      addToast,
+      onSaved,
+    ],
   );
 
   return (
@@ -156,6 +187,7 @@ const ServiceModal: React.FC<ServiceModalProps> = ({
     >
       <CompactDialog
         color={colors.primary}
+        style={features.deposit ? { height: 'min(500px, 100%)' } : undefined}
         role="dialog"
         aria-modal="true"
         aria-labelledby="service-modal-title"
@@ -221,6 +253,25 @@ const ServiceModal: React.FC<ServiceModalProps> = ({
                 <FieldError>{errors.price}</FieldError>
               </ModalField>
             </FieldRow>
+
+            {features.deposit && (
+              <FieldRow>
+                <ModalField hasError={!!errors.deposit}>
+                  <span>Sinal (R$)</span>
+                  <TextInput
+                    value={deposit}
+                    onChange={event => setDeposit(event.target.value)}
+                    placeholder="Sem sinal"
+                    inputMode="decimal"
+                    aria-invalid={!!errors.deposit}
+                  />
+                  <FieldError>{errors.deposit}</FieldError>
+                </ModalField>
+                <Hint style={{ alignSelf: 'center' }}>
+                  Pago antes para garantir o horário. Em branco, sem sinal.
+                </Hint>
+              </FieldRow>
+            )}
 
             {!isNew && (
               <Hint>Mudanças não alteram agendamentos já feitos.</Hint>

@@ -25,6 +25,7 @@ import TerminalSettings from './TerminalSettings';
 import WhatsAppSettings from './WhatsAppSettings';
 import ProfileFieldsSettings from './ProfileFieldsSettings';
 import FeaturesSettings from './FeaturesSettings';
+import ResourceSettings from './ResourceSettings';
 import {
   Page,
   PageHeader,
@@ -464,6 +465,7 @@ const Settings: React.FC = () => {
               </Card>
 
               <FeaturesSettings />
+              <ResourceSettings />
             </div>
 
             <div>

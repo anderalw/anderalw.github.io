@@ -15,6 +15,8 @@ import { useToast } from '../../hooks/Toast';
 import getApiErrorMessage from '../../utils/getApiErrorMessage';
 import { formatPrice } from '../../utils/money';
 import { formatDuration } from '../../utils/duration';
+import { useFeatures } from '../../hooks/Vocabulary';
+import { colors } from '../../styles/theme';
 
 import AppLayout from '../../components/AppLayout';
 import EmptyState from '../../components/EmptyState';
@@ -48,6 +50,7 @@ type ModalState = { service: Service | null } | null;
 const BUFFER_OPTIONS = [0, 5, 10, 15, 20, 30, 45, 60];
 
 const ManageServices: React.FC = () => {
+  const features = useFeatures();
   const { can } = useAuth();
   // A tela é de quem tem a permissão (a API também confere)
   const allowed = can('catalog');
@@ -266,6 +269,16 @@ const ManageServices: React.FC = () => {
                           </td>
                           <td className="num">
                             {formatPrice(service.price_cents)}
+                            {features.deposit && !!service.deposit_cents && (
+                              <small
+                                style={{
+                                  display: 'block',
+                                  color: colors.textMuted,
+                                }}
+                              >
+                                {`sinal ${formatPrice(service.deposit_cents)}`}
+                              </small>
+                            )}
                           </td>
                           <td>
                             <Badge

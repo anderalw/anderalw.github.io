@@ -48,14 +48,14 @@ const Dialog = styled(CompactDialog)`
   height: min(500px, 100%);
 `;
 
-const Methods = styled.div`
+export const Methods = styled.div`
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: 8px;
   margin-bottom: 18px;
 `;
 
-const Method = styled.button<{ selected: boolean }>`
+export const Method = styled.button<{ selected: boolean }>`
   height: 42px;
   border: 1px solid ${colors.borderStrong};
   border-radius: ${radius.md};
@@ -80,7 +80,7 @@ const Method = styled.button<{ selected: boolean }>`
     `}
 `;
 
-const SectionLabel = styled.span`
+export const SectionLabel = styled.span`
   display: block;
   margin-bottom: 8px;
   font-size: 13px;

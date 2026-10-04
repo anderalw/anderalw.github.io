@@ -84,6 +84,10 @@ interface PaymentStepProps {
   // Clube: incluso no plano do cliente e o preço normal do serviço
   included: boolean;
   listPriceCents: number | null;
+  // Incluso num pacote de sessões (e não no plano do clube)
+  inPackage?: boolean;
+  // Sinal já recebido: priceCents já vem sem ele
+  depositPaidCents?: number;
   initialMethod: PaymentMethod | null;
   initialPaidCents: number | null;
   // Já concluído: só troca o pagamento
@@ -177,7 +181,7 @@ const Amount = styled.label`
   }
 `;
 
-const ConfirmButton = styled.button`
+export const ConfirmButton = styled.button`
   display: inline-flex;
   align-items: center;
   gap: 8px;
@@ -269,6 +273,8 @@ const PaymentStep: React.FC<PaymentStepProps> = ({
   priceCents: markedPriceCents,
   included,
   listPriceCents,
+  inPackage = false,
+  depositPaidCents = 0,
   initialMethod,
   initialPaidCents,
   editing,
@@ -356,6 +362,10 @@ const PaymentStep: React.FC<PaymentStepProps> = ({
     amountNote = `Desconto de ${formatPrice(-difference)}`;
   } else if (difference > 0) {
     amountNote = `Acréscimo de ${formatPrice(difference)} (ex: gorjeta)`;
+  } else if (priceCents !== null && depositPaidCents > 0) {
+    amountNote = `O que falta (sinal de ${formatPrice(
+      depositPaidCents,
+    )} já pago)`;
   } else if (priceCents !== null) {
     amountNote = 'Igual ao preço marcado';
   }
@@ -376,9 +386,13 @@ const PaymentStep: React.FC<PaymentStepProps> = ({
         <IncludedBox>
           <FiAward />
           <div>
-            <strong>Incluso no plano</strong>
+            <strong>
+              {inPackage ? 'Incluso no pacote' : 'Incluso no plano'}
+            </strong>
             <p>
-              O cliente tem plano de assinatura: este atendimento não é cobrado
+              {inPackage
+                ? 'Sessão do pacote comprado pelo cliente: este atendimento não é cobrado'
+                : 'O cliente tem plano de assinatura: este atendimento não é cobrado'}
               {listPriceCents !== null &&
                 ` (no preço normal seria ${formatPrice(listPriceCents)})`}
               .
@@ -386,7 +400,9 @@ const PaymentStep: React.FC<PaymentStepProps> = ({
           </div>
         </IncludedBox>
         <LinkButton type="button" onClick={() => setChargeNormally(true)}>
-          Cobrar normalmente (o uso volta ao saldo do plano)
+          {inPackage
+            ? 'Cobrar normalmente (a sessão volta ao pacote)'
+            : 'Cobrar normalmente (o uso volta ao saldo do plano)'}
         </LinkButton>
 
         <PanelActions style={{ marginTop: 'auto', alignItems: 'center' }}>
@@ -425,7 +441,9 @@ const PaymentStep: React.FC<PaymentStepProps> = ({
       <SectionTitle>{editing ? 'Alterar pagamento' : 'Pagamento'}</SectionTitle>
       <Hint>
         {included
-          ? 'Cobrando normalmente: o atendimento sai do plano. Como o cliente pagou?'
+          ? `Cobrando normalmente: o atendimento sai do ${
+              inPackage ? 'pacote' : 'plano'
+            }. Como o cliente pagou?`
           : 'Como o cliente pagou?'}
       </Hint>
 

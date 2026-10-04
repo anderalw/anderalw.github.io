@@ -207,3 +207,11 @@ export const HistoryStatus = styled.span<{ tone: 'ok' | 'missed' | 'neutral' }>`
     return colors.textMuted;
   }};
 `;
+
+// Sinal do horário: pendente (com a orientação de como pagar) ou recebido
+export const DepositLine = styled.p<{ paid: boolean }>`
+  margin-top: 4px;
+  font-size: 12px;
+  line-height: 1.4;
+  color: ${props => (props.paid ? colors.success : colors.warning)};
+`;

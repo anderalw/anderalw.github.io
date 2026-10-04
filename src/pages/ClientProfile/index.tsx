@@ -26,6 +26,8 @@ import { formatCep, formatCpf } from '../../utils/profileFields';
 import AppLayout from '../../components/AppLayout';
 import EmptyState from '../../components/EmptyState';
 import MembershipCard from './MembershipCard';
+import PackagesCard from './PackagesCard';
+import ConsentCard from './ConsentCard';
 import {
   Page,
   Card,
@@ -476,6 +478,18 @@ const ClientProfile: React.FC = () => {
 
             {features.club && (
               <MembershipCard clientId={id} clientName={client?.name || ''} />
+            )}
+
+            {features.packages && (
+              <PackagesCard clientId={id} clientName={client?.name || ''} />
+            )}
+
+            {features.consent && (
+              <ConsentCard
+                clientId={id}
+                clientName={client?.name || ''}
+                clientCpf={client?.cpf ? formatCpf(client.cpf) : null}
+              />
             )}
           </SideColumn>
 

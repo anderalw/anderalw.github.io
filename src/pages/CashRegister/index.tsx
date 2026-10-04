@@ -70,6 +70,21 @@ interface CashItem {
   paid_cents: number | null;
   received_cents: number;
   payment_method: PaymentMethod | null;
+  // Sinal recebido antes (contado no dia em que foi pago)
+  deposit_cents: number;
+  // Incluso num pacote de sessões
+  package: boolean;
+}
+
+// Sinal ou pacote de sessões recebido no dia
+interface OtherItem {
+  id: string;
+  kind: 'deposit' | 'package';
+  paid_at: string;
+  client_name: string;
+  description: string;
+  amount_cents: number;
+  payment_method: PaymentMethod;
 }
 
 // Mensalidade do clube recebida no dia
@@ -101,6 +116,7 @@ interface CashDay {
   totals: Record<TotalKey, { count: number; cents: number }>;
   items: CashItem[];
   memberships: MembershipItem[];
+  others: OtherItem[];
   pending: number;
   // Já passaram e ninguém registrou (neste dia)
   pending_items: PendingItem[];
@@ -388,6 +404,12 @@ const CashRegister: React.FC = () => {
                           ? 'mensalidade'
                           : 'mensalidades'
                       }`,
+                    data.others.length > 0 &&
+                      `${data.others.length} ${
+                        data.others.length === 1
+                          ? 'outro recebimento'
+                          : 'outros recebimentos'
+                      }`,
                   ]
                     .filter(Boolean)
                     .join(' · ')
@@ -546,7 +568,15 @@ const CashRegister: React.FC = () => {
                               ) : (
                                 <>
                                   {formatPrice(item.received_cents)}
-                                  {item.price_cents !== null &&
+                                  {item.deposit_cents > 0 && (
+                                    <small>
+                                      {`+ sinal ${formatPrice(
+                                        item.deposit_cents,
+                                      )}`}
+                                    </small>
+                                  )}
+                                  {item.deposit_cents === 0 &&
+                                    item.price_cents !== null &&
                                     item.received_cents !==
                                       item.price_cents && (
                                       <small>
@@ -560,7 +590,11 @@ const CashRegister: React.FC = () => {
                             </td>
                             <td>
                               {item.payment_method === 'membership' ? (
-                                <Badge tone="primary">Incluso no plano</Badge>
+                                <Badge tone="primary">
+                                  {item.package
+                                    ? 'Incluso no pacote'
+                                    : 'Incluso no plano'}
+                                </Badge>
                               ) : (
                                 <MethodSelect
                                   aria-label={`Pagamento de ${item.client_name}`}
@@ -646,6 +680,40 @@ const CashRegister: React.FC = () => {
                         <td>{format(parseISO(item.paid_at), 'HH:mm')}</td>
                         <td>{item.client_name}</td>
                         <td>{item.plan_name}</td>
+                        <td className="num">
+                          {formatPrice(item.amount_cents)}
+                        </td>
+                        <td>{PAYMENT_LABELS[item.payment_method]}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </ItemsTable>
+              </Card>
+            )}
+            {data && data.others.length > 0 && (
+              <Card>
+                <CardHeader>
+                  <div>
+                    <h2>Sinais e pacotes</h2>
+                    <p>Entram nos totais de cada forma de pagamento.</p>
+                  </div>
+                </CardHeader>
+                <ItemsTable>
+                  <thead>
+                    <tr>
+                      <th>Horário</th>
+                      <th>{terms.Client}</th>
+                      <th>Descrição</th>
+                      <th className="num">Valor</th>
+                      <th>Pagamento</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {data.others.map(item => (
+                      <tr key={`${item.kind}-${item.id}`}>
+                        <td>{format(parseISO(item.paid_at), 'HH:mm')}</td>
+                        <td>{item.client_name}</td>
+                        <td>{item.description}</td>
                         <td className="num">
                           {formatPrice(item.amount_cents)}
                         </td>

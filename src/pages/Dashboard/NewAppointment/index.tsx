@@ -121,6 +121,15 @@ interface Benefit {
   reason: string | null;
 }
 
+// Pacote de sessões do cliente (saldo)
+interface ClientPackage {
+  id: string;
+  service_id: string;
+  sessions: number;
+  remaining: number;
+  state: 'active' | 'used_up' | 'canceled';
+}
+
 // Cliente fixo: horários da série e se cada um está livre
 interface SeriesOccurrence {
   date: Date;
@@ -213,6 +222,7 @@ const NewAppointment: React.FC<NewAppointmentProps> = ({
   const [preview, setPreview] = useState<SeriesPreview | null>(null);
   // Clube: incluso no plano do cliente, com desconto ou preço normal
   const [benefit, setBenefit] = useState<Benefit | null>(null);
+  const [clientPackages, setClientPackages] = useState<ClientPackage[]>([]);
 
   // Esc fecha o painel
   useEffect(() => {
@@ -549,6 +559,28 @@ const NewAppointment: React.FC<NewAppointmentProps> = ({
 
   const benefitTime = (chosenStart || start).getTime();
 
+  // Pacotes do cliente escolhido (o agendamento fica incluso)
+  useEffect(() => {
+    setClientPackages([]);
+
+    if (!features.packages || !client) return undefined;
+
+    let active = true;
+
+    api
+      .get<ClientPackage[]>('/packages', { params: { client_id: client.id } })
+      .then(response => {
+        if (active) setClientPackages(response.data);
+      })
+      .catch(() => {
+        // Sem a lista: o servidor aplica o pacote mesmo assim
+      });
+
+    return () => {
+      active = false;
+    };
+  }, [features.packages, client]);
+
   useEffect(() => {
     setBenefit(null);
 
@@ -584,7 +616,17 @@ const NewAppointment: React.FC<NewAppointmentProps> = ({
       benefit ? benefit.price_cents : service.price_cents,
     );
 
-    if (benefit?.membership_id) {
+    const coveringPackage = clientPackages.find(
+      item =>
+        item.state === 'active' &&
+        item.service_id === service.id &&
+        item.remaining > 0,
+    );
+
+    if (coveringPackage) {
+      priceText = 'Incluso no pacote';
+      priceNote = `Restam ${coveringPackage.remaining} de ${coveringPackage.sessions} sessões`;
+    } else if (benefit?.membership_id) {
       priceText = 'Incluso no plano';
       priceNote = `${benefit.plan_name} · ${formatPrice(
         service.price_cents,

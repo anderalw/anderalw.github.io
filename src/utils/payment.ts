@@ -1,5 +1,5 @@
 // Formas de pagamento registradas no atendimento (iguais às da API);
-// 'membership' = incluso no plano do clube (nada a receber)
+// 'membership' = incluso no plano do clube ou num pacote (nada a receber)
 export type PaymentMethod = 'pix' | 'credit' | 'debit' | 'cash' | 'membership';
 
 // Formas de receber dinheiro (para escolher na tela)

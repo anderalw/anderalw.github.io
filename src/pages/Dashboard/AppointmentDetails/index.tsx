@@ -29,6 +29,7 @@ import { formatPhone, phoneHref as toPhoneHref } from '../../../utils/phone';
 import { AgendaClient } from '../agenda';
 import { PaymentMethod, PAYMENT_LABELS } from '../../../utils/payment';
 import PaymentStep from './PaymentStep';
+import DepositStep from './DepositStep';
 import { AlertTag } from '../../Clients/styles';
 
 import {
@@ -62,7 +63,7 @@ import {
   SeriesNote,
   UndoRow,
 } from './styles';
-import { useVocabulary } from '../../../hooks/Vocabulary';
+import { useFeatures, useVocabulary } from '../../../hooks/Vocabulary';
 
 export interface AppointmentDetailsData {
   id: string;
@@ -73,6 +74,11 @@ export interface AppointmentDetailsData {
   // Clube: incluso no plano / preço normal quando houve benefício
   membership_id: string | null;
   list_price_cents: number | null;
+  package_id: string | null;
+  // Sinal pedido e o recebimento (null = ainda não)
+  deposit_cents: number | null;
+  deposit_paid_at: string | null;
+  deposit_method: PaymentMethod | null;
   // Registrado depois do horário; null = a confirmar
   attendance: 'completed' | 'no_show' | null;
   payment_method: PaymentMethod | null;
@@ -98,7 +104,7 @@ interface AppointmentDetailsProps {
   onChanged(message: { title: string; description: string }): void;
 }
 
-type Mode = 'view' | 'reschedule' | 'confirm-cancel' | 'payment';
+type Mode = 'view' | 'reschedule' | 'confirm-cancel' | 'payment' | 'deposit';
 
 const STATUS_LABELS: Record<AppointmentStatus, string> = {
   upcoming: 'Agendado',
@@ -150,6 +156,7 @@ const AppointmentDetails: React.FC<AppointmentDetailsProps> = ({
   onChanged,
 }) => {
   const terms = useVocabulary();
+  const features = useFeatures();
   const closeButtonRef = useRef<HTMLButtonElement>(null);
   const { addToast } = useToast();
   const [mode, setMode] = useState<Mode>('view');
@@ -214,20 +221,36 @@ const AppointmentDetails: React.FC<AppointmentDetailsProps> = ({
     )}; aguardando o cliente`;
   }
 
+  // Sinal já recebido: no dia, falta só o resto
+  const depositPaid = appointment.deposit_paid_at
+    ? appointment.deposit_cents || 0
+    : 0;
+  const remaining =
+    appointment.price_cents !== null
+      ? Math.max(0, appointment.price_cents - depositPaid)
+      : null;
+  const included = !!appointment.membership_id || !!appointment.package_id;
+
   // Linha do cartão "Atendido": o pagamento registrado ou o que vai entrar
-  const received = appointment.paid_cents ?? appointment.price_cents;
+  const received = appointment.paid_cents ?? remaining;
   let attendedText = 'Entra no faturamento.';
 
   if (appointment.payment_method === 'membership') {
-    attendedText = 'Incluso no plano do cliente.';
+    attendedText = appointment.package_id
+      ? 'Incluso no pacote do cliente.'
+      : 'Incluso no plano do cliente.';
   } else if (appointment.attendance === 'completed') {
     attendedText = `${
       appointment.payment_method
         ? PAYMENT_LABELS[appointment.payment_method]
         : 'Pagamento não informado'
     }${received !== null ? ` · ${formatPrice(received)}` : ''}`;
-  } else if (appointment.membership_id) {
-    attendedText = 'Incluso no plano: nada a cobrar.';
+  } else if (included) {
+    attendedText = appointment.package_id
+      ? 'Incluso no pacote: nada a cobrar.'
+      : 'Incluso no plano: nada a cobrar.';
+  } else if (depositPaid > 0 && remaining !== null) {
+    attendedText = `Falta receber ${formatPrice(remaining)} (sinal pago).`;
   } else if (appointment.price_cents !== null) {
     attendedText = `Entra no faturamento (${formatPrice(
       appointment.price_cents,
@@ -315,6 +338,37 @@ const AppointmentDetails: React.FC<AppointmentDetailsProps> = ({
       });
     },
     [clientName, onChanged],
+  );
+
+  // Sinal recebido; null desfaz
+  const handleDeposit = useCallback(
+    async (method: PaymentMethod | null, amountCents?: number) => {
+      setSavingAttendance(true);
+
+      try {
+        await api.patch(`/appointments/${appointment.id}/deposit`, {
+          payment_method: method,
+          amount_cents: amountCents ?? null,
+        });
+
+        onChanged({
+          title: method ? 'Sinal registrado' : 'Sinal desfeito',
+          description: method
+            ? `${clientName} · ${PAYMENT_LABELS[method]} · ${formatPrice(
+                amountCents || 0,
+              )}`
+            : clientName,
+        });
+      } catch (err) {
+        addToast({
+          type: 'error',
+          title: 'Não foi possível registrar',
+          description: getApiErrorMessage(err, 'Tente novamente.'),
+        });
+        setSavingAttendance(false);
+      }
+    },
+    [appointment.id, clientName, onChanged, addToast],
   );
 
   const handlePayment = useCallback(
@@ -463,10 +517,12 @@ const AppointmentDetails: React.FC<AppointmentDetailsProps> = ({
                 {appointment.service?.name || 'Serviço não informado'}
               </li>
 
-              {appointment.membership_id && (
+              {included && (
                 <li>
                   <FiDollarSign />
-                  Incluso no plano
+                  {appointment.package_id
+                    ? 'Incluso no pacote'
+                    : 'Incluso no plano'}
                   {appointment.list_price_cents !== null && (
                     <small>
                       {`(${formatPrice(appointment.list_price_cents)})`}
@@ -474,16 +530,48 @@ const AppointmentDetails: React.FC<AppointmentDetailsProps> = ({
                   )}
                 </li>
               )}
-              {!appointment.membership_id &&
-                appointment.price_cents !== null && (
-                  <li>
-                    <FiDollarSign />
-                    {formatPrice(appointment.price_cents)}
-                    {appointment.list_price_cents !== null && (
-                      <small>desconto do plano</small>
-                    )}
-                  </li>
-                )}
+              {!included && appointment.price_cents !== null && (
+                <li>
+                  <FiDollarSign />
+                  {formatPrice(appointment.price_cents)}
+                  {appointment.list_price_cents !== null && (
+                    <small>desconto do plano</small>
+                  )}
+                </li>
+              )}
+
+              {!!appointment.deposit_cents && (
+                <li>
+                  <FiDollarSign />
+                  <span>
+                    {`Sinal de ${formatPrice(appointment.deposit_cents)}`}
+                    <SeriesNote>
+                      {appointment.deposit_paid_at
+                        ? `Pago no ${PAYMENT_LABELS[
+                            appointment.deposit_method || 'pix'
+                          ].toLowerCase()} em ${format(
+                            parseISO(appointment.deposit_paid_at),
+                            'dd/MM',
+                          )}`
+                        : 'Ainda não pago'}
+                      {appointment.deposit_paid_at &&
+                        appointment.attendance !== 'completed' && (
+                          <>
+                            {' · '}
+                            <UndoButton
+                              type="button"
+                              style={{ padding: 0 }}
+                              disabled={savingAttendance}
+                              onClick={() => handleDeposit(null)}
+                            >
+                              desfazer
+                            </UndoButton>
+                          </>
+                        )}
+                    </SeriesNote>
+                  </span>
+                </li>
+              )}
 
               <li>
                 <FiScissors />
@@ -598,6 +686,27 @@ const AppointmentDetails: React.FC<AppointmentDetailsProps> = ({
                         </small>
                       </span>
                     </AttendanceCard>
+                    {features.deposit &&
+                      !appointment.deposit_paid_at &&
+                      !included &&
+                      !!appointment.price_cents && (
+                        <ActionCard
+                          type="button"
+                          onClick={() => setMode('deposit')}
+                        >
+                          <FiDollarSign />
+                          <span>
+                            <strong>Registrar sinal</strong>
+                            <small>
+                              {appointment.deposit_cents
+                                ? `Sinal de ${formatPrice(
+                                    appointment.deposit_cents,
+                                  )} para garantir o horário.`
+                                : 'O cliente pagou uma parte antes.'}
+                            </small>
+                          </span>
+                        </ActionCard>
+                      )}
                     <ActionCard
                       type="button"
                       onClick={() => setMode('reschedule')}
@@ -726,8 +835,10 @@ const AppointmentDetails: React.FC<AppointmentDetailsProps> = ({
               <PaymentStep
                 appointmentId={appointment.id}
                 onTerminalPaid={handleTerminalPaid}
-                priceCents={appointment.price_cents}
-                included={!!appointment.membership_id}
+                priceCents={remaining}
+                included={included}
+                inPackage={!!appointment.package_id}
+                depositPaidCents={depositPaid}
                 listPriceCents={appointment.list_price_cents}
                 initialMethod={appointment.payment_method}
                 initialPaidCents={appointment.paid_cents}
@@ -735,6 +846,16 @@ const AppointmentDetails: React.FC<AppointmentDetailsProps> = ({
                 saving={savingAttendance}
                 onBack={() => setMode('view')}
                 onConfirm={handlePayment}
+              />
+            )}
+
+            {mode === 'deposit' && (
+              <DepositStep
+                depositCents={appointment.deposit_cents}
+                priceCents={appointment.price_cents}
+                saving={savingAttendance}
+                onBack={() => setMode('view')}
+                onConfirm={(method, cents) => handleDeposit(method, cents)}
               />
             )}
 

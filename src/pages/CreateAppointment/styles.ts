@@ -357,3 +357,26 @@ export const SummaryFooter = styled.div`
     color: ${colors.textSubtle};
   }
 `;
+
+// Sinal do serviço escolhido e como pagar (altura reservada)
+export const DepositNote = styled.div<{ active: boolean }>`
+  min-height: 74px;
+  margin-top: 10px;
+  padding: 10px 12px;
+  border-radius: 8px;
+  background: ${props => (props.active ? colors.surfaceHover : 'transparent')};
+  font-size: 12px;
+  line-height: 1.4;
+  color: ${colors.textMuted};
+
+  strong {
+    display: block;
+    margin-bottom: 2px;
+    font-size: 13px;
+    color: ${colors.text};
+  }
+
+  span {
+    white-space: pre-line;
+  }
+`;

@@ -45,6 +45,12 @@ export interface AgendaAppointment {
   // Clube: incluso no plano (preço 0) / preço normal quando houve benefício
   membership_id: string | null;
   list_price_cents: number | null;
+  // Pacote de sessões que cobre o horário
+  package_id: string | null;
+  // Sinal pedido e o recebimento (null = ainda não)
+  deposit_cents: number | null;
+  deposit_paid_at: string | null;
+  deposit_method: PaymentMethod | null;
   // Registrado depois do horário: atendido ou falta; null = a confirmar
   attendance: Attendance | null;
   // Pagamento do atendimento concluído (null = não informado / o preço)

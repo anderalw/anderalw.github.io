@@ -44,9 +44,12 @@ import {
   Total,
   TotalNote,
   SummaryFooter,
+  DepositNote,
   WaitlistBox,
 } from './styles';
 import { useVocabulary, useFeatures } from '../../hooks/Vocabulary';
+import { useBranding } from '../../hooks/Branding';
+import ConsentModal from './ConsentModal';
 
 interface Provider {
   id: string;
@@ -59,6 +62,24 @@ interface Service {
   name: string;
   duration_minutes: number;
   price_cents: number;
+  // Sinal para garantir o horário (null = sem sinal)
+  deposit_cents?: number | null;
+}
+
+// Pacote de sessões do cliente (saldo)
+interface ClientPackage {
+  id: string;
+  service_id: string;
+  sessions: number;
+  remaining: number;
+  state: 'active' | 'used_up' | 'canceled';
+}
+
+// Termo de consentimento e se o cliente já aceitou o texto atual
+interface ConsentStatus {
+  text: string;
+  version: string;
+  accepted: boolean;
 }
 
 // Horário livre para o serviço escolhido, no formato 'HH:mm'
@@ -136,6 +157,35 @@ const CreateAppointment: React.FC = () => {
   // do preço para o serviço e o horário escolhidos
   const [hasPlan, setHasPlan] = useState(false);
   const [benefit, setBenefit] = useState<Benefit | null>(null);
+  // Pacotes de sessões do cliente
+  const [packages, setPackages] = useState<ClientPackage[]>([]);
+  // Termo de consentimento: o texto, se já aceitou e o modal
+  const [consent, setConsent] = useState<ConsentStatus | null>(null);
+  const [askConsent, setAskConsent] = useState(false);
+  const [acceptingConsent, setAcceptingConsent] = useState(false);
+  const { branding } = useBranding();
+
+  const loadPackages = useCallback(() => {
+    if (!features.packages) return;
+
+    api
+      .get<ClientPackage[]>('/packages/me')
+      .then(response => setPackages(response.data))
+      .catch(() => setPackages([]));
+  }, [features.packages]);
+
+  useEffect(() => {
+    loadPackages();
+  }, [loadPackages]);
+
+  useEffect(() => {
+    if (!features.consent) return;
+
+    api
+      .get<ConsentStatus>('/clients/me/consent')
+      .then(response => setConsent(response.data))
+      .catch(() => setConsent(null));
+  }, [features.consent]);
 
   const loadWaitlist = useCallback(() => {
     api
@@ -329,6 +379,7 @@ const CreateAppointment: React.FC = () => {
       // Limpa o horário e recarrega a lista para permitir um novo agendamento
       setSelectedTime('');
       setRefreshKey(key => key + 1);
+      loadPackages();
     } catch (err) {
       addToast({
         type: 'error',
@@ -352,14 +403,65 @@ const CreateAppointment: React.FC = () => {
     isAnyProvider,
     appointmentDate,
     addToast,
+    loadPackages,
   ]);
+
+  // Com o termo ligado e ainda não aceito: primeiro o termo
+  const handleConfirm = useCallback(() => {
+    if (features.consent && consent && !consent.accepted) {
+      setAskConsent(true);
+      return;
+    }
+
+    handleCreateAppointment();
+  }, [features.consent, consent, handleCreateAppointment]);
+
+  const acceptConsentAndBook = useCallback(async () => {
+    if (!consent) return;
+
+    setAcceptingConsent(true);
+
+    try {
+      const response = await api.post<ConsentStatus>('/clients/me/consent', {
+        version: consent.version,
+      });
+
+      setConsent(response.data);
+      setAskConsent(false);
+      await handleCreateAppointment();
+    } catch (err) {
+      addToast({
+        type: 'error',
+        title: 'Não foi possível registrar o aceite',
+        description: getApiErrorMessage(err, 'Tente novamente.'),
+      });
+    } finally {
+      setAcceptingConsent(false);
+    }
+  }, [consent, handleCreateAppointment, addToast]);
 
   const canConfirm = !!(service && providerChosen && appointmentDate);
 
   let totalText = service ? formatPrice(service.price_cents) : 'R$ –';
   let totalNote = '';
 
-  if (service && benefit) {
+  // Pacote com sessão para o serviço: incluso, sem passar pelo clube
+  const coveringPackage =
+    features.packages && service
+      ? packages.find(
+          item =>
+            item.state === 'active' &&
+            item.service_id === service.id &&
+            item.remaining > 0,
+        )
+      : undefined;
+
+  if (service && coveringPackage) {
+    totalText = 'Incluso no pacote';
+    totalNote = `Restam ${coveringPackage.remaining} de ${
+      coveringPackage.sessions
+    } sessões · ${formatPrice(service.price_cents)} no preço normal`;
+  } else if (service && benefit) {
     if (benefit.membership_id) {
       totalText = 'Incluso no plano';
       totalNote = `${benefit.plan_name} · ${formatPrice(
@@ -372,6 +474,18 @@ const CreateAppointment: React.FC = () => {
         : '';
     }
   }
+
+  // Sinal para garantir o horário (não vale quando está incluso)
+  const depositCents =
+    features.deposit &&
+    service?.deposit_cents &&
+    !coveringPackage &&
+    !benefit?.membership_id
+      ? Math.min(
+          service.deposit_cents,
+          benefit?.price_cents ?? service.price_cents,
+        )
+      : 0;
 
   const dateKey = selectedDate ? format(selectedDate, 'yyyy-MM-dd') : '';
   const waitingRequest = waitlist.find(item => item.date === dateKey);
@@ -713,13 +827,33 @@ const CreateAppointment: React.FC = () => {
                   <span>Total</span>
                   <strong>{totalText}</strong>
                 </Total>
-                {hasPlan && <TotalNote>{totalNote}</TotalNote>}
+                {(hasPlan || features.packages) && (
+                  <TotalNote>{totalNote}</TotalNote>
+                )}
+                {/* Espaço reservado quando o negócio cobra sinal */}
+                {features.deposit && (
+                  <DepositNote active={depositCents > 0}>
+                    {depositCents > 0 && (
+                      <>
+                        <strong>
+                          {`Sinal de ${formatPrice(
+                            depositCents,
+                          )} para garantir o horário`}
+                        </strong>
+                        <span>
+                          {branding.deposit_instructions ||
+                            `Combine o pagamento com ${terms.thePlace}.`}
+                        </span>
+                      </>
+                    )}
+                  </DepositNote>
+                )}
               </CardBody>
 
               <SummaryFooter>
                 <UIButton
                   type="button"
-                  onClick={handleCreateAppointment}
+                  onClick={handleConfirm}
                   disabled={!canConfirm || saving}
                 >
                   <FiCheck />
@@ -730,6 +864,16 @@ const CreateAppointment: React.FC = () => {
             </Card>
           </Summary>
         </Columns>
+
+        {askConsent && consent && (
+          <ConsentModal
+            text={consent.text}
+            placeName={branding.name}
+            saving={acceptingConsent || saving}
+            onClose={() => setAskConsent(false)}
+            onAccept={acceptConsentAndBook}
+          />
+        )}
       </Page>
     </AppLayout>
   );

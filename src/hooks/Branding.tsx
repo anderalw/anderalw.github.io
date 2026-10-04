@@ -30,6 +30,8 @@ export interface Branding {
   // Recursos ligados (padrão do ramo + ajuste do admin)
   features?: Partial<Record<FeatureKey, boolean>>;
   feature_defaults?: Partial<Record<FeatureKey, boolean>>;
+  // Como pagar o sinal (chave Pix, prazo...)
+  deposit_instructions?: string;
 }
 
 interface BrandingContextData {
